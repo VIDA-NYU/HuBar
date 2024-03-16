@@ -1,0 +1,46 @@
+html,
+body,
+.container{
+    height: 100vh;
+    margin: 0;
+}
+
+body{
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+  
+.container {
+    display: grid;
+    grid-template-rows: 1fr 2fr;
+}
+  
+#overview-panel{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+  
+#details-panel{
+    border: 1px solid #000;
+}
+
+.cell{
+    border: 1px solid #000;
+    padding: 20px;
+    text-align: center;
+}
+
+
+#scatterplot-container {
+    padding: 0;
+
+    position: relative; /* Ensure relative positioning */
+}
+
+#sourceDropdown {
+    position: absolute; /* Position dropdown absolutely */
+    top: 5px; /* Adjust top position as needed */
+    right: 5px; /* Adjust right position as needed */
+    z-index: 1; /* Ensure dropdown is above other elements */
+}
+  
