@@ -13,22 +13,35 @@
   <div class="container">
 
     <div id="overview-panel">
-      <div id = "cell1" class="cell">VIDEO</div>
+      <div id = "video-container" class="cell">  
+        <!-- <select id="video-dropdown"></select> --> 
+       <video id="video-player" controls muted="muted"></video>
+      </div>
       
       <div id = "scatterplot-container" class="cell">
-          <select id="sourceDropdown"> 
-          
-          </select>
+        <label id="groupby-label" for="groupby-dropdown">Groupby:</label>
+        <select id="groupby-dropdown">
+            <option selected value="trial">trial</option>
+            <option value="subject">subject</option>
+        </select>
+        
+        <label id = "source-label" for="source-dropdown">Source:</label>
+        <select id="source-dropdown">
+            <!-- Options for the source dropdown -->
+        </select>
       </div>
       <div class="cell">3</div>
       <div class="cell">4</div>
     </div>
 
     <div id="details-panel">
-
+      <div id= "event-timeline-container" class="cell"></div>
+      <div class="cell">2</div>
+      <div class="cell">3</div>
+      <div class="cell">4</div>
     </div>
   </div>
 
-<script src="dist/bundle.js"></script>
+<script src="dist/app.bundle.js"></script>
 </body>
 </html>

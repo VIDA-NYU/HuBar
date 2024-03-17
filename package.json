@@ -11,7 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "bootstrap": "^5.3.3",
-    "d3": "^7.9.0"
+    "d3": "^7.9.0",
+    "d3-drag": "^3.0.0",
+    "d3-selection": "^3.0.0",
+    "robust-point-in-polygon": "^1.0.3"
   },
   "devDependencies": {
     "webpack": "^5.90.3",

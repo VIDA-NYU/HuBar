@@ -22,6 +22,8 @@ body{
   
 #details-panel{
     border: 1px solid #000;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
 }
 
 .cell{
@@ -31,16 +33,79 @@ body{
 }
 
 
-#scatterplot-container {
+
+#scatterplot-container, #video-container, #event-timeline-container {
     padding: 0;
 
     position: relative; /* Ensure relative positioning */
 }
 
-#sourceDropdown {
+
+.event-timeline-container {
+    /*text-align: center;*/
+    overflow-y: scroll;
+}
+
+
+#groupby-label {
     position: absolute; /* Position dropdown absolutely */
-    top: 5px; /* Adjust top position as needed */
-    right: 5px; /* Adjust right position as needed */
+    left:10%;
+    top:5px;
+}
+
+#groupby-dropdown{
+    position: absolute; /* Position dropdown absolutely */
+    top: 4px; /* Adjust top position as needed */
+    left: 29%; /* Adjust left position as needed */
     z-index: 1; /* Ensure dropdown is above other elements */
 }
-  
+
+
+#source-dropdown, #video-dropdown {
+    position: absolute; /* Position dropdown absolutely */
+    top: 4px; /* Adjust top position as needed */
+    right: 10%; /* Adjust right position as needed */
+    z-index: 1; /* Ensure dropdown is above other elements */
+}
+#source-label{
+    position: absolute; /* Position dropdown absolutely */
+    right:27%;
+    top:5px;
+}
+
+#video-player {
+    margin-top: 7%;
+    max-width:98%;
+    margin-left: 1%;
+    margin-right: 1%;
+    max-height: 93%; 
+    z-index: -100;
+    background-size: cover;
+    overflow:hidden;
+}
+
+
+.lasso path {
+    stroke: #beaed4;
+    stroke-width:3px;
+}
+
+.lasso .drawn {
+    fill:  #beaed4;
+    fill-opacity:.3 ;
+}
+
+
+.lasso .loop_close {
+   
+    stroke-dasharray: 4,4;
+}
+
+.lasso .origin {
+
+    fill-opacity:0;
+}
+
+.unselectedscatter {
+    opacity: 0.1;
+}
