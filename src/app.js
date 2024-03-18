@@ -4,27 +4,33 @@ import lasso from './lasso.js'; // Adjust the path if necessary
 
 const videoFolder = "data/video/"
 const videoPlayer = document.getElementById('video-player');
-let dataFiles, selectedItems, selectedScatterSource, selectedGroupby, uniqueTrials, uniqueSubjects,
-    eventTimelineSvg , eventTimelineGroup, 
-    scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial;
+let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
+    selectedScatterSource, selectedGroupby, selectedFilter,
+    scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial,
+    eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
+    matrixSvg, matrixGroup;
+
 let vidStart = 0;
 let vidEnd = 5;
 let maxTimestamp=0.0;
 
+const allSteps = ["a", "b", "c", "d", "e", "f", "?", "*", "1", "2", "v"]
+
 const stepColorScale = d3.scaleOrdinal()
-  .domain(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
-  .range(d3.schemeCategory10);
+  .domain(allSteps)
+  .range(d3.schemePaired);
 
 const margins={ 
     scatterplot:{ top:35, left:15, right:15, bottom:10},
     video:{ top:0, left:0, right:0, bottom:0},
-    eventTimeline:{top:20, left:10, right:30, bottom:20},
-
+    eventTimeline:{top:25, left:55, right:10, bottom:20},
+    matrix:{top:25, left:5, right:5, bottom:20}
 }
 
 Promise.all([
         d3.csv("data/scatterplot_imu_gaze_complete.csv"),
         d3.json("data/formatted_mission_log.json"),
+        d3.json("data/steps_error_distribution.json"),
     ])
     
     .then(function(files) {
@@ -39,7 +45,7 @@ Promise.all([
 
 function initializeContainers(){
     console.log("initializing")
-
+    
     // Extract unique sources from the data
     const sources = [...new Set(dataFiles[0].map(d => d.source))];
     uniqueTrials = [...new Set(dataFiles[0].map(d => d.trial))]
@@ -51,12 +57,16 @@ function initializeContainers(){
         .enter()
         .append("option")
         .text(d => d)
-        .attr("value", d => d);
+        .attr("value", d => d)
+        .attr("selected", (d, i) => i === 0 ? "selected" : null);
     
     // Add onchange event to get dropdown source and update scatterplot
     sourceDropdown.on("change", function() {
         selectedScatterSource = sourceDropdown.property("value");
         updateScatterplot();
+        selectedItems = [];
+        updateEventTimeline();
+        updateMatrix();
     });
 
     const groupbyDropdown = d3.select("#groupby-dropdown");
@@ -65,9 +75,27 @@ function initializeContainers(){
     groupbyDropdown.on("change", function() {
         selectedGroupby = groupbyDropdown.property("value");
         updateScatterplot();
-
+        selectedItems = [];
+        updateEventTimeline();
+        updateMatrix();
     });
     
+    const filterDropdown = d3.select("#filter-dropdown");
+    
+    // Add onchange event to get groupBy and update scatterplot
+    filterDropdown.on("change", function() {
+        selectedFilter = filterDropdown.property("value");
+        updateScatterplot();
+        selectedItems = [];
+        updateEventTimeline();
+        updateMatrix();
+    });
+
+    //initialise select variables
+    selectedScatterSource = sourceDropdown.property("value");
+    selectedGroupby=groupbyDropdown.property("value");
+    selectedFilter = filterDropdown.property("value");
+    selectedItems = [];
 
     //intialise svgs
 
@@ -94,16 +122,20 @@ function initializeContainers(){
     eventTimelineGroup= eventTimelineSvg.append("g")
         .attr("transform", `translate(${margins.eventTimeline.left}, ${margins.eventTimeline.top})`)
         .attr("width", eventTimelineDiv.node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right )
-        .attr("height", eventTimelineDiv.node().clientHeight - margins.eventTimeline.top - margins.eventTimeline.bottom);
+        .attr("height", eventTimelineDiv.node().clientHeight - margins.eventTimeline.top - margins.eventTimeline.bottom);    
 
-    //initialise select variables
-    selectedScatterSource = sources[0]
-    selectedGroupby="trial";
-    selectedItems = [];
+    //matrix
+    let matrixDiv= d3.select("#matrix-container")  
+    matrixSvg = matrixDiv
+        .append("svg")
+        .attr("width", matrixDiv.node().clientWidth)
+        .attr("height", 200)
+        
+    matrixGroup = matrixSvg.append("g")
+        .attr("transform", `translate(${margins.matrix.left}, ${margins.matrix.top})`)
+        .attr("width", matrixDiv.node().clientWidth -margins.matrix.left - margins.matrix.right )
+        .attr("height", matrixDiv.node().clientHeight - margins.matrix.top - margins.matrix.bottom); 
 
-    //
-    
-    
     //TIMESTAMP ADD FLOAT
 
     dataFiles[1].forEach((trial)=>{
@@ -191,47 +223,44 @@ function initializeContainers(){
     
     scatterColorScaleSubject = generateColorScale(dataFiles[0], "subject");
     scatterColorScaleTrial = generateColorScale(dataFiles[0], "trial");       
-
-    //TEMP EVENTS
-    /*
-   
-    let arr = filteredObjects[0]["data"];
-    // Log the first element
-    console.log("First element:", arr[0]);
-
-    console.log("q2 element:", arr[Math.floor(arr.length*0.25)]);
-
-    console.log("q3 element:", arr[Math.floor(arr.length*0.5)]);
-
-    console.log("q4 element:", arr[Math.floor(arr.length*0.75)]);
-    // Log the last element
-    console.log("Last element:", arr[arr.length - 1]);
-    */
-
+    
     //TEMP VIDEO
     videoPlayer.src = videoFolder+"0293/2/hl2_rgb/codec_hl2_rgb.mp4";
-    fitVideoToContainer();
-    videoPlayer.load();
-    videoPlayer.play();
+    //fitVideoToContainer();
     videoPlayer.addEventListener('timeupdate', function() {
         if (this.currentTime >= vidEnd) {
           // Loop back to the start time
           this.currentTime = vidStart;
         }
       });
-    setTimeout(() => videoPlayer.src = videoFolder+"0293/11/hl2_rgb/codec_hl2_rgb_vfr.mp4",10000);
+
+    //videoPlayer.load();
+    
+
 
     console.log("initialized");
 
 }
 
-function updateScatterplot (){
+function updateScatterplot(){
     console.log("Updating Scatterplot")
-    const filteredData = dataFiles[0].filter(d => d.source === selectedScatterSource);
+    let filteredData = dataFiles[0].filter(d => d.source === selectedScatterSource);
+    scatterSvg.selectAll('.lasso').remove();
+    scatterGroup.selectAll('.unselectedscatter').attr("class","scatterpoints");
+
+    //Filter out for top 10/5 if selected
+    if (selectedFilter!='all'){
+        let trialFrequency = {};
+        filteredData.forEach(obj => {
+            trialFrequency[obj.trial] = (trialFrequency[obj.trial] || 0) + 1;
+        });
+        // Step 2: Sort the values based on their frequencies
+        let topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
+        filteredData = filteredData.filter(obj => topTrialValues.includes(obj.trial));
+    }
+
     let scatterplotDiv = d3.select("#scatterplot-container") 
-    console.log(selectedScatterSource)
-    console.log(selectedGroupby)
-    const xScale = d3.scaleLinear()
+    const xScaleScatter = d3.scaleLinear()
         .domain(d3.extent(filteredData, d => +d.x))
         .range([0, scatterplotDiv.node().clientWidth - margins.scatterplot.left - margins.scatterplot.right]);
 
@@ -248,7 +277,7 @@ function updateScatterplot (){
         .style("text-align", "left"); // Add text-align: left to align text left
         ;
 
-    const yScale = d3.scaleLinear()
+    const yScaleScatter = d3.scaleLinear()
         .domain(d3.extent(filteredData, d => +d.y))
         .range([scatterplotDiv.node().clientHeight - margins.scatterplot.bottom - margins.scatterplot.top, 0]);
 
@@ -260,8 +289,8 @@ function updateScatterplot (){
 
     // Update existing circles
     circles
-        .attr("cx", d => xScale(+d.x))
-        .attr("cy", d => yScale(+d.y))
+        .attr("cx", d => xScaleScatter(+d.x))
+        .attr("cy", d => yScaleScatter(+d.y))
         .attr("fill", d => {
             if (selectedGroupby == "trial") {
                 
@@ -274,8 +303,8 @@ function updateScatterplot (){
     // Enter new circles
     circles.enter()
         .append("circle")
-        .attr("cx", d => xScale(+d.x))
-        .attr("cy", d => yScale(+d.y))
+        .attr("cx", d => xScaleScatter(+d.x))
+        .attr("cy", d => yScaleScatter(+d.y))
         .attr("r", 5)
         .attr("fill", d => {
             if (selectedGroupby == "trial") {
@@ -314,10 +343,10 @@ function updateScatterplot (){
 
     //on drawing of lasso
     function lasso_end(){
-
+        selectedItems = []
         let itemsBrushed=lassoBrush.selectedItems()["_groups"][0];
-        
         if (itemsBrushed.length>0){
+            
             lassoBrush.notSelectedItems().attr("class","scatterpoints unselectedscatter");
             lassoBrush.selectedItems().attr("class","scatterpoints");         
             itemsBrushed.forEach((item)=>{
@@ -326,10 +355,10 @@ function updateScatterplot (){
         }
         //case where no nodes are selected - reset filters and inform parent
         else{
-            selectedItems = []
             lassoBrush.items().attr("class","scatterpoints");
         }
         updateEventTimeline();
+        updateMatrix();
     }
 }
 
@@ -353,66 +382,47 @@ function updateEventTimeline(){
     
 
     selectedItems.forEach((item)=>{
-        console.log()
         let tempObject = dataFiles[1].filter(obj => obj.subject_id == item.subject && obj.trial_id == item.trial);
-        if (tempObject.length!=1){
-            console.log("ERROR: Either MORE THAN 1 MATCH OR NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
-            //console.log(tempObject)
-            //console.log(tempObject.length)
-            //console.log(item)
+        if (tempObject.length==0){
+            console.log("ERROR:NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
+            tempObject= [{subject_id: item.subject, trial_id: item.trial, missing:true}]
         }
-        
         else
-            filteredObjects.push(tempObject[0]) 
+            tempObject[0]["missing"]=false
+        filteredObjects.push(tempObject[0]) 
     })
     
-    let xEventTimelineScale= d3.scaleLinear()
+    xEventTimelineScale= d3.scaleLinear()
         .domain([0.0, maxTimestamp])
         .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
-    let brushes=[]
+    reverseTimelineScale = d3.scaleLinear()
+        .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
+        .range([0.0, maxTimestamp])
+
     let currentY = margins.eventTimeline.top
     
-    if(selectedGroupby=="trial"){
-        uniqueTrials.forEach((trial)=>{
-            let groupedObj = filteredObjects.filter(obj => obj.trial_id == trial)
-            if (groupedObj.length>0)
-                eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-10).text("Trial "+ trial).style("font-size", "14px").attr("alignment-baseline","middle").style("fill","black")
-            else
-                return
-            groupedObj.forEach((session)=>{ 
-                
-                let stepData = session.consolidatedData.step;
-                let errorData = session.consolidatedData.error;
-                let phaseData = session.consolidatedData.flightPhase;
-                
+    let groupArray = uniqueSubjects
+    if(selectedGroupby=="trial")
+        groupArray = uniqueTrials
 
-               
-                stepData.forEach(data => {
-                    eventTimelineGroup.append("rect")
-                        .attr("x", xEventTimelineScale(data.startTimestamp))
-                        .attr("y", currentY)
-                        .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
-                        .attr("height", 30)
-                        .style("fill", stepColorScale(data.value))
-                        .on("mouseover", function(d) {
-                            console.log("Mouseover rect")
-                            eventTooltip.transition()
-                                .duration(200)
-                                .style("opacity", .9);
-                                eventTooltip.html(`<strong>Step:</strong> ${data.value}`)
-                                .style("left", (d.layerX + 10) + "px")
-                                .style("top", (d.layerY - 28) + "px");
-                        })
-                        .on("mouseout", function(d) {
-                            eventTooltip.transition()
-                                .duration(500)
-                                .style("opacity", 0);
-                        })
+    groupArray.forEach((id)=>{
+        let groupedObj = filteredObjects.filter(obj => obj.subject_id == id)
+        if (selectedGroupby=="trial")
+            groupedObj = filteredObjects.filter(obj => obj.trial_id == id)
+        if (groupedObj.length>0 && selectedGroupby=="trial")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-15).text("Trial "+ id).style("font-size", "16px").attr("alignment-baseline","middle").style("fill","black")
+        else if (groupedObj.length>0 && selectedGroupby=="subject")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-15).text("Subject "+ id).style("font-size", "16px").attr("alignment-baseline","middle").style("fill","black")
+        else
+            return
 
-                        ;
-                });
-                let sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]-10).attr("y", currentY+11).text("Sub:"+ session.subject_id).style("font-size", "10px").attr("text-anchor","end").style("fill","black")
-                let bbox = sessionTitle.node().getBBox();
+        groupedObj.forEach((session)=>{ 
+            if (session.missing){
+                console.log("Missing", session)
+                let displayMissing= `Missing mission info for Subject:${session.subject_id} Trial:${session.trial_id}`
+                let missingText = eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - margins.eventTimeline.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
+                let bbox = missingText.node().getBBox();
+                
                 eventTimelineGroup.append("rect")
                     .attr("x", bbox.x - 3)
                     .attr("y", bbox.y - 3)
@@ -420,98 +430,308 @@ function updateEventTimeline(){
                     .attr("rx",5)
                     .attr("ry",5)
                     .attr("height", bbox.height + 6)
-                    .style("fill", "#FFD166");
-                eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]-10).attr("y", currentY+11).text("Sub:"+ session.subject_id).style("font-size", "10px").attr("text-anchor","end").style("fill","#05668D")
+                    .style("fill", "#FFB3B2");
 
-                currentY +=30;
-                errorData.forEach(data => {
-                    eventTimelineGroup.append("rect")
-                        .attr("x", xEventTimelineScale(data.startTimestamp))
-                        .attr("y", currentY+1)
-                        .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
-                        .attr("height", 14)
-                        .style("fill", () => data.value == "error" || data.value == "Error" ? "red" : "steelblue")
-                        .on("mouseover", function() {
-                            eventTooltip.transition()
-                                .duration(200)
-                                .style("opacity", .9);
-                                eventTooltip.html(`<strong>Error:</strong> ${data.value}`)
-                                .style("left", (d.layerX + 10) + "px")
-                                .style("top", (d.layerY - 28) + "px");
-                        })
-                        .on("mouseout", function(d) {
-                            eventTooltip.transition()
-                                .duration(500)
-                                .style("opacity", 0);
-                        });
-                });
-                currentY +=15;
+                eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - margins.eventTimeline.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
+                currentY+=70
+                if(eventTimelineSvg.attr("height")<=currentY+200){
+                    eventTimelineGroup.attr("height",currentY+200)
+                    eventTimelineSvg.attr("height",currentY+250+margins.eventTimeline.top+margins.eventTimeline.bottom)     
+                }
+                return
+            }
+            let stepData = session.consolidatedData.step;
+            let errorData = session.consolidatedData.error;
+            let phaseData = session.consolidatedData.flightPhase;
+            stepData.forEach(data => {
+                eventTimelineGroup.append("rect")
+                    .attr("x", xEventTimelineScale(data.startTimestamp))
+                    .attr("y", currentY)
+                    .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                    .attr("height", 30)
+                    .style("fill", stepColorScale(data.value));
+            });
+            let sessionTitle
+            if (selectedGroupby=="trial")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Sub:"+ session.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+            else
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Trial:"+ session.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+            let bbox = sessionTitle.node().getBBox();
+            eventTimelineGroup.append("rect")
+                .attr("x", bbox.x - 2)
+                .attr("y", bbox.y - 2)
+                .attr("width", bbox.width + 4)
+                .attr("rx",5)
+                .attr("ry",5)
+                .attr("height", bbox.height + 4)
+                .style("fill", "#FFD166");
+            
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 5).attr("y", currentY+25).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","#05668D")
 
-                phaseData.forEach(data => {
-                    eventTimelineGroup.append("rect")
-                        .attr("x", xEventTimelineScale(data.startTimestamp))
-                        .attr("y", currentY+1)
-                        .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
-                        .attr("height", 14)
-                        .style("fill", () => data.value ==  "Preflight" ? "#8BC34A" : "#FF5722")
-                        .on("mouseover", function() {
-                            eventTooltip.transition()
-                                .duration(200)
-                                .style("opacity", .9);
-                                eventTooltip.html(`<strong>Flight Phase:</strong> ${data.value}`)
-                                .style("left", (d.layerX + 10) + "px")
-                                .style("top", (d.layerY - 28) + "px");
-                        })
-                        .on("mouseout", function(d) {
-                            eventTooltip.transition()
-                                .duration(500)
-                                .style("opacity", 0);
-                        });;
+            currentY+=30;
+            errorData.forEach(data => {
+                eventTimelineGroup.append("rect")
+                    .attr("x", xEventTimelineScale(data.startTimestamp))
+                    .attr("y", currentY+1)
+                    .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                    .attr("height", 14)
+                    .style("fill", () => data.value == "error" || data.value == "Error" ? "black" : "#AEAEAE")
+                    .on("mouseover", function() {
+                        eventTooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                            eventTooltip.html(`<strong>Error:</strong> ${data.value}`)
+                            .style("left", (d.layerX + 10) + "px")
+                            .style("top", (d.layerY - 28) + "px");
+                    })
+                    .on("mouseout", function(d) {
+                        eventTooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+            });
+            currentY+=15;
+
+            phaseData.forEach(data => {
+                eventTimelineGroup.append("rect")
+                    .attr("x", xEventTimelineScale(data.startTimestamp))
+                    .attr("y", currentY+1)
+                    .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                    .attr("height", 14)
+                    .style("fill", () => data.value ==  "Preflight" ? "#8BC34A" : "#FF5722")
+                    .on("mouseover", function() {
+                        eventTooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                            eventTooltip.html(`<strong>Flight Phase:</strong> ${data.value}`)
+                            .style("left", (d.layerX + 10) + "px")
+                            .style("top", (d.layerY - 28) + "px");
+                    })
+                    .on("mouseout", function(d) {
+                        eventTooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+
+                eventTimelineGroup.append("rect")
+                    .attr("x",  xEventTimelineScale(data.startTimestamp))
+                    .attr("y", currentY+1)
+                    .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp))
+                    .attr("height", 14)
+                    .style("fill", "white")
+                    .style("stroke", "black")
+                    .style("stroke-width", "2px");
+            
+                eventTimelineGroup.append("text")
+                    .attr("x", xEventTimelineScale(data.startTimestamp) + (xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) /2) // Place text in the middle horizontally
+                    .attr("y", currentY + 11) // Adjust vertically to center the text
+                    .attr("text-anchor", "middle") // Center-align the text horizontally
+                    .style("font-size", "10px") // Adjust font size if needed
+                    .style("fill", "black")
+                    .text(()=> {
+                        if (data.value === "Preflight") {
+                            return "PF";
+                        } else {
+                            return "FL";
+                        }
+                    })
+            });
+            
+            currentY+=15
+
+            let brush = d3.brushX()
+                .extent([[0, currentY-60], [xEventTimelineScale.range()[1] , currentY]])
+                .on("start", brushstart)
+                .on("end", brushended);
+        
+            eventTimelineGroup.append("g")
+                .attr("class", "brush timelinebrush")
+                .attr("data-trial",session.trial_id)
+                .attr("data-subject",session.subject_id)
+                .datum({brush:brush})
+                .call(brush);
+            //clear all other brushes when brushing starts
+            function brushstart(){
+                let allBrushes = eventTimelineGroup.selectAll(".timelinebrush").nodes()
+                allBrushes.forEach((eachBrush)=>{
+                    if (eachBrush !=this)
+                        d3.select(eachBrush).call(d3.brush().move, null); 
+                })
+            }   
+
+            function brushended (e){
+                console.log("Brushed");
+                let selected_trial = e.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
+                let selected_subject = e.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
+                vidStart = reverseTimelineScale(e.selection[0])
+                vidEnd = reverseTimelineScale(e.selection[1])
+                videoPath = `data/video/${String(selected_subject).padStart(4, '0')}/${selected_trial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`
+                videoPlayer.src = videoPath;
+                videoPlayer.addEventListener('loadeddata', function() {
+                    videoPlayer.currentTime = vidStart;
+                    videoPlayer.play();
                 });
                 
-                currentY += 15
+                videoPlayer.load();
+                
 
-                let brush = d3.brushX()
-                    .extent([[0, currentY-60], [xEventTimelineScale.range()[1] , currentY]])
-                    .on("start", brushstart)
-                    .on("end", brushended);
-            
-                eventTimelineGroup.append("g")
-                    .attr("class", "brush timelinebrush")
-                    .attr("data-trial",session.trial_id)
-                    .attr("data-subject",session.subject_id)
-                    .datum({brush:brush})
-                    .call(brush);
-                //clear all other brushes when brushing starts
-                function brushstart(){
-                    let allBrushes = eventTimelineGroup.selectAll(".timelinebrush").nodes()
-                    allBrushes.forEach((eachBrush)=>{
-                        if (eachBrush !=this)
-                            d3.select(eachBrush).call(d3.brush().move, null); 
-                    })
-                }   
+            }
 
-                function brushended (selection){
-                    console.log("Brushed");
-                    console.log(selection)
-                    let selected_trial = selection.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
-                    let selected_subject = selection.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
+            currentY+=10
 
-                }
-
-                currentY+=10
-
-                if (eventTimelineGroup.attr("height")<=currentY+150){
-                    eventTimelineGroup.attr("height",currentY+150)
-                    eventTimelineSvg.attr("height",currentY+150+margins.eventTimeline.top+margins.eventTimeline.bottom)     
-                }
-            })
-            currentY+= 50
-            if (eventTimelineGroup.attr("height")<=currentY+150){
-                eventTimelineGroup.attr("height",currentY+150)
-                eventTimelineSvg.attr("height",currentY+150+margins.eventTimeline.top+margins.eventTimeline.bottom)     
-            } 
+            if (eventTimelineSvg.attr("height")<=currentY+200){
+                eventTimelineGroup.attr("height",currentY+200)
+                eventTimelineSvg.attr("height",currentY+250+margins.eventTimeline.top+margins.eventTimeline.bottom)     
+            }
         })
+        currentY+=50
+        if (eventTimelineSvg.attr("height")<=currentY+200){
+            eventTimelineGroup.attr("height",currentY+200)
+            eventTimelineSvg.attr("height",currentY+250+margins.eventTimeline.top+margins.eventTimeline.bottom)     
+        }
+    })
+
+
+}
+
+function updateMatrix(){
+    matrixGroup.selectAll('*').remove();
+    let filteredObjects = []
+    selectedItems.forEach((item)=>{
+        let tempObject = dataFiles[2].filter(obj => obj.subject == item.subject && obj.trial == item.trial);
+        if (tempObject.length==0){
+            console.log("ERROR: NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
+            tempObject= [{subject: item.subject, trial: item.trial, missing:true}]
+        }
+        
+        else
+            tempObject[0]["missing"]=false
+        filteredObjects.push(tempObject[0]) 
+    })
+    
+    let stepsToKeep = ["a","b","c","d","e","f"]
+    const valuesByStep = stepsToKeep.map(step =>
+        filteredObjects.map(obj => obj[step]).filter(value => value !== undefined)
+    );
+
+    const minValuesByStep = valuesByStep.map(values => d3.min(values));
+    
+    const maxValuesByStep = valuesByStep.map(values => d3.max(values));
+
+    let nullIndices = [];
+    minValuesByStep.forEach((element, index) => {
+        if (element == null) {
+            nullIndices.push(index);
+        }
+    });
+    
+    const stepsPresent = stepsToKeep.filter((value, index) => !nullIndices.includes(index));
+        
+    const xScaleMatrix = d3.scaleBand()
+        .domain(stepsPresent)
+        .range([0,  d3.select("#matrix-container").node().clientWidth -margins.matrix.left - margins.matrix.right ]);
+
+    const maxRadius = xScaleMatrix.bandwidth()/2;
+    
+    // Calculate min and max total values across all steps and objects
+    const minTotal = d3.min(minValuesByStep);
+    const maxTotal = d3.max(maxValuesByStep);
+    
+    const radiusScale = d3.scaleLinear()
+        .domain([minTotal, maxTotal])
+        .range([8,maxRadius]); 
+
+    let currentY = margins.matrix.top; 
+    
+    let groupArray = uniqueSubjects
+    if(selectedGroupby=="trial")
+        groupArray = uniqueTrials
+
+    groupArray.forEach((id)=>{
+        let groupedObj = filteredObjects.filter(obj => obj.subject == id)
+        if (selectedGroupby=="trial")
+            groupedObj = filteredObjects.filter(obj => obj.trial == id)
+        if (groupedObj.length==0)
+            return
+        groupedObj.forEach((session)=>{
+            if (session.missing){
+                console.log("Missing", session)
+                let displayMissing= `Missing mission info for Subject:${session.subject} Trial:${session.trial}`
+                let missingText = matrixGroup.append("text").attr("x", xScaleMatrix.range()[0] - margins.matrix.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
+                let bbox = missingText.node().getBBox();
+                
+                matrixGroup.append("rect")
+                    .attr("x", bbox.x - 3)
+                    .attr("y", bbox.y - 3)
+                    .attr("width", bbox.width + 6)
+                    .attr("rx",5)
+                    .attr("ry",5)
+                    .attr("height", bbox.height + 6)
+                    .style("fill", "#FFB3B2");
+
+                matrixGroup.append("text").attr("x", xScaleMatrix.range()[0] - margins.matrix.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
+                if(matrixSvg.attr("height")<=currentY+200){
+                    matrixGroup.attr("height",currentY+200)
+                    matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
+                }
+                currentY+=70;
+                return
+            }
+            
+            console.log(session)
+            stepsPresent.forEach(step => createPie( session, step));
+            currentY+=70;
+        })
+        currentY+=50
+        if(matrixSvg.attr("height")<=currentY+200){
+            matrixGroup.attr("height",currentY+200)
+            matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
+        } 
+    })    
+
+    function createPie(row, step) {
+        const total = row[step] ?? 0;
+        const none = row[step + "_None"] ?? 0;
+        const error = row[step + "_error"] ?? 0;
+        if (total==0)
+            return
+        else if (error==0 || none==0){
+            matrixGroup.append('circle')
+                .attr('cx', xScaleMatrix(step)+maxRadius)
+                .attr('cy', currentY + 30)
+                .attr('r', radiusScale(total))
+                .attr('fill', ()=> error==0? stepColorScale(step) : "black");
+
+            return
+        }
+        const radius = radiusScale(total); // Scale the radius according to the total
+    
+        const color = d3.scaleOrdinal()
+            .domain(["None", "error"])
+            .range([stepColorScale(step), "black"]);
+    
+        const pie = d3.pie()([none, error]);
+    
+        const arc = d3.arc()
+            .innerRadius(0)
+            .outerRadius(radius);
+    
+        const arcs = matrixGroup.selectAll(".arc-" + step + "-"+row.subject +"-"+row.trial)
+            .data(pie)
+            .enter()
+            .append("g")
+            .attr("class", ".arc-" + step + "-"+row.subject +"-"+row.trial)
+            .attr("transform", "translate(" + (xScaleMatrix(step)+maxRadius) + "," + (currentY + 30) + ")");
+    
+        arcs.append("path")
+            .attr("fill", (d, i) => color(i === 0 ? "None" : "error"))
+            .attr("d", arc);
+    
+        //arcs.append("text")
+          //  .attr("transform", d => "translate(" + arc.centroid(d) + ")")
+            //.attr("text-anchor", "middle")
+            //.attr("fill", "white")
+            //.text(d => d.value);
     }
 }
 

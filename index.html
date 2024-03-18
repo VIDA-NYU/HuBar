@@ -19,26 +19,37 @@
       </div>
       
       <div id = "scatterplot-container" class="cell">
-        <label id="groupby-label" for="groupby-dropdown">Groupby:</label>
-        <select id="groupby-dropdown">
-            <option selected value="trial">trial</option>
-            <option value="subject">subject</option>
-        </select>
-        
         <label id = "source-label" for="source-dropdown">Source:</label>
         <select id="source-dropdown">
             <!-- Options for the source dropdown -->
         </select>
+
+
+        <label id="groupby-label" for="groupby-dropdown">Groupby:</label>
+        <select id="groupby-dropdown">
+          <option selected value="subject">subject</option>
+            <option value="trial">trial</option>
+        </select>
+
+        <label id = "filter-label" for="filter-dropdown">Trial ID:</label>
+        <select id="filter-dropdown">
+          <option value="t5">Top 5</option>
+          <option selected value="t10">Top 10</option>
+          <option value="all">All</option>
+        </select>
+
+        
+
       </div>
-      <div class="cell">3</div>
-      <div class="cell">4</div>
+      <div class="cell">FNIRS aggregations</div>
+      <div class="cell">IMU Grouped</div>
     </div>
 
     <div id="details-panel">
       <div id= "event-timeline-container" class="cell"></div>
-      <div class="cell">2</div>
-      <div class="cell">3</div>
-      <div class="cell">4</div>
+      <div id="matrix-container" class="cell"></div>
+      <div class="cell">FNIRS</div>
+      <div class="cell">IMU</div>
     </div>
   </div>
 
