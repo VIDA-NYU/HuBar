@@ -4,18 +4,26 @@ import lasso from './lasso.js'; // Adjust the path if necessary
 
 const videoFolder = "data/video/"
 const videoPlayer = document.getElementById('video-player');
-let selectedScatterSource, selectedGroupby, scatterSvg, scatterGroup, dataFiles, scatterColorScaleSubject, scatterColorScaleTrial;
+let dataFiles, selectedItems, selectedScatterSource, selectedGroupby, uniqueTrials, uniqueSubjects,
+    eventTimelineSvg , eventTimelineGroup, 
+    scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial;
 let vidStart = 0;
 let vidEnd = 5;
+let maxTimestamp=0.0;
+
+const stepColorScale = d3.scaleOrdinal()
+  .domain(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
+  .range(d3.schemeCategory10);
 
 const margins={ 
     scatterplot:{ top:35, left:15, right:15, bottom:10},
-    video:{ top:0, left:0, right:0, bottom:0}
+    video:{ top:0, left:0, right:0, bottom:0},
+    eventTimeline:{top:20, left:10, right:30, bottom:20},
 
 }
 
 Promise.all([
-        d3.csv("data/scatterplot_imu_gaze.csv"),
+        d3.csv("data/scatterplot_imu_gaze_complete.csv"),
         d3.json("data/formatted_mission_log.json"),
     ])
     
@@ -34,7 +42,8 @@ function initializeContainers(){
 
     // Extract unique sources from the data
     const sources = [...new Set(dataFiles[0].map(d => d.source))];
-
+    uniqueTrials = [...new Set(dataFiles[0].map(d => d.trial))]
+    uniqueSubjects = [...new Set(dataFiles[0].map(d => d.subject))]
     // Populate dropdown with options
     const sourceDropdown = d3.select("#source-dropdown");
     sourceDropdown.selectAll("option")
@@ -59,8 +68,10 @@ function initializeContainers(){
 
     });
     
-    selectedGroupby="trial";
 
+    //intialise svgs
+
+    //scatterplot
     let scatterplotDiv = d3.select("#scatterplot-container") 
     scatterSvg = scatterplotDiv
         .append("svg")
@@ -73,7 +84,24 @@ function initializeContainers(){
         .attr("height", scatterplotDiv.node().clientHeight - margins.scatterplot.top - margins.scatterplot.bottom);
 
     
+    //eventtimeline
+    let eventTimelineDiv= d3.select("#event-timeline-container")  
+    eventTimelineSvg = eventTimelineDiv
+        .append("svg")
+        .attr("width", eventTimelineDiv.node().clientWidth)
+        .attr("height", 200)
+        
+    eventTimelineGroup= eventTimelineSvg.append("g")
+        .attr("transform", `translate(${margins.eventTimeline.left}, ${margins.eventTimeline.top})`)
+        .attr("width", eventTimelineDiv.node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right )
+        .attr("height", eventTimelineDiv.node().clientHeight - margins.eventTimeline.top - margins.eventTimeline.bottom);
+
+    //initialise select variables
     selectedScatterSource = sources[0]
+    selectedGroupby="trial";
+    selectedItems = [];
+
+    //
     
     
     //TIMESTAMP ADD FLOAT
@@ -93,9 +121,9 @@ function initializeContainers(){
 
         //consolidate step data:
         let consolidatedData = {
-            Step: [],
-            FlightPhase: [],
-            Error: []
+            step: [],
+            flightPhase: [],
+            error: []
         };  
         let currentStep = null;
         let currentFlightPhase = null;
@@ -104,49 +132,50 @@ function initializeContainers(){
         trial['data'].forEach(record => {
             // Consolidate 'Step' data
             if (record.Step !== currentStep) {
-                if (consolidatedData.Step.length > 0) {
-                consolidatedData.Step[consolidatedData.Step.length - 1].endTimestamp = record.float_timestamp;
+                if (consolidatedData.step.length > 0) {
+                consolidatedData.step[consolidatedData.step.length - 1].endTimestamp = record.float_timestamp;
                 }
-                consolidatedData.Step.push({
+                consolidatedData.step.push({
                 startTimestamp: record.float_timestamp,
                 endTimestamp: record.float_timestamp,
                 value: record.Step
                 });
                 currentStep = record.Step;
             } else {
-                consolidatedData.Step[consolidatedData.Step.length - 1].endTimestamp = record.float_timestamp;
+                consolidatedData.step[consolidatedData.step.length - 1].endTimestamp = record.float_timestamp;
             }
 
             // Consolidate 'FlightPhase' data
             if (record.FlightPhase !== currentFlightPhase) {
-                if (consolidatedData.FlightPhase.length > 0) {
-                consolidatedData.FlightPhase[consolidatedData.FlightPhase.length - 1].endTimestamp = record.float_timestamp;
+                if (consolidatedData.flightPhase.length > 0) {
+                consolidatedData.flightPhase[consolidatedData.flightPhase.length - 1].endTimestamp = record.float_timestamp;
                 }
-                consolidatedData.FlightPhase.push({
+                consolidatedData.flightPhase.push({
                 startTimestamp: record.float_timestamp,
                 endTimestamp: record.float_timestamp,
                 value: record.FlightPhase
                 });
                 currentFlightPhase = record.FlightPhase;
             } else {
-                consolidatedData.FlightPhase[consolidatedData.FlightPhase.length - 1].endTimestamp = record.float_timestamp;
+                consolidatedData.flightPhase[consolidatedData.flightPhase.length - 1].endTimestamp = record.float_timestamp;
             }
 
             // Consolidate 'Error' data
             if (record.Error !== currentError) {
-                if (consolidatedData.Error.length > 0) {
-                consolidatedData.Error[consolidatedData.Error.length - 1].endTimestamp = record.float_timestamp;
+                if (consolidatedData.error.length > 0) {
+                consolidatedData.error[consolidatedData.error.length - 1].endTimestamp = record.float_timestamp;
                 }
-                consolidatedData.Error.push({
+                consolidatedData.error.push({
                 startTimestamp: record.float_timestamp,
                 endTimestamp: record.float_timestamp,
                 value: record.Error
                 });
                 currentError = record.Error;
             } else {
-                consolidatedData.Error[consolidatedData.Error.length - 1].endTimestamp = record.float_timestamp;
+                consolidatedData.error[consolidatedData.error.length - 1].endTimestamp = record.float_timestamp;
             }
         });
+        maxTimestamp= Math.max(consolidatedData.flightPhase[consolidatedData.flightPhase.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedData'] = consolidatedData;
     })
     console.log(dataFiles[1])
@@ -165,7 +194,7 @@ function initializeContainers(){
 
     //TEMP EVENTS
     /*
-    const filteredObjects = dataFiles[1].filter(obj => obj.subject_id === 293 && obj.trial_id === 2);
+   
     let arr = filteredObjects[0]["data"];
     // Log the first element
     console.log("First element:", arr[0]);
@@ -290,20 +319,200 @@ function updateScatterplot (){
         
         if (itemsBrushed.length>0){
             lassoBrush.notSelectedItems().attr("class","scatterpoints unselectedscatter");
-            lassoBrush.selectedItems().attr("class","scatterpoints");            
+            lassoBrush.selectedItems().attr("class","scatterpoints");         
+            itemsBrushed.forEach((item)=>{
+                selectedItems.push({trial:item.__data__.trial ,subject:item.__data__.subject})
+            })
         }
         //case where no nodes are selected - reset filters and inform parent
         else{
+            selectedItems = []
             lassoBrush.items().attr("class","scatterpoints");
-            //selected
         }
+        updateEventTimeline();
     }
 }
 
 function updateEventTimeline(){
+    eventTimelineGroup.selectAll('*').remove();
+    if (selectedItems.length == 0){
+        return;
+    }
+    let filteredObjects=[];
+
+    let eventTooltip =d3.select("#event-timeline-container").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("position", "absolute")
+    //.style("width","150px")
+    .style("background-color", "white")
+    .style("padding", "8px")
+    .style("border-radius", "5px")
+    .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)")
+    .style("text-align", "left"); // Add text-align: left to align text left
     
 
+    selectedItems.forEach((item)=>{
+        console.log()
+        let tempObject = dataFiles[1].filter(obj => obj.subject_id == item.subject && obj.trial_id == item.trial);
+        if (tempObject.length!=1){
+            console.log("ERROR: Either MORE THAN 1 MATCH OR NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
+            //console.log(tempObject)
+            //console.log(tempObject.length)
+            //console.log(item)
+        }
+        
+        else
+            filteredObjects.push(tempObject[0]) 
+    })
+    
+    let xEventTimelineScale= d3.scaleLinear()
+        .domain([0.0, maxTimestamp])
+        .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
+    let brushes=[]
+    let currentY = margins.eventTimeline.top
+    
+    if(selectedGroupby=="trial"){
+        uniqueTrials.forEach((trial)=>{
+            let groupedObj = filteredObjects.filter(obj => obj.trial_id == trial)
+            if (groupedObj.length>0)
+                eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-10).text("Trial "+ trial).style("font-size", "14px").attr("alignment-baseline","middle").style("fill","black")
+            else
+                return
+            groupedObj.forEach((session)=>{ 
+                
+                let stepData = session.consolidatedData.step;
+                let errorData = session.consolidatedData.error;
+                let phaseData = session.consolidatedData.flightPhase;
+                
 
+               
+                stepData.forEach(data => {
+                    eventTimelineGroup.append("rect")
+                        .attr("x", xEventTimelineScale(data.startTimestamp))
+                        .attr("y", currentY)
+                        .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                        .attr("height", 30)
+                        .style("fill", stepColorScale(data.value))
+                        .on("mouseover", function(d) {
+                            console.log("Mouseover rect")
+                            eventTooltip.transition()
+                                .duration(200)
+                                .style("opacity", .9);
+                                eventTooltip.html(`<strong>Step:</strong> ${data.value}`)
+                                .style("left", (d.layerX + 10) + "px")
+                                .style("top", (d.layerY - 28) + "px");
+                        })
+                        .on("mouseout", function(d) {
+                            eventTooltip.transition()
+                                .duration(500)
+                                .style("opacity", 0);
+                        })
+
+                        ;
+                });
+                let sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]-10).attr("y", currentY+11).text("Sub:"+ session.subject_id).style("font-size", "10px").attr("text-anchor","end").style("fill","black")
+                let bbox = sessionTitle.node().getBBox();
+                eventTimelineGroup.append("rect")
+                    .attr("x", bbox.x - 3)
+                    .attr("y", bbox.y - 3)
+                    .attr("width", bbox.width + 6)
+                    .attr("rx",5)
+                    .attr("ry",5)
+                    .attr("height", bbox.height + 6)
+                    .style("fill", "#FFD166");
+                eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]-10).attr("y", currentY+11).text("Sub:"+ session.subject_id).style("font-size", "10px").attr("text-anchor","end").style("fill","#05668D")
+
+                currentY +=30;
+                errorData.forEach(data => {
+                    eventTimelineGroup.append("rect")
+                        .attr("x", xEventTimelineScale(data.startTimestamp))
+                        .attr("y", currentY+1)
+                        .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                        .attr("height", 14)
+                        .style("fill", () => data.value == "error" || data.value == "Error" ? "red" : "steelblue")
+                        .on("mouseover", function() {
+                            eventTooltip.transition()
+                                .duration(200)
+                                .style("opacity", .9);
+                                eventTooltip.html(`<strong>Error:</strong> ${data.value}`)
+                                .style("left", (d.layerX + 10) + "px")
+                                .style("top", (d.layerY - 28) + "px");
+                        })
+                        .on("mouseout", function(d) {
+                            eventTooltip.transition()
+                                .duration(500)
+                                .style("opacity", 0);
+                        });
+                });
+                currentY +=15;
+
+                phaseData.forEach(data => {
+                    eventTimelineGroup.append("rect")
+                        .attr("x", xEventTimelineScale(data.startTimestamp))
+                        .attr("y", currentY+1)
+                        .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                        .attr("height", 14)
+                        .style("fill", () => data.value ==  "Preflight" ? "#8BC34A" : "#FF5722")
+                        .on("mouseover", function() {
+                            eventTooltip.transition()
+                                .duration(200)
+                                .style("opacity", .9);
+                                eventTooltip.html(`<strong>Flight Phase:</strong> ${data.value}`)
+                                .style("left", (d.layerX + 10) + "px")
+                                .style("top", (d.layerY - 28) + "px");
+                        })
+                        .on("mouseout", function(d) {
+                            eventTooltip.transition()
+                                .duration(500)
+                                .style("opacity", 0);
+                        });;
+                });
+                
+                currentY += 15
+
+                let brush = d3.brushX()
+                    .extent([[0, currentY-60], [xEventTimelineScale.range()[1] , currentY]])
+                    .on("start", brushstart)
+                    .on("end", brushended);
+            
+                eventTimelineGroup.append("g")
+                    .attr("class", "brush timelinebrush")
+                    .attr("data-trial",session.trial_id)
+                    .attr("data-subject",session.subject_id)
+                    .datum({brush:brush})
+                    .call(brush);
+                //clear all other brushes when brushing starts
+                function brushstart(){
+                    let allBrushes = eventTimelineGroup.selectAll(".timelinebrush").nodes()
+                    allBrushes.forEach((eachBrush)=>{
+                        if (eachBrush !=this)
+                            d3.select(eachBrush).call(d3.brush().move, null); 
+                    })
+                }   
+
+                function brushended (selection){
+                    console.log("Brushed");
+                    console.log(selection)
+                    let selected_trial = selection.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
+                    let selected_subject = selection.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
+
+                }
+
+                currentY+=10
+
+                if (eventTimelineGroup.attr("height")<=currentY+150){
+                    eventTimelineGroup.attr("height",currentY+150)
+                    eventTimelineSvg.attr("height",currentY+150+margins.eventTimeline.top+margins.eventTimeline.bottom)     
+                }
+            })
+            currentY+= 50
+            if (eventTimelineGroup.attr("height")<=currentY+150){
+                eventTimelineGroup.attr("height",currentY+150)
+                eventTimelineSvg.attr("height",currentY+150+margins.eventTimeline.top+margins.eventTimeline.bottom)     
+            } 
+        })
+    }
 }
 
 function fitVideoToContainer( ) {

@@ -3,6 +3,8 @@ body,
 .container{
     height: 100vh;
     margin: 0;
+    overflow-y:none;
+
 }
 
 body{
@@ -13,23 +15,27 @@ body{
 .container {
     display: grid;
     grid-template-rows: 1fr 2fr;
+    overflow-y:none;
+
 }
   
 #overview-panel{
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    overflow-y:none;
+
 }
   
 #details-panel{
     border: 1px solid #000;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    overflow-y:scroll;
+
 }
 
 .cell{
     border: 1px solid #000;
-    padding: 20px;
-    text-align: center;
 }
 
 
@@ -41,9 +47,8 @@ body{
 }
 
 
-.event-timeline-container {
+#event-timeline-container {
     /*text-align: center;*/
-    overflow-y: scroll;
 }
 
 
