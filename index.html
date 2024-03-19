@@ -41,15 +41,22 @@
         
 
       </div>
-      <div class="cell">FNIRS aggregations</div>
+      <div class="cell">
+        <label style="margin-top: 5%; margin-left: 20%;" id = "fnirs-label" for="fnirs-dropdown">FNIRS Variable:</label>
+        <select id="fnirs-dropdown">
+          <option selected value="workload">Workload</option>
+          <option selected value="attention">Attention</option>
+          <option value="perception">Perception</option>
+        </select>
+
+      </div>
       <div class="cell">IMU Grouped</div>
     </div>
 
     <div id="details-panel">
       <div id= "event-timeline-container" class="cell"></div>
       <div id="matrix-container" class="cell"></div>
-      <div class="cell">FNIRS</div>
-      <div class="cell">IMU</div>
+      <div class="cell">Details/IMU/Video</div>
     </div>
   </div>
 

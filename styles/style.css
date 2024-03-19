@@ -29,7 +29,7 @@ body{
 #details-panel{
     border: 1px solid #000;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 3fr 3fr 3fr;
     overflow-y:scroll;
 
 }

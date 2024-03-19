@@ -5,7 +5,7 @@ import lasso from './lasso.js'; // Adjust the path if necessary
 const videoFolder = "data/video/"
 const videoPlayer = document.getElementById('video-player');
 let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
-    selectedScatterSource, selectedGroupby, selectedFilter,
+    selectedScatterSource, selectedGroupby, selectedFilter, selectedFNIRS,
     scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial,
     eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
     matrixSvg, matrixGroup;
@@ -29,8 +29,9 @@ const margins={
 
 Promise.all([
         d3.csv("data/scatterplot_imu_gaze_complete.csv"),
-        d3.json("data/formatted_mission_log.json"),
+        d3.json("data/formatted_mission_log_seconds.json"),
         d3.json("data/steps_error_distribution.json"),
+        d3.json("data/FNIRS_sampled.json"),
     ])
     
     .then(function(files) {
@@ -91,10 +92,19 @@ function initializeContainers(){
         updateMatrix();
     });
 
+    const fnirsDropdown = d3.select("#fnirs-dropdown");
+    
+    // Add onchange event to get groupBy and update scatterplot
+    fnirsDropdown.on("change", function() {
+        selectedFNIRS = fnirsDropdown.property("value");
+        updateEventTimeline();
+    });
+
     //initialise select variables
     selectedScatterSource = sourceDropdown.property("value");
     selectedGroupby=groupbyDropdown.property("value");
     selectedFilter = filterDropdown.property("value");
+    selectedFNIRS = fnirsDropdown.property("value");
     selectedItems = [];
 
     //intialise svgs
@@ -139,20 +149,8 @@ function initializeContainers(){
     //TIMESTAMP ADD FLOAT
 
     dataFiles[1].forEach((trial)=>{
-        let firstTimestampInSeconds = timestampToSeconds(trial['data'][0].timestamp);
-        trial['data'].forEach((record, index) => {
-            // For the first event, set float_timestamp to 0.0
-            if (index === 0) {
-                record.float_timestamp = 0.0;
-            } else {
-                // For subsequent events, calculate float_timestamp based on the difference from the first event
-                let currentTimestampInSeconds = timestampToSeconds(record.timestamp);
-                record.float_timestamp = (currentTimestampInSeconds - firstTimestampInSeconds); // Convert milliseconds to seconds
-            }
-        });
-
         //consolidate step data:
-        let consolidatedData = {
+        let consolidatedStepData = {
             step: [],
             flightPhase: [],
             error: []
@@ -164,54 +162,114 @@ function initializeContainers(){
         trial['data'].forEach(record => {
             // Consolidate 'Step' data
             if (record.Step !== currentStep) {
-                if (consolidatedData.step.length > 0) {
-                consolidatedData.step[consolidatedData.step.length - 1].endTimestamp = record.float_timestamp;
+                if (consolidatedStepData.step.length > 0) {
+                consolidatedStepData.step[consolidatedStepData.step.length - 1].endTimestamp = record.seconds;
                 }
-                consolidatedData.step.push({
-                startTimestamp: record.float_timestamp,
-                endTimestamp: record.float_timestamp,
+                consolidatedStepData.step.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
                 value: record.Step
                 });
                 currentStep = record.Step;
             } else {
-                consolidatedData.step[consolidatedData.step.length - 1].endTimestamp = record.float_timestamp;
+                consolidatedStepData.step[consolidatedStepData.step.length - 1].endTimestamp = record.seconds;
             }
 
             // Consolidate 'FlightPhase' data
             if (record.FlightPhase !== currentFlightPhase) {
-                if (consolidatedData.flightPhase.length > 0) {
-                consolidatedData.flightPhase[consolidatedData.flightPhase.length - 1].endTimestamp = record.float_timestamp;
+                if (consolidatedStepData.flightPhase.length > 0) {
+                consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp = record.seconds;
                 }
-                consolidatedData.flightPhase.push({
-                startTimestamp: record.float_timestamp,
-                endTimestamp: record.float_timestamp,
+                consolidatedStepData.flightPhase.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
                 value: record.FlightPhase
                 });
                 currentFlightPhase = record.FlightPhase;
             } else {
-                consolidatedData.flightPhase[consolidatedData.flightPhase.length - 1].endTimestamp = record.float_timestamp;
+                consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp = record.seconds;
             }
 
             // Consolidate 'Error' data
             if (record.Error !== currentError) {
-                if (consolidatedData.error.length > 0) {
-                consolidatedData.error[consolidatedData.error.length - 1].endTimestamp = record.float_timestamp;
+                if (consolidatedStepData.error.length > 0) {
+                consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
                 }
-                consolidatedData.error.push({
-                startTimestamp: record.float_timestamp,
-                endTimestamp: record.float_timestamp,
+                consolidatedStepData.error.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
                 value: record.Error
                 });
                 currentError = record.Error;
             } else {
-                consolidatedData.error[consolidatedData.error.length - 1].endTimestamp = record.float_timestamp;
+                consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
             }
         });
-        maxTimestamp= Math.max(consolidatedData.flightPhase[consolidatedData.flightPhase.length - 1].endTimestamp, maxTimestamp)
-        trial['consolidatedData'] = consolidatedData;
+        maxTimestamp= Math.max(consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp, maxTimestamp)
+        trial['consolidatedStepData'] = consolidatedStepData;
     })
-    console.log(dataFiles[1])
-    
+
+    //consolidate FNIRS Data
+    dataFiles[3].forEach((trial)=>{
+        let consolidatedFNIRS = {
+            workload: [],
+            attention: [],
+            perception: [],
+        };
+
+        let currentWorkload = null;
+        let currentAttention = null;
+        let currentPerception = null;
+        
+        trial['data'].forEach(record => {
+            // Consolidate 'Workload' data
+            if (record.workload_classification !== currentWorkload) {
+                if (consolidatedFNIRS.workload.length > 0) {
+                consolidatedFNIRS.workload[consolidatedFNIRS.workload.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedFNIRS.workload.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.workload_classification
+                });
+                currentWorkload = record.workload_classification;
+            } else {
+                consolidatedFNIRS.workload[consolidatedFNIRS.workload.length - 1].endTimestamp = record.seconds;
+            }
+            
+            //consolidate 'Attention' data
+            if (record.attention_classification !== currentAttention) {
+                if (consolidatedFNIRS.attention.length > 0) {
+                consolidatedFNIRS.attention[consolidatedFNIRS.attention.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedFNIRS.attention.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.attention_classification
+                });
+                currentAttention = record.attention_classification;
+            } else {
+                consolidatedFNIRS.attention[consolidatedFNIRS.attention.length - 1].endTimestamp = record.seconds;
+            }
+
+            //consolidate 'Perception Data'
+            if (record.perception_classification !== currentPerception) {
+                if (consolidatedFNIRS.perception.length > 0) {
+                consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedFNIRS.perception.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.perception_classification
+                });
+                currentPerception = record.perception_classification;
+            } else {
+                consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp = record.seconds;
+            }
+        });
+        maxTimestamp= Math.max(consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp, maxTimestamp)
+        trial['consolidatedFNIRS'] = consolidatedFNIRS; 
+    })
     //initialize colorscales for scatterplot
 
     function generateColorScale(data, accessor) {
@@ -362,26 +420,29 @@ function updateScatterplot(){
     }
 }
 
-function updateEventTimeline(){
+function updateEventTimeline(){   
+    
     eventTimelineGroup.selectAll('*').remove();
     if (selectedItems.length == 0){
         return;
     }
-    let filteredObjects=[];
 
-    let eventTooltip =d3.select("#event-timeline-container").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0)
-    .style("position", "absolute")
-    //.style("width","150px")
-    .style("background-color", "white")
-    .style("padding", "8px")
-    .style("border-radius", "5px")
-    .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)")
-    .style("text-align", "left"); // Add text-align: left to align text left
+    let filteredMissionData=[];
+    let filteredFnirs = [];
+    let currentY = margins.eventTimeline.top
+    let groupArray = uniqueSubjects
+    if(selectedGroupby=="trial")
+        groupArray = uniqueTrials
+ 
+    xEventTimelineScale= d3.scaleLinear()
+        .domain([0.0, maxTimestamp])
+        .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
+    reverseTimelineScale = d3.scaleLinear()
+        .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
+        .range([0.0, maxTimestamp])
     
-
     selectedItems.forEach((item)=>{
+        //filter Mission File
         let tempObject = dataFiles[1].filter(obj => obj.subject_id == item.subject && obj.trial_id == item.trial);
         if (tempObject.length==0){
             console.log("ERROR:NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
@@ -389,37 +450,38 @@ function updateEventTimeline(){
         }
         else
             tempObject[0]["missing"]=false
-        filteredObjects.push(tempObject[0]) 
+        filteredMissionData.push(tempObject[0])
+        
+        //Filter Fnirs file
+        tempObject = dataFiles[3].filter(obj => obj.subject_id == item.subject && obj.trial_id == item.trial);
+        if (tempObject.length==0){
+            console.log("ERROR:NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
+            tempObject= [{subject_id: item.subject, trial_id: item.trial, missing:true}]
+        }
+        else
+            tempObject[0]["missing"]=false
+        filteredFnirs.push(tempObject[0])
     })
-    
-    xEventTimelineScale= d3.scaleLinear()
-        .domain([0.0, maxTimestamp])
-        .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
-    reverseTimelineScale = d3.scaleLinear()
-        .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
-        .range([0.0, maxTimestamp])
-
-    let currentY = margins.eventTimeline.top
-    
-    let groupArray = uniqueSubjects
-    if(selectedGroupby=="trial")
-        groupArray = uniqueTrials
 
     groupArray.forEach((id)=>{
-        let groupedObj = filteredObjects.filter(obj => obj.subject_id == id)
+        let groupedObj = filteredMissionData.filter(obj => obj.subject_id == id)
         if (selectedGroupby=="trial")
-            groupedObj = filteredObjects.filter(obj => obj.trial_id == id)
+            groupedObj = filteredMissionData.filter(obj => obj.trial_id == id)
         if (groupedObj.length>0 && selectedGroupby=="trial")
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-15).text("Trial "+ id).style("font-size", "16px").attr("alignment-baseline","middle").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-15).text("Trial "+ id).style("font-size", "16px").attr("text-anchor","middle").style("fill","black")
         else if (groupedObj.length>0 && selectedGroupby=="subject")
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-15).text("Subject "+ id).style("font-size", "16px").attr("alignment-baseline","middle").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY-15).text("Subject "+ id).style("font-size", "16px").attr("text-anchor","middle").style("fill","black")
         else
             return
 
-        groupedObj.forEach((session)=>{ 
-            if (session.missing){
-                console.log("Missing", session)
-                let displayMissing= `Missing mission info for Subject:${session.subject_id} Trial:${session.trial_id}`
+        groupedObj.forEach((sessionMission)=>{
+            let sessionFnirs = filteredFnirs.filter(obj => obj.subject_id == sessionMission.subject_id && obj.trial_id == sessionMission.trial_id)[0]  
+            if (sessionMission.missing){
+                let displayMissing= `Missing mission info for Subject:${sessionMission.subject_id} Trial:${sessionMission.trial_id}`
+
+                if (sessionFnirs.missing)
+                    displayMissing= `Missing Mission and FNIRS info for Subject:${sessionMission.subject_id} Trial:${sessionMission.trial_id}`
+  
                 let missingText = eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - margins.eventTimeline.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
                 let bbox = missingText.node().getBBox();
                 
@@ -433,29 +495,48 @@ function updateEventTimeline(){
                     .style("fill", "#FFB3B2");
 
                 eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - margins.eventTimeline.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
-                currentY+=70
-                if(eventTimelineSvg.attr("height")<=currentY+200){
-                    eventTimelineGroup.attr("height",currentY+200)
-                    eventTimelineSvg.attr("height",currentY+250+margins.eventTimeline.top+margins.eventTimeline.bottom)     
+                currentY+=65
+
+                if(!sessionFnirs.missing){
+                    let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFNIRS];
+                    fnirsToDisplay.forEach(data => {
+                        eventTimelineGroup.append("rect")
+                            .attr("x", xEventTimelineScale(data.startTimestamp))
+                            .attr("y", currentY+1)
+                            .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                            .attr("height", 24)
+                            .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#ff834f" : "#ffffbf";});
+                    });
+                }
+                
+                currentY += 25
+
+                if(eventTimelineSvg.attr("height")<=currentY+220){
+                    eventTimelineGroup.attr("height",currentY+220)
+                    eventTimelineSvg.attr("height",currentY+270+margins.eventTimeline.top+margins.eventTimeline.bottom)     
                 }
                 return
             }
-            let stepData = session.consolidatedData.step;
-            let errorData = session.consolidatedData.error;
-            let phaseData = session.consolidatedData.flightPhase;
+            let stepData = sessionMission.consolidatedStepData.step;
+            let errorData = sessionMission.consolidatedStepData.error;
+            let phaseData = sessionMission.consolidatedStepData.flightPhase;
+            console.log(sessionFnirs)
+            console.log(sessionMission.consolidatedStepData)
+            let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFNIRS];
+
             stepData.forEach(data => {
                 eventTimelineGroup.append("rect")
                     .attr("x", xEventTimelineScale(data.startTimestamp))
                     .attr("y", currentY)
                     .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
-                    .attr("height", 30)
+                    .attr("height", 25)
                     .style("fill", stepColorScale(data.value));
             });
             let sessionTitle
             if (selectedGroupby=="trial")
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Sub:"+ session.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Sub:"+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             else
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Trial:"+ session.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Trial:"+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             let bbox = sessionTitle.node().getBBox();
             eventTimelineGroup.append("rect")
                 .attr("x", bbox.x - 2)
@@ -467,30 +548,27 @@ function updateEventTimeline(){
                 .style("fill", "#FFD166");
             
             eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 5).attr("y", currentY+25).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","#05668D")
+            currentY+=25;
 
-            currentY+=30;
             errorData.forEach(data => {
                 eventTimelineGroup.append("rect")
                     .attr("x", xEventTimelineScale(data.startTimestamp))
                     .attr("y", currentY+1)
                     .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
                     .attr("height", 14)
-                    .style("fill", () => data.value == "error" || data.value == "Error" ? "black" : "#AEAEAE")
-                    .on("mouseover", function() {
-                        eventTooltip.transition()
-                            .duration(200)
-                            .style("opacity", .9);
-                            eventTooltip.html(`<strong>Error:</strong> ${data.value}`)
-                            .style("left", (d.layerX + 10) + "px")
-                            .style("top", (d.layerY - 28) + "px");
-                    })
-                    .on("mouseout", function(d) {
-                        eventTooltip.transition()
-                            .duration(500)
-                            .style("opacity", 0);
-                    });
+                    .style("fill", () => data.value == "error" || data.value == "Error" ? "black" : "#AEAEAE");
             });
             currentY+=15;
+
+            fnirsToDisplay.forEach(data => {
+                eventTimelineGroup.append("rect")
+                    .attr("x", xEventTimelineScale(data.startTimestamp))
+                    .attr("y", currentY+1)
+                    .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
+                    .attr("height", 24)
+                    .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#ff834f" : "#ffffbf";});
+            });
+            currentY+=25;
 
             phaseData.forEach(data => {
                 eventTimelineGroup.append("rect")
@@ -498,20 +576,7 @@ function updateEventTimeline(){
                     .attr("y", currentY+1)
                     .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
                     .attr("height", 14)
-                    .style("fill", () => data.value ==  "Preflight" ? "#8BC34A" : "#FF5722")
-                    .on("mouseover", function() {
-                        eventTooltip.transition()
-                            .duration(200)
-                            .style("opacity", .9);
-                            eventTooltip.html(`<strong>Flight Phase:</strong> ${data.value}`)
-                            .style("left", (d.layerX + 10) + "px")
-                            .style("top", (d.layerY - 28) + "px");
-                    })
-                    .on("mouseout", function(d) {
-                        eventTooltip.transition()
-                            .duration(500)
-                            .style("opacity", 0);
-                    });
+                    .style("fill", () => data.value ==  "Preflight" ? "#8BC34A" : "#FF5722");
 
                 eventTimelineGroup.append("rect")
                     .attr("x",  xEventTimelineScale(data.startTimestamp))
@@ -523,10 +588,10 @@ function updateEventTimeline(){
                     .style("stroke-width", "2px");
             
                 eventTimelineGroup.append("text")
-                    .attr("x", xEventTimelineScale(data.startTimestamp) + (xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) /2) // Place text in the middle horizontally
-                    .attr("y", currentY + 11) // Adjust vertically to center the text
-                    .attr("text-anchor", "middle") // Center-align the text horizontally
-                    .style("font-size", "10px") // Adjust font size if needed
+                    .attr("x", xEventTimelineScale(data.startTimestamp) + (xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) /2) 
+                    .attr("y", currentY + 11)
+                    .attr("text-anchor", "middle") 
+                    .style("font-size", "10px")
                     .style("fill", "black")
                     .text(()=> {
                         if (data.value === "Preflight") {
@@ -538,16 +603,26 @@ function updateEventTimeline(){
             });
             
             currentY+=15
+            eventTimelineGroup.append("rect")
+                .attr("x", 0)
+                .attr("y", currentY-80)
+                .attr("width", xEventTimelineScale.range()[1])
+                .attr("height", 80)
+                .style("stroke", "black")
+                .style("stroke-width", "1px")
+                .style("fill", "none")
+                .style("fill-opacity", 0)
+                .style("stroke-dasharray", "5,5");
 
             let brush = d3.brushX()
-                .extent([[0, currentY-60], [xEventTimelineScale.range()[1] , currentY]])
+                .extent([[0, currentY-80], [xEventTimelineScale.range()[1] , currentY]])
                 .on("start", brushstart)
                 .on("end", brushended);
         
             eventTimelineGroup.append("g")
                 .attr("class", "brush timelinebrush")
-                .attr("data-trial",session.trial_id)
-                .attr("data-subject",session.subject_id)
+                .attr("data-trial",sessionMission.trial_id)
+                .attr("data-subject",sessionMission.subject_id)
                 .datum({brush:brush})
                 .call(brush);
             //clear all other brushes when brushing starts
@@ -629,7 +704,8 @@ function updateMatrix(){
         
     const xScaleMatrix = d3.scaleBand()
         .domain(stepsPresent)
-        .range([0,  d3.select("#matrix-container").node().clientWidth -margins.matrix.left - margins.matrix.right ]);
+        .range([0,  d3.select("#matrix-container").node().clientWidth -margins.matrix.left - margins.matrix.right ])
+        .padding(0.1);
 
     const maxRadius = xScaleMatrix.bandwidth()/2;
     
@@ -674,13 +750,11 @@ function updateMatrix(){
                     matrixGroup.attr("height",currentY+200)
                     matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
                 }
-                currentY+=70;
+                currentY+=90;
                 return
-            }
-            
-            console.log(session)
+            }            
             stepsPresent.forEach(step => createPie( session, step));
-            currentY+=70;
+            currentY+=90;
         })
         currentY+=50
         if(matrixSvg.attr("height")<=currentY+200){
