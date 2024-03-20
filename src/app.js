@@ -717,14 +717,18 @@ function updateEventTimeline(){
     if (selectedItems.length == 0){
         return;
     }
-
     let filteredMissionData=[];
     let filteredFnirs = [];
     let currentY = margins.eventTimeline.top
     let groupArray = uniqueSubjects
     if(selectedGroupby=="trial")
         groupArray = uniqueTrials
- 
+    
+    let yScaleLine =  d3.scaleLinear()
+                        .domain([1.0,0])
+                        .range([1,25])
+                         
+
     xEventTimelineScale= d3.scaleLinear()
         .domain([0.0, maxTimestamp])
         .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
@@ -754,6 +758,7 @@ function updateEventTimeline(){
         filteredFnirs.push(tempObject[0])
     })
 
+    console.log("Filtered", filteredFnirs)  
     groupArray.forEach((id)=>{
         let groupedObj = filteredMissionData.filter(obj => obj.subject_id == id)
         if (selectedGroupby=="trial")
@@ -798,6 +803,21 @@ function updateEventTimeline(){
                             .attr("height", 24)
                             .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#fa5d1b" : "#fee090";});
                     });
+                
+                    let variableName= selectedFNIRS + "_confidence" 
+
+                    // Add the confidence line
+                    eventTimelineGroup.append("path")
+                        .datum(sessionFnirs.data)
+                        .attr("fill", "none")
+                        .attr("stroke", "black")
+                        .attr("stroke-width", 1)
+                        .attr("stroke-opacity", 0.3)
+                        .attr("d", d3.line()
+                        .x(function(d) { return xEventTimelineScale(d.seconds) })
+                        .y(function(d) { return currentY + yScaleLine(d[variableName]) }))
+                    
+
                 }
                 
                 currentY += 25
@@ -857,6 +877,19 @@ function updateEventTimeline(){
                     .attr("height", 24)
                     .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#fa5d1b" : "#fee090";});
             });
+            let variableName= selectedFNIRS + "_confidence" 
+
+            // Add the confidence line
+            eventTimelineGroup.append("path")
+                .datum(sessionFnirs.data)
+                .attr("fill", "none")
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .attr("stroke-opacity", 0.4)
+                .attr("d", d3.line()
+                .x(function(d) { return xEventTimelineScale(d.seconds) })
+                .y(function(d) { return currentY + yScaleLine(d[variableName]) }))
+            
             currentY+=25;
 
             phaseData.forEach(data => {
