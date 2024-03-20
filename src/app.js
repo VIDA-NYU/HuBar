@@ -7,6 +7,7 @@ const videoPlayer = document.getElementById('video-player');
 let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
     selectedScatterSource, selectedGroupby, selectedFilter, selectedFNIRS,
     scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial,
+    fnirsSvg, fnirsGroup,
     eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
     matrixSvg, matrixGroup;
 
@@ -21,10 +22,11 @@ const stepColorScale = d3.scaleOrdinal()
   .range(d3.schemePaired);
 
 const margins={ 
-    scatterplot:{ top:35, left:15, right:15, bottom:10},
+    scatterplot:{ top:40, left:30, right:30, bottom:15},
+    fnirs:{top:30, left:35, right:0, bottom:15},
     video:{ top:0, left:0, right:0, bottom:0},
-    eventTimeline:{top:25, left:55, right:10, bottom:20},
-    matrix:{top:25, left:5, right:5, bottom:20}
+    eventTimeline:{top:30, left:55, right:10, bottom:20},
+    matrix:{top:30, left:5, right:5, bottom:20}
 }
 
 Promise.all([
@@ -32,12 +34,15 @@ Promise.all([
         d3.json("data/formatted_mission_log_seconds.json"),
         d3.json("data/steps_error_distribution.json"),
         d3.json("data/FNIRS_sampled.json"),
+        d3.json("data/fnirs_distribution.json"),
+
     ])
     
     .then(function(files) {
         dataFiles = files;
         initializeContainers();
         updateScatterplot();
+        updateFnirsAgg();
     })
     .catch(function(err) {
     console.log(err)
@@ -66,6 +71,7 @@ function initializeContainers(){
         selectedScatterSource = sourceDropdown.property("value");
         updateScatterplot();
         selectedItems = [];
+        updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
     });
@@ -77,6 +83,7 @@ function initializeContainers(){
         selectedGroupby = groupbyDropdown.property("value");
         updateScatterplot();
         selectedItems = [];
+        updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
     });
@@ -88,6 +95,7 @@ function initializeContainers(){
         selectedFilter = filterDropdown.property("value");
         updateScatterplot();
         selectedItems = [];
+        updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
     });
@@ -107,7 +115,7 @@ function initializeContainers(){
     selectedFNIRS = fnirsDropdown.property("value");
     selectedItems = [];
 
-    //intialise svgs
+    //initialise svgs
 
     //scatterplot
     let scatterplotDiv = d3.select("#scatterplot-container") 
@@ -134,6 +142,19 @@ function initializeContainers(){
         .attr("width", eventTimelineDiv.node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right )
         .attr("height", eventTimelineDiv.node().clientHeight - margins.eventTimeline.top - margins.eventTimeline.bottom);    
 
+
+    //fnirs agg 
+    let fnirsDiv= d3.select("#fnirs-agg-container")  
+    fnirsSvg = fnirsDiv.append("svg")
+        .attr("width", fnirsDiv.node().clientWidth)
+        .attr("height", 500)
+        
+    fnirsGroup = fnirsSvg.append("g")
+        .attr("transform", `translate(${margins.fnirs.left}, ${margins.fnirs.top})`)
+        .attr("width", fnirsDiv.node().clientWidth -margins.fnirs.left - margins.fnirs.right )
+        .attr("height", 400); 
+
+    
     //matrix
     let matrixDiv= d3.select("#matrix-container")  
     matrixSvg = matrixDiv
@@ -420,6 +441,276 @@ function updateScatterplot(){
     }
 }
 
+function updateFnirsAgg(){
+    fnirsGroup.selectAll('*').remove();
+    const proportions = calculateProportions(dataFiles[4]);
+    const totalHeight = proportions.workload.length * 55;
+    const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
+
+    fnirsSvg.attr('height', newHeight+150);
+    fnirsGroup.attr('height', newHeight+60);
+    
+    const categoryXScaleFnirs = d3.scaleBand()
+        .domain(["workload", "attention", "perception"])
+        .range([margins.fnirs.left, fnirsSvg.attr("width")- margins.fnirs.left - margins.fnirs.right])
+        .padding(0.1)
+
+    const xScaleFnirs = d3.scaleLinear()
+        .domain([0, 1]) // proportion scale
+        .range([0, categoryXScaleFnirs.bandwidth()]);
+
+    let yScaleFnirs
+
+    if(selectedGroupby=="trial"){
+        yScaleFnirs = d3.scaleBand()
+            .domain(proportions.attention.map(d => `Trial ${d.trial}`))
+            .range([0, totalHeight])
+            .paddingInner(0.4)
+            .paddingOuter(0.1);
+    }
+    else{
+        yScaleFnirs = d3.scaleBand()
+            .domain(proportions.attention.map(d => `Sub ${d.subject}`))
+            .range([0, totalHeight])
+            .paddingInner(0.4)
+            .paddingOuter(0.1);
+    }
+    
+    // Create axes
+    const xAxis = d3.axisTop(categoryXScaleFnirs);
+    const yAxis = d3.axisLeft(yScaleFnirs);
+
+    // Append axes to SVG
+    fnirsGroup.append('g')
+        .attr('class', 'x-axis axisHide')
+        .attr('transform', `translate(0, 0)`)
+        .call(xAxis);
+
+    fnirsGroup.append('g')
+        .attr('class', 'y-axis axisHide')
+        .attr('transform', `translate(40, 0)`)
+        .call(yAxis);
+    
+    
+    // Create bars workload
+    fnirsGroup.selectAll('.workload-optimal')
+        .data(proportions.workload)
+        .enter()
+        .append('rect')
+        .attr('class', 'workload-optimal')
+        .attr('x', categoryXScaleFnirs("workload"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`)
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)
+        })
+        .attr('width', d => xScaleFnirs(d.optimal))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#fee090');
+
+    fnirsGroup.selectAll('.workload-overload')
+        .data(proportions.workload)
+        .enter()
+        .append('rect')
+        .attr('class', 'workload-overload')
+        .attr('x', categoryXScaleFnirs("workload"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)  +  yScaleFnirs.bandwidth()/3
+        })
+        .attr('width', d => xScaleFnirs(d.overload))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#fa5d1b');
+
+    fnirsGroup.selectAll('.workload-underload')
+        .data(proportions.workload)
+        .enter()
+        .append('rect')
+        .attr('class', 'workload-underload')
+        .attr('x',categoryXScaleFnirs("workload"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + (2 * yScaleFnirs.bandwidth()/3)
+            else
+                return yScaleFnirs(`Sub ${d.subject}`) + (2 * yScaleFnirs.bandwidth()/3)
+        })
+        .attr('width', d => xScaleFnirs(d.underload))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', "#91bfdb");
+
+    
+    
+    // Create bars attention
+    fnirsGroup.selectAll('.attention-optimal')
+        .data(proportions.attention)
+        .enter()
+        .append('rect')
+        .attr('class', 'attention-optimal')
+        .attr('x', categoryXScaleFnirs("attention"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`)
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)
+        })
+        .attr('width', d => xScaleFnirs(d.optimal))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#fee090');
+
+    fnirsGroup.selectAll('.attention-overload')
+        .data(proportions.attention)
+        .enter()
+        .append('rect')
+        .attr('class', 'attention-overload')
+        .attr('x', categoryXScaleFnirs("attention"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)  +  yScaleFnirs.bandwidth()/3
+        })
+        .attr('width', d => xScaleFnirs(d.overload))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#fa5d1b');
+
+    fnirsGroup.selectAll('.attention-underload')
+        .data(proportions.attention)
+        .enter()
+        .append('rect')
+        .attr('class', 'attention-underload')
+        .attr('x',categoryXScaleFnirs("attention"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + (2 * yScaleFnirs.bandwidth()/3)
+            else
+                return yScaleFnirs(`Sub ${d.subject}`) + (2 * yScaleFnirs.bandwidth()/3)
+        })
+        .attr('width', d => xScaleFnirs(d.underload))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', "#91bfdb");
+
+    // Create bars perception
+    fnirsGroup.selectAll('.perception-optimal')
+        .data(proportions.perception)
+        .enter()
+        .append('rect')
+        .attr('class', 'perception-optimal')
+        .attr('x', categoryXScaleFnirs("perception"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`)
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)
+        })
+        .attr('width', d => xScaleFnirs(d.optimal))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#fee090');
+
+    fnirsGroup.selectAll('.perception-overload')
+        .data(proportions.perception)
+        .enter()
+        .append('rect')
+        .attr('class', 'perception-overload')
+        .attr('x', categoryXScaleFnirs("perception"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)  +  yScaleFnirs.bandwidth()/3
+        })
+        .attr('width', d => xScaleFnirs(d.overload))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#fa5d1b');
+
+    fnirsGroup.selectAll('.perception-underload')
+        .data(proportions.perception)
+        .enter()
+        .append('rect')
+        .attr('class', 'perception-underload')
+        .attr('x',categoryXScaleFnirs("perception"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + (2 * yScaleFnirs.bandwidth()/3)
+            else
+                return yScaleFnirs(`Sub ${d.subject}`) + (2 * yScaleFnirs.bandwidth()/3)
+        })
+        .attr('width', d => xScaleFnirs(d.underload))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', "#91bfdb");
+}
+
+
+// Function to calculate proportions
+function calculateProportions(data) {
+    const proportions = {
+        workload : [],
+        attention: [],
+        perception : [],
+    };
+    let groupArray = uniqueTrials
+    if (selectedGroupby== "subject")
+        groupArray= uniqueSubjects
+    groupArray.forEach((groupID, iteration)=>{
+
+        let filteredData = data.filter(obj => obj.trial == groupID );
+
+        if (selectedGroupby=="subject")
+            filteredData = data.filter(obj => obj.subject == groupID );
+        // Initialize an object to store the sum of values
+        let sumOfValues = {};
+
+        // Iterate over each object in the array
+        filteredData.forEach(entry => {
+            // Iterate over each key in the object
+            Object.keys(entry).forEach(key => {
+                // Skip 'subject' and 'trial'
+                if (key !== 'subject' && key !== 'trial') {
+                    // If the key doesn't exist in the sumOfValues object, initialize it to 0
+                    sumOfValues[key] = sumOfValues[key] || 0;
+                    // Add the value of the current key to the sumOfValues object
+                    sumOfValues[key] += entry[key] || 0; // If the key is absent, default its value to 0
+                }
+            });
+        });
+        let total = (sumOfValues['perception_classification_Optimal'] || 0) + (sumOfValues['perception_classification_Underload'] || 0) + (sumOfValues['perception_classification_Overload'] || 0);
+        let optimal = (sumOfValues['perception_classification_Optimal'] || 0) / total;
+        let underload = (sumOfValues['perception_classification_Underload'] || 0) / total;
+        let overload = (sumOfValues['perception_classification_Overload'] || 0) / total;
+
+        if (selectedGroupby == "trial")
+            proportions['perception'].push({ trial: groupID, optimal: optimal, underload: underload, overload: overload });
+        else
+            proportions['perception'].push({ subject: groupID, optimal: optimal, underload: underload, overload: overload });
+
+        total = (sumOfValues['attention_classification_Optimal'] || 0) + (sumOfValues['attention_classification_Underload'] || 0) + (sumOfValues['attention_classification_Overload'] || 0);
+        optimal = (sumOfValues['attention_classification_Optimal'] || 0) / total;
+        underload = (sumOfValues['attention_classification_Underload'] || 0) / total;
+        overload = (sumOfValues['attention_classification_Overload'] || 0) / total;
+
+        if (selectedGroupby == "trial")
+            proportions['attention'].push({ trial: groupID,  optimal: optimal, underload: underload, overload: overload });
+        else
+            proportions['attention'].push({subject: groupID, optimal: optimal, underload: underload, overload: overload });
+
+        total = (sumOfValues['workload_classification_Optimal'] || 0) + (sumOfValues['workload_classification_Underload'] || 0) + (sumOfValues['workload_classification_Overload'] || 0);
+        optimal = (sumOfValues['workload_classification_Optimal'] || 0) / total;
+        underload = (sumOfValues['workload_classification_Underload'] || 0) / total;
+        overload = (sumOfValues['workload_classification_Overload'] || 0) / total;
+        if (selectedGroupby == "trial")
+            proportions['workload'].push({ trial: groupID,  optimal: optimal, underload: underload, overload: overload });
+        else
+            proportions['workload'].push({subject: groupID, optimal: optimal, underload: underload, overload: overload });
+
+
+
+    });
+
+    return proportions;
+}
+
 function updateEventTimeline(){   
     
     eventTimelineGroup.selectAll('*').remove();
@@ -505,7 +796,7 @@ function updateEventTimeline(){
                             .attr("y", currentY+1)
                             .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
                             .attr("height", 24)
-                            .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#ff834f" : "#ffffbf";});
+                            .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#fa5d1b" : "#fee090";});
                     });
                 }
                 
@@ -520,8 +811,6 @@ function updateEventTimeline(){
             let stepData = sessionMission.consolidatedStepData.step;
             let errorData = sessionMission.consolidatedStepData.error;
             let phaseData = sessionMission.consolidatedStepData.flightPhase;
-            console.log(sessionFnirs)
-            console.log(sessionMission.consolidatedStepData)
             let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFNIRS];
 
             stepData.forEach(data => {
@@ -566,7 +855,7 @@ function updateEventTimeline(){
                     .attr("y", currentY+1)
                     .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
                     .attr("height", 24)
-                    .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#ff834f" : "#ffffbf";});
+                    .style("fill", () => {return data.value == "Underload" ? "#91bfdb" : data.value == "Overload" ? "#fa5d1b" : "#fee090";});
             });
             currentY+=25;
 
@@ -635,7 +924,6 @@ function updateEventTimeline(){
             }   
 
             function brushended (e){
-                console.log("Brushed");
                 let selected_trial = e.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
                 let selected_subject = e.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
                 vidStart = reverseTimelineScale(e.selection[0])
@@ -646,10 +934,7 @@ function updateEventTimeline(){
                     videoPlayer.currentTime = vidStart;
                     videoPlayer.play();
                 });
-                
                 videoPlayer.load();
-                
-
             }
 
             currentY+=10
@@ -706,6 +991,15 @@ function updateMatrix(){
         .domain(stepsPresent)
         .range([0,  d3.select("#matrix-container").node().clientWidth -margins.matrix.left - margins.matrix.right ])
         .padding(0.1);
+
+
+    const xAxis = d3.axisTop(xScaleMatrix);
+
+    // Append axes to SVG
+    matrixGroup.append('g')
+        .attr('class', 'x-axis axisHide')
+        .attr('transform', `translate(0, 10)`)
+        .call(xAxis);
 
     const maxRadius = xScaleMatrix.bandwidth()/2;
     
@@ -809,22 +1103,5 @@ function updateMatrix(){
     }
 }
 
-function fitVideoToContainer( ) {
-    let videoContainer = document.getElementById('video-container')
-    let videoWidth = videoPlayer.videoWidth;
-    let videoHeight = videoPlayer.videoHeight;
-    let contianerWidth = videoContainer.offsetWidth;
-    let containerHeight = videoContainer.offsetHeight;
-    let widthRatio = contianerWidth / videoWidth;
-    let heightRatio = (containerHeight - margins.video.top) / videoHeight;
-    let scale = Math.min(widthRatio, heightRatio); 
-    // Set the width and height of the video player
-    videoPlayer.style.width = (videoWidth * scale) + 'px';
-    videoPlayer.style.height = Math.min( (videoHeight * scale), (containerHeight - margins.video.top)) + 'px';
-}
 
-// Function to convert timestamp to seconds from strings
-function timestampToSeconds(timestamp) {
-    let [hours, minutes, seconds] = timestamp.split(':').map(parseFloat);
-    return hours * 3600 + minutes * 60 + seconds;
-}
+  

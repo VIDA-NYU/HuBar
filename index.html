@@ -13,10 +13,6 @@
   <div class="container">
 
     <div id="overview-panel">
-      <div id = "video-container" class="cell">  
-        <!-- <select id="video-dropdown"></select> --> 
-       <video id="video-player" controls muted="muted"></video>
-      </div>
       
       <div id = "scatterplot-container" class="cell">
         <label id = "source-label" for="source-dropdown">Source:</label>
@@ -37,26 +33,38 @@
           <option selected value="t10">Top 10</option>
           <option value="all">All</option>
         </select>
+      </div>
 
-        
+      <div id="fnirs-agg-container" class="cell">
+
 
       </div>
       <div class="cell">
-        <label style="margin-top: 5%; margin-left: 20%;" id = "fnirs-label" for="fnirs-dropdown">FNIRS Variable:</label>
+
+
+
+      <h4>TIME DISTRIBUTIONS HERE </h4>
+      </div>
+
+
+    </div>
+
+    <div id="details-panel">
+      <div id= "event-timeline-container" class="cell">
+        <label id = "fnirs-label" for="fnirs-dropdown">FNIRS Variable:</label>
         <select id="fnirs-dropdown">
           <option selected value="workload">Workload</option>
           <option selected value="attention">Attention</option>
           <option value="perception">Perception</option>
         </select>
 
+        
       </div>
-      <div class="cell">IMU Grouped</div>
-    </div>
-
-    <div id="details-panel">
-      <div id= "event-timeline-container" class="cell"></div>
       <div id="matrix-container" class="cell"></div>
-      <div class="cell">Details/IMU/Video</div>
+      <div class="cell">      
+        <div id = "video-container" class="cell">  
+          <video id="video-player" controls muted="muted"></video>
+      </div></div>
     </div>
   </div>
 
