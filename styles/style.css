@@ -27,17 +27,20 @@ body{
 
 
 #details-panel{
-    border: 1px solid #000;
     display: grid;
-    grid-template-columns: 3fr 3fr 2fr 2fr;
+    grid-template-columns:9fr 3fr;
     overflow-y:scroll;
 
 }
 
 .cell{
-    border: 1px solid #000;
+    border: 1px solid #504a4a;
+    border-radius: 8px;
+    margin:2%
 }
-
+#video-container{
+    border: none;
+}
 
 
 #scatterplot-container, #video-container, #event-timeline-container {
@@ -46,14 +49,19 @@ body{
     position: relative; /* Ensure relative positioning */
 }
 
-
-#event-timeline-container {
-    border-right: none;
+#tlmatrix-container{
+    margin: 1%;
+    display: grid;
+    grid-template-columns: 3fr 3fr 2fr;
+    padding: none;
+    border: 1px solid #504a4a;
+    border-radius: 8px;
+}
+#event-timeline-container, #matrix-container, #fnirs-sesions-container {
+    border: none;
+    margin: none;
 }
 
-#matrix-container{
-    border-left: none;
-}  
 
 #source-label{
     font-size: 0.8em;
@@ -65,7 +73,7 @@ body{
 #source-dropdown {
     position: absolute; /* Position dropdown absolutely */
     top: 4px; /* Adjust top position as needed */
-    left: 14%; /* Adjust right position as needed */
+    left: 13%; /* Adjust right position as needed */
     z-index: 1; /* Ensure dropdown is above other elements */
 }
 
@@ -73,21 +81,21 @@ body{
 #groupby-label {
     font-size: 0.8em;
     position: absolute; /* Position dropdown absolutely */
-    left:36%;
+    left:34%;
     top:5px;
 }
 
 #groupby-dropdown{
     position: absolute; /* Position dropdown absolutely */
     top: 4px; /* Adjust top position as needed */
-    left: 49%; /* Adjust left position as needed */
+    left: 47%; /* Adjust left position as needed */
     z-index: 1; /* Ensure dropdown is above other elements */
 }
 
 #filter-label{
     font-size: 0.8em;
     position: absolute; /* Position dropdown absolutely */
-    left:76%;
+    left:71%;
     top:5px;
 }
 
@@ -102,14 +110,14 @@ body{
 #fnirs-label{
     font-size: 0.8em;
     position: absolute; /* Position dropdown absolutely */
-    left:5%;
-    top:5px;
+    left:1%;
+    top:1px;
 }
 
 #fnirs-dropdown{
     position: absolute; /* Position dropdown absolutely */
-    top: 4px; /* Adjust top position as needed */
-    left: 25%; /* Adjust left position as needed */
+    top: 1px; /* Adjust top position as needed */
+    left: 26%; /* Adjust left position as needed */
     z-index: 1;
 }
 

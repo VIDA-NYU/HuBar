@@ -9,7 +9,8 @@ let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
     scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial,
     fnirsSvg, fnirsGroup,
     eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
-    matrixSvg, matrixGroup;
+    matrixSvg, matrixGroup,
+    fnirsSessionsSvg, fnirsSessionsGroup;
 
 let vidStart = 0;
 let vidEnd = 5;
@@ -26,7 +27,8 @@ const margins={
     fnirs:{top:30, left:35, right:0, bottom:15},
     video:{ top:0, left:0, right:0, bottom:0},
     eventTimeline:{top:30, left:55, right:10, bottom:20},
-    matrix:{top:30, left:5, right:5, bottom:20}
+    matrix:{top:30, left:5, right:5, bottom:20},
+    fnirsSessions:{top:30, left:10, right:10, bottom:20},
 }
 
 Promise.all([
@@ -35,6 +37,7 @@ Promise.all([
         d3.json("data/steps_error_distribution.json"),
         d3.json("data/FNIRS_sampled.json"),
         d3.json("data/fnirs_distribution.json"),
+        d3.json("data/step_switch_error.json"),
 
     ])
     
@@ -74,6 +77,7 @@ function initializeContainers(){
         updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
+        updateFnirsSessions();
     });
 
     const groupbyDropdown = d3.select("#groupby-dropdown");
@@ -86,6 +90,7 @@ function initializeContainers(){
         updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
+        updateFnirsSessions();
     });
     
     const filterDropdown = d3.select("#filter-dropdown");
@@ -98,6 +103,7 @@ function initializeContainers(){
         updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
+        updateFnirsSessions();
     });
 
     const fnirsDropdown = d3.select("#fnirs-dropdown");
@@ -106,6 +112,7 @@ function initializeContainers(){
     fnirsDropdown.on("change", function() {
         selectedFNIRS = fnirsDropdown.property("value");
         updateEventTimeline();
+        updateFnirsSessions();
     });
 
     //initialise select variables
@@ -165,7 +172,22 @@ function initializeContainers(){
     matrixGroup = matrixSvg.append("g")
         .attr("transform", `translate(${margins.matrix.left}, ${margins.matrix.top})`)
         .attr("width", matrixDiv.node().clientWidth -margins.matrix.left - margins.matrix.right )
-        .attr("height", matrixDiv.node().clientHeight - margins.matrix.top - margins.matrix.bottom); 
+        .attr("height", matrixDiv.node().clientHeight - margins.matrix.top - margins.matrix.bottom);
+    
+        //matrix
+    let fnirsSessionsDiv= d3.select("#fnirs-sesions-container")  
+    
+    fnirsSessionsSvg = fnirsSessionsDiv
+        .append("svg")
+        .attr("width", fnirsSessionsDiv.node().clientWidth)
+        .attr("height", 200)
+        
+    fnirsSessionsGroup = fnirsSessionsSvg.append("g")
+        .attr("transform", `translate(${margins.fnirsSessions.left}, ${margins.fnirsSessions.top})`)
+        .attr("width", fnirsSessionsDiv.node().clientWidth -margins.fnirsSessions.left - margins.fnirsSessions.right )
+        .attr("height", fnirsSessionsDiv.node().clientHeight - margins.fnirsSessions.top - margins.fnirsSessions.bottom); 
+
+
 
     //TIMESTAMP ADD FLOAT
 
@@ -297,7 +319,7 @@ function initializeContainers(){
         const uniqueValues = Array.from(new Set(data.map(d => d[accessor])));
         return d3.scaleOrdinal()
             .domain(uniqueValues)
-            .range(d3.schemePaired);
+            .range(d3.schemeAccent);
     }
     
     scatterColorScaleSubject = generateColorScale(dataFiles[0], "subject");
@@ -438,12 +460,26 @@ function updateScatterplot(){
         }
         updateEventTimeline();
         updateMatrix();
+        updateFnirsSessions();
     }
 }
 
 function updateFnirsAgg(){
+    console.log("updateFnirs")
     fnirsGroup.selectAll('*').remove();
-    const proportions = calculateProportions(dataFiles[4]);
+    let fnirsFilteredData = dataFiles[4]
+
+    if (selectedFilter!='all'){
+        let trialFrequency = {};
+        fnirsFilteredData.forEach(obj => {
+            trialFrequency[obj.trial] = (trialFrequency[obj.trial] || 0) + 1;
+        });
+        // Step 2: Sort the values based on their frequencies
+        let topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
+        topTrialValues = topTrialValues.map(str => parseInt(str))
+        fnirsFilteredData = fnirsFilteredData.filter((obj) => {return topTrialValues.includes(obj.trial)});
+    }
+    const proportions = calculateProportions(fnirsFilteredData);
     const totalHeight = proportions.workload.length * 55;
     const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
 
@@ -653,7 +689,7 @@ function calculateProportions(data) {
     let groupArray = uniqueTrials
     if (selectedGroupby== "subject")
         groupArray= uniqueSubjects
-    groupArray.forEach((groupID, iteration)=>{
+    groupArray.forEach((groupID)=>{
 
         let filteredData = data.filter(obj => obj.trial == groupID );
 
@@ -661,7 +697,8 @@ function calculateProportions(data) {
             filteredData = data.filter(obj => obj.subject == groupID );
         // Initialize an object to store the sum of values
         let sumOfValues = {};
-
+        if (filteredData.length<1)
+            return
         // Iterate over each object in the array
         filteredData.forEach(entry => {
             // Iterate over each key in the object
@@ -791,7 +828,7 @@ function updateEventTimeline(){
                     .style("fill", "#FFB3B2");
 
                 eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - margins.eventTimeline.left + 5).attr("y", currentY+22).text(displayMissing).style("font-size", "12px").attr("text-anchor","start").style("fill","black")
-                currentY+=65
+                currentY+=40
 
                 if(!sessionFnirs.missing){
                     let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFNIRS];
@@ -812,15 +849,13 @@ function updateEventTimeline(){
                         .attr("fill", "none")
                         .attr("stroke", "black")
                         .attr("stroke-width", 1)
-                        .attr("stroke-opacity", 0.3)
+                        .attr("stroke-opacity", 0.2)
                         .attr("d", d3.line()
                         .x(function(d) { return xEventTimelineScale(d.seconds) })
                         .y(function(d) { return currentY + yScaleLine(d[variableName]) }))
-                    
-
                 }
                 
-                currentY += 25
+                currentY += 50
 
                 if(eventTimelineSvg.attr("height")<=currentY+220){
                     eventTimelineGroup.attr("height",currentY+220)
@@ -983,9 +1018,141 @@ function updateEventTimeline(){
             eventTimelineSvg.attr("height",currentY+250+margins.eventTimeline.top+margins.eventTimeline.bottom)     
         }
     })
+}
 
+function updateFnirsSessions(){
+    console.log("Updatefnirssessions")
+    fnirsSessionsGroup.selectAll('*').remove();
+    let filteredObjects = []
+    let xScaleFnirsSessions=  d3.scaleLinear()
+                                .domain([0.0,1.0])
+                                .range([0, fnirsSessionsGroup.attr("width")/2 - 5 ])
+    selectedItems.forEach((item)=>{
+        let tempObject = dataFiles[4].filter(obj => obj.subject == item.subject && obj.trial == item.trial);
+        if (tempObject.length==0){
+            console.log("ERROR: NO FNIRS SESSIONS DATA FOUND FOR SUBJECT AND TRIAL ID")
+            tempObject= [{subject: item.subject, trial: item.trial, missing:true}]
+        }
+        
+        else
+            tempObject[0]["missing"]=false
+        filteredObjects.push(tempObject[0]) 
+    })
+
+    let currentY = margins.fnirsSessions.top; 
+    
+    let groupArray = uniqueSubjects
+    if(selectedGroupby=="trial")
+        groupArray = uniqueTrials
+
+    groupArray.forEach((id)=>{
+        let groupedObj = filteredObjects.filter(obj => obj.subject == id)
+        if (selectedGroupby=="trial")
+            groupedObj = filteredObjects.filter(obj => obj.trial == id)
+        if (groupedObj.length==0)
+            return
+        
+        groupedObj.forEach((session)=>{
+            let sessionObject = {
+                subject: 0,
+                trial: 0,
+                workload_classification_Optimal: 0,
+                workload_classification_Overload: 0,
+                workload_classification_Underload: 0,
+                attention_classification_Optimal: 0,
+                attention_classification_Overload: 0,
+                attention_classification_Underload: 0,
+                perception_classification_Optimal: 0,
+                perception_classification_Underload: 0,
+                perception_classification_Overload: 0
+            }
+
+            Object.entries(session).forEach(([key, value]) => {sessionObject[key] = value});
+            
+            sessionObject['perception_classification_Total'] =  sessionObject.perception_classification_Optimal + sessionObject.perception_classification_Underload + sessionObject.perception_classification_Overload
+            sessionObject['attention_classification_Total'] =  sessionObject.attention_classification_Optimal +  sessionObject.attention_classification_Underload +  sessionObject.attention_classification_Overload
+            sessionObject['workload_classification_Total'] =   sessionObject.workload_classification_Optimal +  sessionObject.workload_classification_Underload +  sessionObject.workload_classification_Overload
+
+            let variableName = selectedFNIRS + "_classification_";
+          
+            //optimal
+            fnirsSessionsGroup.append("rect")
+                .attr("x", 0)
+                .attr("y", currentY+21)
+                .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Optimal"]/sessionObject[variableName+"Total"] ))
+                .attr("height", 16)
+                .style("fill", "#fee090" );
+
+            //Overload
+            fnirsSessionsGroup.append("rect")
+                .attr("x", 0)
+                .attr("y", currentY+37)
+                .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
+                .attr("height", 16)
+                .style("fill", "#fa5d1b" );
+
+            //underload
+            fnirsSessionsGroup.append("rect")
+                .attr("x", 0)
+                .attr("y", currentY+53)
+                .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Underload"]/sessionObject[variableName+"Total"] ))
+                .attr("height", 16)
+                .style("fill", "#91bfdb" );
+
+
+            let errorData = dataFiles[5].filter(obj => obj.subject_id == sessionObject.subject && obj.trial_id == sessionObject.trial)[0];
+            
+            if (errorData){
+                //Non Error
+                fnirsSessionsGroup.append("rect")
+                    .attr("x", xScaleFnirsSessions.range()[1] + 5)
+                    .attr("y", currentY+21)
+                    .attr("width", xScaleFnirsSessions((100-errorData['percentage_error'])/100 ))
+                    .attr("height", 16)
+                    .style("fill", "#AEAEAE" );
+
+                //Error
+                fnirsSessionsGroup.append("rect")
+                    .attr("x", xScaleFnirsSessions.range()[1] + 5)
+                    .attr("y", currentY+36)
+                    .attr("width", xScaleFnirsSessions(errorData['percentage_error']/100 ))
+                    .attr("height", 16)
+                    .style("fill", "black" );
+
+            }
+
+            else{
+                fnirsSessionsGroup.append("text")
+                    .attr("x", xScaleFnirsSessions.range()[1])
+                    .attr("y", currentY + 38)
+                    .style("font-size", "10px")
+                    .attr("text-anchor","start")
+                    .style("fill","black")
+                    .text("Error data not found")
+            }
+
+
+            
+            currentY+=90
+
+            if (fnirsSessionsSvg.attr("height")<=currentY+200){
+                fnirsSessionsGroup.attr("height",currentY+200)
+                fnirsSessionsSvg.attr("height",currentY+250+margins.fnirsSessions.top+margins.fnirsSessions.bottom)     
+            }
+        })
+
+        currentY+=50
+
+        if (fnirsSessionsSvg.attr("height")<=currentY+200){
+            fnirsSessionsGroup.attr("height",currentY+200)
+            fnirsSessionsSvg.attr("height",currentY+250+margins.fnirsSessions.top+margins.fnirsSessions.bottom)   
+        }
+    
+    })
 
 }
+
+
 
 function updateMatrix(){
     matrixGroup.selectAll('*').remove();

@@ -50,18 +50,23 @@
     </div>
 
     <div id="details-panel">
-      <div id= "event-timeline-container" class="cell">
-        <label id = "fnirs-label" for="fnirs-dropdown">FNIRS Variable:</label>
-        <select id="fnirs-dropdown">
-          <option selected value="workload">Workload</option>
-          <option selected value="attention">Attention</option>
-          <option value="perception">Perception</option>
-        </select>
-
+      <div id="tlmatrix-container">
         
+        <div id= "event-timeline-container" class="cell">
+          <label id = "fnirs-label" for="fnirs-dropdown">FNIRS Variable:</label>
+          <select id="fnirs-dropdown">
+            <option selected value="workload">Workload</option>
+            <option selected value="attention">Attention</option>
+            <option value="perception">Perception</option>
+          </select>
+        </div>
+        
+        <div id="matrix-container" class="cell"></div>
+        
+        <div id ="fnirs-sesions-container" class="cell"></div>
+      
       </div>
-      <div id="matrix-container" class="cell"></div>
-      <div class="cell"></div>
+      
       <div class="cell">      
         <div id = "video-container" class="cell">  
           <video id="video-player" controls muted="muted"></video>
