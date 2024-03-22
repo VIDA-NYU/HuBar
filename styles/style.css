@@ -10,7 +10,7 @@ body,
 body{
     padding: 0;
     overflow-y:none;
-    font-family: Arial, sans-serif;
+    font-family: Open Sans, Arial, sans-serif;
 }
   
 .container {
@@ -36,18 +36,44 @@ body{
 .cell{
     border: 1px solid #504a4a;
     border-radius: 8px;
-    margin:2%
+    margin:2%;
+    padding: 0%
 }
+
 #video-container{
     border: none;
+    margin: 0%;
 }
 
 
-#scatterplot-container, #video-container, #event-timeline-container {
+#scatterplot-container, #video-container, #event-timeline-container, #fnirs-sesions-container {
     padding: 0;
 
     position: relative; /* Ensure relative positioning */
 }
+
+#hl2-container{
+    position: relative;
+    margin: 0%;
+}
+
+#imu-header{
+    visibility: hidden;
+    margin: 0;    
+    position: absolute;
+    top: 160px;
+    text-align: center;
+    left:50%;
+}
+
+#imu-header > div {
+   position: relative;
+   left:-50%;
+}
+
+#imu-header > div > select{
+    max-width:60%
+} 
 
 #tlmatrix-container{
     margin: 1%;
@@ -110,14 +136,15 @@ body{
 #fnirs-label{
     font-size: 0.8em;
     position: absolute; /* Position dropdown absolutely */
-    left:1%;
-    top:1px;
+    left:0%;
+    top:25px;
 }
 
 #fnirs-dropdown{
+    width: 34%;
     position: absolute; /* Position dropdown absolutely */
-    top: 1px; /* Adjust top position as needed */
-    left: 26%; /* Adjust left position as needed */
+    top: 35px; /* Adjust top position as needed */
+    left: 8%; /* Adjust left position as needed */
     z-index: 1;
 }
 
@@ -187,3 +214,5 @@ body{
     font-size: 11px;
     font-weight: bold;
 }
+
+
