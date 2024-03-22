@@ -1629,6 +1629,7 @@ function updateHl2Details(){
         .style("fill", "none")
         .style("fill-opacity", 0)
         //.style("stroke-dasharray", "5,5");
+        
 
     hl2Group.append("path")
         .datum(dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial))
@@ -1649,6 +1650,20 @@ function updateHl2Details(){
         .attr("d", d3.line()
         .x(function(d) { return xScaleHL2(d.seconds) })
         .y(function(d) { return 160+ yScaleImu(d[selectedImu]) }))
+    
+    hl2Group.append("rect")
+    .attr("class","frame-rectangle")
+    .attr("x",xScaleHL2(vidStart))
+    .attr("y",1)
+    .attr("height","118")
+    .attr("width", xScaleHL2(vidEnd) - xScaleHL2(vidStart))
+
+    hl2Group.append("rect")
+    .attr("class","frame-rectangle")
+    .attr("x",xScaleHL2(vidStart))
+    .attr("y",161)
+    .attr("height","118")
+    .attr("width", xScaleHL2(vidEnd)- xScaleHL2(vidStart))
     
 }
 

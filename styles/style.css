@@ -193,9 +193,9 @@ body{
 }
 
 .timelinebrush .selection{
-    fill: black;
-    fill-opacity: 0.6;
-    stroke-width: 5px;
+        fill: black;
+        fill-opacity: 0.6;
+        stroke-width: 5px;
   }
 
 #fnirs-agg-container{
@@ -214,5 +214,15 @@ body{
     font-size: 11px;
     font-weight: bold;
 }
+
+.frame-rectangle{
+
+    fill: black;
+    fill-opacity: 0.5;
+    stroke-width: 5px;
+    stroke:black;
+
+}
+
 
 
