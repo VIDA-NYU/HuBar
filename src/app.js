@@ -5,7 +5,7 @@ import lasso from './lasso.js'; // Adjust the path if necessary
 const videoFolder = "data/video/"
 const videoPlayer = document.getElementById('video-player');
 let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
-    selectedScatterSource, selectedGroupby, selectedFilter, selectedFNIRS,
+    selectedScatterSource, selectedGroupby, selectedFilter, selectedFnirs,
     scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial,
     fnirsSvg, fnirsGroup,
     eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
@@ -32,7 +32,7 @@ const stepColorScale = d3.scaleOrdinal()
 
 const margins={ 
     scatterplot:{ top:40, left:30, right:30, bottom:15},
-    fnirs:{top:30, left:35, right:0, bottom:15},
+    fnirs:{top:50, left:35, right:0, bottom:15},
     video:{ top:0, left:0, right:0, bottom:0},
     eventTimeline:{top:28, left:55, right:10, bottom:20},
     matrix:{top:28, left:5, right:5, bottom:20},
@@ -49,6 +49,8 @@ Promise.all([
         d3.json("data/step_switch_error.json"),
         d3.csv("data/gaze_sampled.csv"),
         d3.csv("data/imu_sampled.csv"),
+        d3.json("data/all_correlations.json"),
+        d3.json("data/sessions_metadata.json"),
 
     ])
     
@@ -121,7 +123,7 @@ function initializeContainers(){
     
     // Add onchange event to get groupBy and update scatterplot
     fnirsDropdown.on("change", function() {
-        selectedFNIRS = fnirsDropdown.property("value");
+        selectedFnirs = fnirsDropdown.property("value");
         updateEventTimeline();
         updateFnirsSessions();
     });
@@ -145,7 +147,7 @@ function initializeContainers(){
     selectedScatterSource = sourceDropdown.property("value");
     selectedGroupby=groupbyDropdown.property("value");
     selectedFilter = filterDropdown.property("value");
-    selectedFNIRS = fnirsDropdown.property("value");
+    selectedFnirs = fnirsDropdown.property("value");
     selectedItems = [];
     selectedGaze = gazeDropdown.property("value");
     selectedImu = imuDropdown.property("value")
@@ -183,11 +185,13 @@ function initializeContainers(){
     fnirsSvg = fnirsDiv.append("svg")
         .attr("width", fnirsDiv.node().clientWidth)
         .attr("height", 500)
-        
+
     fnirsGroup = fnirsSvg.append("g")
         .attr("transform", `translate(${margins.fnirs.left}, ${margins.fnirs.top})`)
         .attr("width", fnirsDiv.node().clientWidth -margins.fnirs.left - margins.fnirs.right )
         .attr("height", 400);    
+
+
 
     let fontImportURL = 'https://fonts.googleapis.com/css?family=Lato|Open+Sans|Oswald|Raleway|Roboto|Indie+Flower|Gamja+Flower';
 
@@ -253,6 +257,11 @@ function initializeContainers(){
         let currentError = null;
 
         trial['data'].forEach(record => {
+
+            if (record.seconds<0){
+                return
+            }
+
             // Consolidate 'Step' data
             if (record.Step !== currentStep) {
                 if (consolidatedStepData.step.length > 0) {
@@ -298,9 +307,14 @@ function initializeContainers(){
                 consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
             }
         });
+        console.log(trial)
+
         maxTimestamp= Math.max(consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedStepData'] = consolidatedStepData;
     })
+
+    
+
 
     //consolidate FNIRS Data
     dataFiles[3].forEach((trial)=>{
@@ -310,11 +324,25 @@ function initializeContainers(){
             perception: [],
         };
 
+        //handle special case where the values are too high (timestamps out of sync)
+        if (trial.trial_id == 4 && trial.subject_id==8708){
+            trial.data = trial.data.map(item => {
+                return {
+                    ...item,
+                    seconds: item.seconds - 84004.747
+                };
+            });
+        }
+
         let currentWorkload = null;
         let currentAttention = null;
         let currentPerception = null;
         
-        trial['data'].forEach(record => {
+        trial['data'].forEach(record=> {
+
+            if (record.seconds<0){
+                return
+            }
             // Consolidate 'Workload' data
             if (record.workload_classification !== currentWorkload) {
                 if (consolidatedFNIRS.workload.length > 0) {
@@ -363,11 +391,10 @@ function initializeContainers(){
         maxTimestamp= Math.max(consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedFNIRS'] = consolidatedFNIRS; 
     })
-
     //find global max timestamp
-
     maxTimestamp = Math.max(maxTimestamp,dataFiles[6].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[6][0]["seconds"]));
     maxTimestamp = Math.max(maxTimestamp,dataFiles[7].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[7][0]["seconds"]));
+    
 
     //initialize colorscales for scatterplot
 
@@ -383,17 +410,12 @@ function initializeContainers(){
     
     //TEMP VIDEO
     videoPlayer.src = videoFolder+"0293/2/hl2_rgb/codec_hl2_rgb.mp4";
-    //fitVideoToContainer();
     videoPlayer.addEventListener('timeupdate', function() {
         if (this.currentTime >= vidEnd) {
           // Loop back to the start time
           this.currentTime = vidStart;
         }
       });
-
-    //videoPlayer.load();
-    
-
 
     console.log("initialized");
 
@@ -522,6 +544,7 @@ function updateScatterplot(){
 
 function updateFnirsAgg(){
     console.log("updateFnirs")
+
     fnirsGroup.selectAll('*').remove();
     let fnirsFilteredData = dataFiles[4]
 
@@ -539,13 +562,57 @@ function updateFnirsAgg(){
     const totalHeight = proportions.workload.length * 55;
     const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
 
-    fnirsSvg.attr('height', newHeight+150);
+    fnirsSvg.attr('height', newHeight+170);
     fnirsGroup.attr('height', newHeight+60);
     
+
     const categoryXScaleFnirs = d3.scaleBand()
         .domain(["workload", "attention", "perception"])
         .range([margins.fnirs.left, fnirsSvg.attr("width")- margins.fnirs.left - margins.fnirs.right])
         .padding(0.1)
+
+    fnirsGroup.append("rect")
+        .attr("x",categoryXScaleFnirs("workload"))
+        .attr("y",-23)
+        .attr("height", 9)
+        .attr("width", 9)
+        .attr("fill", "#ef3b2c");
+
+    fnirsGroup.append("text")     
+        .attr("x", categoryXScaleFnirs("workload") + 13)
+        .attr("y",-15)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Optimal");
+
+    fnirsGroup.append("rect")
+        .attr("x",categoryXScaleFnirs("attention"))
+        .attr("y", -23)
+        .attr("height", 9)
+        .attr("width", 9)
+        .attr("fill", "#a50f15");
+    
+    fnirsGroup.append("text")
+        .attr("x",categoryXScaleFnirs("attention")+13)
+        .attr("y", -15)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Overload");
+
+    fnirsGroup.append("rect")
+        .attr("x",categoryXScaleFnirs("perception"))
+        .attr("y", -23)
+        .attr("height", 9)
+        .attr("width", 9)
+        .attr("fill", "#ffb0b0");
+    
+    fnirsGroup.append("text")
+        .attr("x",categoryXScaleFnirs("perception")+13)
+        .attr("y", -15)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Underload");
+    
 
     const xScaleFnirs = d3.scaleLinear()
         .domain([0, 1]) // proportion scale
@@ -575,7 +642,7 @@ function updateFnirsAgg(){
     // Append axes to SVG
     fnirsGroup.append('g')
         .attr('class', 'x-axis axisHide')
-        .attr('transform', `translate(0, 0)`)
+        .attr('transform', `translate(0, -27)`)
         .call(xAxis)
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif");
@@ -901,7 +968,7 @@ function updateEventTimeline(){
                 currentY+=40
 
                 if(!sessionFnirs.missing){
-                    let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFNIRS];
+                    let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFnirs];
                     fnirsToDisplay.forEach(data => {
                         eventTimelineGroup.append("rect")
                             .attr("x", xEventTimelineScale(data.startTimestamp))
@@ -911,15 +978,15 @@ function updateEventTimeline(){
                             .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#a50f15" : "#ef3b2c";});
                     });
                 
-                    let variableName= selectedFNIRS + "_confidence" 
+                    let variableName= selectedFnirs + "_confidence" 
 
                     // Add the confidence line
                     eventTimelineGroup.append("path")
-                        .datum(sessionFnirs.data)
+                        .datum(sessionFnirs.data.filter(function(d) { return d.seconds >= 0; }))
                         .attr("fill", "none")
-                        .attr("stroke", "#B4D3B2")
+                        .attr("stroke", "#add8e6")
                         .attr("stroke-width", 1)
-                        .attr("stroke-opacity", 0.2)
+                        .attr("stroke-opacity", 0.8)
                         .attr("d", d3.line()
                         .x(function(d) { return xEventTimelineScale(d.seconds) })
                         .y(function(d) { return currentY + yScaleLine(d[variableName]) }))
@@ -961,7 +1028,7 @@ function updateEventTimeline(){
             let stepData = sessionMission.consolidatedStepData.step;
             let errorData = sessionMission.consolidatedStepData.error;
             let phaseData = sessionMission.consolidatedStepData.flightPhase;
-            let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFNIRS];
+            let fnirsToDisplay = sessionFnirs.consolidatedFNIRS[selectedFnirs];
 
             stepData.forEach(data => {
                 eventTimelineGroup.append("rect")
@@ -1007,20 +1074,19 @@ function updateEventTimeline(){
                     .attr("height", 24)
                     .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#a50f15" : "#ef3b2c";});
             });
-            let variableName= selectedFNIRS + "_confidence" 
+            let variableName= selectedFnirs + "_confidence" 
 
             // Add the confidence line
-            /*
             eventTimelineGroup.append("path")
-                .datum(sessionFnirs.data)
+                .datum(sessionFnirs.data.filter(function(d) { return d.seconds >= 0; }))
                 .attr("fill", "none")
-                .attr("stroke", "white")
+                .attr("stroke", "#add8e6")
                 .attr("stroke-width", 1)
-                .attr("stroke-opacity", 0.7)
+                .attr("stroke-opacity", 0.8)
                 .attr("d", d3.line()
                 .x(function(d) { return xEventTimelineScale(d.seconds) })
                 .y(function(d) { return currentY + yScaleLine(d[variableName]) }))
-            */
+            
             currentY+=25;
 
             phaseData.forEach(data => {
@@ -1101,17 +1167,9 @@ function updateEventTimeline(){
 
                 if (e.selection == null){
                     brushedSubject = null;
-                    brushedTrial = null;
-                    /*
-
-                    CODE TO HIGHLIGHT STEPS
-                    */
-                    
+                    brushedTrial = null;    
                     updateHl2Details();
-
-
                     return
-                    
                 }
 
                 
@@ -1136,13 +1194,11 @@ function updateEventTimeline(){
                     else if (step.endTimestamp> vidStart && step.startTimestamp < vidEnd)
                         stepNames.add(step.value)
                 })
-                console.log(stepNames)
                 stepNames.forEach((name)=>{
                     let arcName = ".arc-" + name + "-"+brushedSubject +"-" + brushedTrial;
                     let circleName = ".circle-" + name + "-"+brushedSubject +"-" + brushedTrial;
 
                     let arcElements = document.getElementsByClassName(arcName)
-                    console.log(arcElements)
                     if(arcElements.length==2){
                        arcElements[0].firstChild.classList.toggle("highlight-arcs") 
                        arcElements[1].firstChild.classList.toggle("highlight-arcs")   
@@ -1155,10 +1211,8 @@ function updateEventTimeline(){
                 })
                 d3.selectAll(".highlight-arcs")
                 .attr("stroke","red")
-                .attr("stroke-width", 2)
-
+                .attr("stroke-width", 3)
             }
-
             currentY+=10
 
             if (eventTimelineSvg.attr("height")<=currentY+200){
@@ -1177,10 +1231,18 @@ function updateEventTimeline(){
 function updateFnirsSessions(){
     console.log("Updatefnirssessions")
     fnirsSessionsGroup.selectAll('*').remove();
+    
+    if (selectedItems.length<1)
+        return
     let filteredObjects = []
     let xScaleFnirsSessions=  d3.scaleLinear()
                                 .domain([0.0,1.0])
                                 .range([0, fnirsSessionsGroup.attr("width")/2 - 5 ])
+
+    let xScaleCorrelations = d3.scaleLinear()
+        .domain([-1,1])
+        .range([fnirsSessionsGroup.attr("width")/2, fnirsSessionsGroup.attr("width")])
+    
     selectedItems.forEach((item)=>{
         let tempObject = dataFiles[4].filter(obj => obj.subject == item.subject && obj.trial == item.trial);
         if (tempObject.length==0){
@@ -1194,18 +1256,60 @@ function updateFnirsSessions(){
     })
 
     let currentY = margins.fnirsSessions.top; 
-    
     let groupArray = uniqueSubjects
-    if(selectedGroupby=="trial")
+    let correlations = dataFiles[8].subject_correlations
+    if(selectedGroupby=="trial"){
+        correlations = dataFiles[8].trial_correlations
         groupArray = uniqueTrials
-
+    }
     groupArray.forEach((id)=>{
         let groupedObj = filteredObjects.filter(obj => obj.subject == id)
         if (selectedGroupby=="trial")
             groupedObj = filteredObjects.filter(obj => obj.trial == id)
         if (groupedObj.length==0)
             return
-        
+
+        //correlations
+        fnirsSessionsGroup.append('g')
+            .attr('class', 'x-axis')
+            .attr('transform', `translate(0, ${currentY-25})`)
+            .call(d3.axisBottom(xScaleCorrelations)
+                .tickValues([-1, -0.5, 0, 0.5, 1]));
+        if(correlations[id]){
+            console.log(id)
+            console.log(correlations[id])
+            let optimalCorr = correlations[id][selectedFnirs+"_Optimal"]
+            let overloadCorr = correlations[id][selectedFnirs+"_Overload"]
+            let underloadCorr = correlations[id][selectedFnirs+"_Underload"]
+            console.log(optimalCorr, overloadCorr, underloadCorr)
+            if(optimalCorr != null)
+                fnirsSessionsGroup.append("rect")
+                    .attr("x", xScaleCorrelations(optimalCorr))
+                    .attr("y", currentY-34)
+                    .attr("fill", "#ef3b2c")
+                    .attr("width", 9)
+                    .attr("height", 9)
+                    .attr("class",`group-${id}`);
+
+            if(overloadCorr != null)
+                fnirsSessionsGroup.append("rect")
+                    .attr("x", xScaleCorrelations(overloadCorr))
+                    .attr("y", currentY-34)
+                    .attr("fill", "#a50f15")
+                    .attr("width", 9)
+                    .attr("height", 9)
+                    .attr("class",`group-${id}`);
+            if(underloadCorr != null)
+                fnirsSessionsGroup.append("rect")
+                    .attr("x", xScaleCorrelations(underloadCorr))
+                    .attr("y", currentY-34)
+                    .attr("fill", "#ffb0b0")
+                    .attr("width", 9)
+                    .attr("height", 9)
+                    .attr("class",`group-${id}`);
+            
+        }
+            
         groupedObj.forEach((session)=>{
             let sessionObject = {
                 subject: 0,
@@ -1227,8 +1331,9 @@ function updateFnirsSessions(){
             sessionObject['attention_classification_Total'] =  sessionObject.attention_classification_Optimal +  sessionObject.attention_classification_Underload +  sessionObject.attention_classification_Overload
             sessionObject['workload_classification_Total'] =   sessionObject.workload_classification_Optimal +  sessionObject.workload_classification_Underload +  sessionObject.workload_classification_Overload
 
-            let variableName = selectedFNIRS + "_classification_";
-          
+            let variableName = selectedFnirs + "_classification_";
+            
+
             //optimal
             fnirsSessionsGroup.append("rect")
                 .attr("x", 0)
