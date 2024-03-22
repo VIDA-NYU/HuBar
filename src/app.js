@@ -1158,11 +1158,15 @@ function updateEventTimeline(){
 
             function brushended (e){
                 console.log("brush ended")
-                d3.selectAll(".highlight-arcs")
-                .attr("stroke","none");
 
-                d3.selectAll(".highlight-arcs")
+                matrixGroup.selectAll(".highlight-arcs")
                     .classed("highlight-arcs", false)
+
+                matrixGroup.selectAll(".arc>path")
+                    .style("fill-opacity",1)
+
+                matrixGroup.selectAll(".circle")
+                    .style("fill-opacity",1)
 
 
                 if (e.selection == null){
@@ -1195,8 +1199,8 @@ function updateEventTimeline(){
                         stepNames.add(step.value)
                 })
                 stepNames.forEach((name)=>{
-                    let arcName = ".arc-" + name + "-"+brushedSubject +"-" + brushedTrial;
-                    let circleName = ".circle-" + name + "-"+brushedSubject +"-" + brushedTrial;
+                    let arcName = "arc-" + name + "-"+brushedSubject +"-" + brushedTrial;
+                    let circleName = "circle-" + name + "-"+brushedSubject +"-" + brushedTrial;
 
                     let arcElements = document.getElementsByClassName(arcName)
                     if(arcElements.length==2){
@@ -1209,9 +1213,13 @@ function updateEventTimeline(){
                         circleElements[0].classList.toggle("highlight-arcs")  
                     } 
                 })
-                d3.selectAll(".highlight-arcs")
-                .attr("stroke","red")
-                .attr("stroke-width", 3)
+                matrixGroup.selectAll(".arc>path")
+                    .style("fill-opacity",0.1)
+                matrixGroup.selectAll(".circle")
+                    .style("fill-opacity",0.1)
+                matrixGroup.selectAll(".highlight-arcs")
+                    .style("fill-opacity",1)
+               
             }
             currentY+=10
 
@@ -1517,7 +1525,7 @@ function updateMatrix(){
         else if (error==0 || none==0){
             matrixGroup.append('circle')
                 .attr('cx', xScaleMatrix(step)+maxRadius)
-                .attr("class", ".circle-" + step + "-"+row.subject +"-"+row.trial)
+                .attr("class", "circle circle-" + step + "-"+row.subject +"-"+row.trial)
                 .attr('cy', currentY + 30)
                 .attr('r', radiusScale(total))
                 .attr('fill', ()=> error==0? stepColorScale(step) : "black");
@@ -1540,7 +1548,7 @@ function updateMatrix(){
             .data(pie)
             .enter()
             .append("g")
-            .attr("class", ".arc-" + step + "-"+row.subject +"-"+row.trial)
+            .attr("class", "arc arc-" + step + "-"+row.subject +"-"+row.trial)
             .attr("transform", "translate(" + (xScaleMatrix(step)+maxRadius) + "," + (currentY + 30) + ")");
     
         arcs.append("path")
@@ -1572,8 +1580,15 @@ function updateHl2Details(){
     d3.select("#imu-header")
         .style("visibility","visible")
 
+    let maxGazeTimestamp = dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
+        .reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), 0);
+    
+    let maxImuTimestamp = dataFiles[7].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
+        .reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), 0);
+    
+
     let xScaleHL2= d3.scaleLinear()
-        .domain([0, maxTimestamp])
+        .domain([0, Math.max(maxImuTimestamp, maxGazeTimestamp)])
         .range([0,hl2Group.attr("width")])
 
     let yScaleGaze = d3.scaleLinear()
