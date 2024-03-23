@@ -6,7 +6,7 @@ const videoFolder = "data/video/"
 const videoPlayer = document.getElementById('video-player');
 let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
     selectedScatterSource, selectedGroupby, selectedFilter, selectedFnirs,
-    scatterSvg, scatterGroup, scatterColorScaleSubject, scatterColorScaleTrial,
+    scatterSvg, scatterGroup, scatterScaleEncoding, 
     fnirsSvg, fnirsGroup,
     eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
     matrixSvg, matrixGroup,
@@ -31,12 +31,12 @@ const stepColorScale = d3.scaleOrdinal()
   .range(modifiedSchemePaired);
 
 const margins={ 
-    scatterplot:{ top:40, left:30, right:30, bottom:15},
+    scatterplot:{ top:40, left:30, right:110, bottom:15},
     fnirs:{top:50, left:35, right:0, bottom:15},
     video:{ top:0, left:0, right:0, bottom:0},
-    eventTimeline:{top:28, left:55, right:10, bottom:20},
-    matrix:{top:28, left:5, right:5, bottom:20},
-    fnirsSessions:{top:28, left:10, right:10, bottom:20},
+    eventTimeline:{top:37, left:55, right:10, bottom:20},
+    matrix:{top:37, left:5, right:5, bottom:20},
+    fnirsSessions:{top:37, left:10, right:10, bottom:20},
     hl2:{top:10, left:10, right:10, bottom:10}
 }
 
@@ -396,32 +396,48 @@ function initializeContainers(){
     maxTimestamp = Math.max(maxTimestamp,dataFiles[7].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[7][0]["seconds"]));
     
 
-    //initialize colorscales for scatterplot
-
-    function generateColorScale(data, accessor) {
-        const uniqueValues = Array.from(new Set(data.map(d => d[accessor])));
-        return d3.scaleOrdinal()
-            .domain(uniqueValues)
-            .range(d3.schemeAccent);
-    }
-    
-    scatterColorScaleSubject = generateColorScale(dataFiles[0], "subject");
-    scatterColorScaleTrial = generateColorScale(dataFiles[0], "trial");       
+    //initialize color/glyphscales for scatterplot
     
     //TEMP VIDEO
-    videoPlayer.src = videoFolder+"0293/2/hl2_rgb/codec_hl2_rgb.mp4";
     videoPlayer.addEventListener('timeupdate', function() {
         if (this.currentTime >= vidEnd) {
           // Loop back to the start time
           this.currentTime = vidStart;
         }
       });
-
-    console.log("initialized");
-
 }
 
 function updateScatterplot(){
+    
+    if (selectedGroupby=="trial" && selectedFilter=="all")
+        margins.scatterplot.right=30;
+    else
+        margins.scatterplot.right=110;
+
+    scatterGroup.attr("width", scatterSvg.attr("width")-margins.scatterplot.left - margins.scatterplot.right)
+
+    function generateScaleScatter(data, accessor) {
+        let symbolArray = d3.symbolsFill;
+        symbolArray.push(d3.symbolDiamond2, d3.symbolX, d3.symbolPlus)
+        const uniqueValues = Array.from(new Set(data.map(d => d[accessor])));
+        if (selectedGroupby=="trial" && selectedFilter=="all")
+            return d3.scaleOrdinal()
+                .domain(uniqueValues)
+                .range(d3.schemeAccent);
+        else
+            return d3.scaleOrdinal()
+                .domain(uniqueValues)
+                .range(symbolArray); 
+    }
+    
+
+    scatterGroup.selectAll("*").remove()
+    scatterGroup.append("rect")
+        .attr("x",0)
+        .attr("y",0)
+        .attr("height", scatterGroup.attr("height"))
+        .attr("width", scatterGroup.attr("width"))
+        .attr("fill-opacity",0)
     console.log("Updating Scatterplot")
     let filteredData = dataFiles[0].filter(d => d.source === selectedScatterSource);
     scatterSvg.selectAll('.lasso').remove();
@@ -437,6 +453,7 @@ function updateScatterplot(){
         let topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
         filteredData = filteredData.filter(obj => topTrialValues.includes(obj.trial));
     }
+    scatterScaleEncoding = generateScaleScatter(filteredData, selectedGroupby);
 
     let scatterplotDiv = d3.select("#scatterplot-container") 
     const xScaleScatter = d3.scaleLinear()
@@ -459,66 +476,61 @@ function updateScatterplot(){
     const yScaleScatter = d3.scaleLinear()
         .domain(d3.extent(filteredData, d => +d.y))
         .range([scatterplotDiv.node().clientHeight - margins.scatterplot.bottom - margins.scatterplot.top, 0]);
+    
+    if (selectedGroupby=="trial" && selectedFilter=="all"){
+        scatterGroup.selectAll("circle")
+            .data(filteredData)
+            .enter()
+            .append("circle")
+            .attr("cx", d => xScaleScatter(+d.x))
+            .attr("cy", d => yScaleScatter(+d.y))
+            .attr("r", 5)
+            .attr("fill", d => {return scatterScaleEncoding(d.trial);})
+            .attr("class", "scatterpoints")
+            .on("mouseover", function(d) {
+                scatterTooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                    scatterTooltip.html(`<strong>Trial:</strong> ${d.target.__data__.trial}<br><strong>Subject:</strong> ${d.target.__data__.subject}`)
+                    .style("left", (d.layerX + 10) + "px")
+                    .style("top", (d.layerY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                scatterTooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+    }
 
- 
-
-    // Select all existing circles
-    const circles = scatterGroup.selectAll("circle")
-        .data(filteredData);
-
-    // Update existing circles
-    circles
-        .attr("cx", d => xScaleScatter(+d.x))
-        .attr("cy", d => yScaleScatter(+d.y))
-        .attr("fill", d => {
-            if (selectedGroupby == "trial") {
-                
-                return scatterColorScaleTrial(d.trial);
-            } else if (selectedGroupby == "subject") {
-                return scatterColorScaleSubject(d.subject);
-            }
-        });
-
-    // Enter new circles
-    circles.enter()
-        .append("circle")
-        .attr("cx", d => xScaleScatter(+d.x))
-        .attr("cy", d => yScaleScatter(+d.y))
-        .attr("r", 5)
-        .attr("fill", d => {
-            if (selectedGroupby == "trial") {
-                
-                return scatterColorScaleTrial(d.trial);
-            } else if (selectedGroupby == "subject") {
-                return scatterColorScaleSubject(d.subject);
-            }
-        })
-        .attr("class", "scatterpoints")
-        .on("mouseover", function(d) {
-            scatterTooltip.transition()
-                .duration(200)
-                .style("opacity", .9);
-                scatterTooltip.html(`<strong>Trial:</strong> ${d.target.__data__.trial}<br><strong>Subject:</strong> ${d.target.__data__.subject}`)
-                .style("left", (d.layerX + 10) + "px")
-                .style("top", (d.layerY - 28) + "px");
-        })
-        .on("mouseout", function(d) {
-            scatterTooltip.transition()
-                .duration(500)
-                .style("opacity", 0);
-        });
-
-    // Remove circles that are no longer needed
-    circles.exit().remove();
-
+    else{   
+        scatterGroup.selectAll("path")
+            .data(filteredData)
+            .enter()
+            .append("path")
+            .attr("d", d3.symbol().type((d) => {
+                if (selectedGroupby=="trial")
+                    return scatterScaleEncoding(d.trial)
+                else 
+                    return scatterScaleEncoding(d.subject) 
+            }).size(64))
+            .attr("stroke","black")
+            .attr("transform", (d)=>{return `translate(${xScaleScatter(+d.x)},${yScaleScatter(+d.y)})`})
+            .attr("class", (d)=>{
+                if (selectedGroupby=="trial")
+                    return "scatterpoints scatter-"+(d.trial)
+                else 
+                    return "scatterpoints scatter-"+(d.subject)
+            });
+        
+    }
     //add brush
     let lassoBrush=lasso()
         .items(scatterGroup.selectAll('.scatterpoints'))
-        .targetArea(scatterSvg)
+        .targetArea(scatterGroup)
         .on("end",lasso_end)
         .on("start",()=>{lassoBrush.items().attr("class","scatterpoints");});
 
-    scatterSvg.call(lassoBrush);
+    scatterGroup.call(lassoBrush);
 
     //on drawing of lasso
     function lasso_end(){
@@ -536,9 +548,72 @@ function updateScatterplot(){
         else{
             lassoBrush.items().attr("class","scatterpoints");
         }
+        updateFnirsAgg();
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
+        
+    }
+    if (selectedGroupby =="subject" || selectedFilter !="all")
+    {
+        let currentY = 4;
+        scatterSvg.append("rect")
+            .attr("x", xScaleScatter.range()[1]+ margins.scatterplot.left + 25)
+            .attr("y", margins.scatterplot.top-5)
+            .attr("width", margins.scatterplot.right - 30)
+            .attr("height", yScaleScatter.range()[0]+5+ margins.scatterplot.bottom/2)
+            .attr("rx",5)
+            .attr("ry",5)
+            .style("fill-opacity", 0.3)
+            .style("fill", "#abf7b1")
+        let domain = scatterScaleEncoding.domain()
+
+        domain.forEach((element)=>{
+            scatterScaleEncoding(element)
+            let legendGroup = scatterSvg.append("g")
+                .attr("transform", `translate(${scatterSvg.attr("width") - margins.scatterplot.right}, ${margins.scatterplot.top})`)
+                .attr("width", margins.scatterplot.right )
+                .attr("height", scatterSvg.attr("height") - margins.scatterplot.top - margins.scatterplot.bottom)
+                .on("click", (event)=>{
+                    selectedItems = []
+                    scatterGroup.selectAll('.scatterpoints').classed("unselectedscatter", true);
+                    let id = d3.select(event.target).attr("data-id")
+                    scatterGroup.selectAll('.scatter-'+id).classed("unselectedscatter", false);
+                    let chosenSamples;
+                    if (selectedGroupby=="trial")
+                        chosenSamples = filteredData.filter(d => d.trial == id)
+                    else
+                        chosenSamples = filteredData.filter(d => d.subject == id)
+                    chosenSamples.forEach((sample)=>{
+                        selectedItems.push({trial:sample.trial ,subject:sample.subject})
+                    })
+                    updateFnirsAgg();
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                })
+
+            legendGroup.append("path")
+                .attr("d", d3.symbol().type(scatterScaleEncoding(element)).size(25))
+                .attr("stroke","black")
+                .attr("data-id",element)
+                .attr("transform", ()=>{return `translate(${33},${currentY})`})
+            
+            legendGroup.append("text")
+                .attr("x",44)
+                .attr("y", currentY +4)
+                .attr("data-id",element)
+                .text(() =>{
+                    if (selectedGroupby=="subject")
+                        return "sub. " + element
+                    else 
+                        return "trial " + element
+                })
+                .attr("text-anchor", "start")
+                .style("font-size","11px")
+
+            currentY+=18.2
+        })
     }
 }
 
@@ -558,7 +633,23 @@ function updateFnirsAgg(){
         topTrialValues = topTrialValues.map(str => parseInt(str))
         fnirsFilteredData = fnirsFilteredData.filter((obj) => {return topTrialValues.includes(obj.trial)});
     }
-    const proportions = calculateProportions(fnirsFilteredData);
+
+    let fnirsFinalData = []
+
+    if (selectedItems.length != 0)
+    { 
+        selectedItems.forEach((item)=>{
+            //filter Mission File
+            let tempObject = fnirsFilteredData.filter(obj => obj.subject == item.subject && obj.trial == item.trial);
+            if (tempObject.length==0)
+                return 
+            fnirsFinalData.push(tempObject[0])
+        })
+    }
+    else
+        fnirsFinalData = fnirsFilteredData
+
+    const proportions = calculateProportions(fnirsFinalData);
     const totalHeight = proportions.workload.length * 55;
     const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
 
@@ -576,7 +667,7 @@ function updateFnirsAgg(){
         .attr("y",-23)
         .attr("height", 9)
         .attr("width", 9)
-        .attr("fill", "#ef3b2c");
+        .attr("fill", "#eb5a4d");
 
     fnirsGroup.append("text")     
         .attr("x", categoryXScaleFnirs("workload") + 13)
@@ -590,7 +681,7 @@ function updateFnirsAgg(){
         .attr("y", -23)
         .attr("height", 9)
         .attr("width", 9)
-        .attr("fill", "#a50f15");
+        .attr("fill", "#99070d");
     
     fnirsGroup.append("text")
         .attr("x",categoryXScaleFnirs("attention")+13)
@@ -670,7 +761,8 @@ function updateFnirsAgg(){
         })
         .attr('width', d => xScaleFnirs(d.optimal))
         .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#ef3b2c');
+        .attr('fill', '#eb5a4d'); //#ef3b2c
+        
 
     fnirsGroup.selectAll('.workload-overload')
         .data(proportions.workload)
@@ -686,7 +778,7 @@ function updateFnirsAgg(){
         })
         .attr('width', d => xScaleFnirs(d.overload))
         .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#a50f15');
+        .attr('fill', '#99070d');
 
     fnirsGroup.selectAll('.workload-underload')
         .data(proportions.workload)
@@ -721,7 +813,7 @@ function updateFnirsAgg(){
         })
         .attr('width', d => xScaleFnirs(d.optimal))
         .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#ef3b2c');
+        .attr('fill', '#eb5a4d');
 
     fnirsGroup.selectAll('.attention-overload')
         .data(proportions.attention)
@@ -737,7 +829,7 @@ function updateFnirsAgg(){
         })
         .attr('width', d => xScaleFnirs(d.overload))
         .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#a50f15');
+        .attr('fill', '#99070d'); //#a50f15
 
     fnirsGroup.selectAll('.attention-underload')
         .data(proportions.attention)
@@ -770,7 +862,7 @@ function updateFnirsAgg(){
         })
         .attr('width', d => xScaleFnirs(d.optimal))
         .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#ef3b2c');
+        .attr('fill', '#eb5a4d');
 
     fnirsGroup.selectAll('.perception-overload')
         .data(proportions.perception)
@@ -786,7 +878,7 @@ function updateFnirsAgg(){
         })
         .attr('width', d => xScaleFnirs(d.overload))
         .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#a50f15');
+        .attr('fill', '#99070d');
 
     fnirsGroup.selectAll('.perception-underload')
         .data(proportions.perception)
@@ -908,7 +1000,15 @@ function updateEventTimeline(){
     reverseTimelineScale = d3.scaleLinear()
         .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
         .range([0.0, maxTimestamp])
-    
+
+    //correlations
+    eventTimelineGroup.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(0, -25)`)
+        .call(d3.axisBottom(xEventTimelineScale)
+            .tickValues([0, maxTimestamp/2, maxTimestamp])
+            .tickFormat(d => Math.round(d) + "s"));
+
     selectedItems.forEach((item)=>{
         //filter Mission File
         let tempObject = dataFiles[1].filter(obj => obj.subject_id == item.subject && obj.trial_id == item.trial);
@@ -975,7 +1075,7 @@ function updateEventTimeline(){
                             .attr("y", currentY+1)
                             .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
                             .attr("height", 24)
-                            .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#a50f15" : "#ef3b2c";});
+                            .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
                     });
                 
                     let variableName= selectedFnirs + "_confidence" 
@@ -1038,22 +1138,28 @@ function updateEventTimeline(){
                     .attr("height", 25)
                     .style("fill", stepColorScale(data.value));
             });
-            let sessionTitle
+
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - 3).attr("y", currentY+18).text("Procedures").style("font-size", "9px").attr("text-anchor","end").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+36).text("Errors").style("font-size", "9px").attr("text-anchor","end").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+55).text(selectedFnirs[0].toUpperCase() + selectedFnirs.slice(1) ).style("font-size", "9px").attr("text-anchor","end").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+75).text("Phase").style("font-size", "9px").attr("text-anchor","end").style("fill","black")
+        
+           let sessionTitle
             if (selectedGroupby=="trial")
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Sub:"+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 4).attr("y", currentY+3).text("Sub: "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             else
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 5).attr("y", currentY+25).text("Trial:"+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 4).attr("y", currentY+3).text("Trial: "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             let bbox = sessionTitle.node().getBBox();
             eventTimelineGroup.append("rect")
-                .attr("x", bbox.x - 2)
-                .attr("y", bbox.y - 2)
-                .attr("width", bbox.width + 4)
+                .attr("x", bbox.x - 3)
+                .attr("y", bbox.y - 3)
+                .attr("width", bbox.width + 6)
                 .attr("rx",5)
                 .attr("ry",5)
-                .attr("height", bbox.height + 4)
+                .attr("height", bbox.height + 6)
                 .style("fill", "#FFD166");
             
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 5).attr("y", currentY+25).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","#05668D")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 4).attr("y", currentY+3).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","#05668D")
             currentY+=25;
 
             errorData.forEach(data => {
@@ -1072,7 +1178,7 @@ function updateEventTimeline(){
                     .attr("y", currentY+1)
                     .attr("width", xEventTimelineScale(data.endTimestamp) - xEventTimelineScale(data.startTimestamp)) 
                     .attr("height", 24)
-                    .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#a50f15" : "#ef3b2c";});
+                    .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
             });
             let variableName= selectedFnirs + "_confidence" 
 
@@ -1294,7 +1400,7 @@ function updateFnirsSessions(){
                 fnirsSessionsGroup.append("rect")
                     .attr("x", xScaleCorrelations(optimalCorr))
                     .attr("y", currentY-34)
-                    .attr("fill", "#ef3b2c")
+                    .attr("fill", "#eb5a4d")
                     .attr("width", 9)
                     .attr("height", 9)
                     .attr("class",`group-${id}`);
@@ -1303,7 +1409,7 @@ function updateFnirsSessions(){
                 fnirsSessionsGroup.append("rect")
                     .attr("x", xScaleCorrelations(overloadCorr))
                     .attr("y", currentY-34)
-                    .attr("fill", "#a50f15")
+                    .attr("fill", "#99070d")
                     .attr("width", 9)
                     .attr("height", 9)
                     .attr("class",`group-${id}`);
@@ -1348,7 +1454,7 @@ function updateFnirsSessions(){
                 .attr("y", currentY+21)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Optimal"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
-                .style("fill", "#ef3b2c" );
+                .style("fill", "#eb5a4d" );
 
             //Overload
             fnirsSessionsGroup.append("rect")
@@ -1356,7 +1462,7 @@ function updateFnirsSessions(){
                 .attr("y", currentY+37)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
-                .style("fill", "#a50f15" );
+                .style("fill", "#99070d" );
 
             //underload
             fnirsSessionsGroup.append("rect")
