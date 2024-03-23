@@ -579,14 +579,14 @@ function updateScatterplot(){
                 .attr("class","legendgroup")
                 .attr("height", scatterSvg.attr("height") - margins.scatterplot.top - margins.scatterplot.bottom)
                 .on("click", (event)=>{
+                    let id = d3.select(event.target).attr("data-id")
+
                     scatterGroup.selectAll(".lasso>path")
                         .attr("d","")
 
                     selectedItems = []
-                    scatterGroup.selectAll('.scatterpoints').classed("unselectedscatter", false);
                     scatterGroup.selectAll('.scatterpoints').classed("unselectedscatter", true);
 
-                    let id = d3.select(event.target).attr("data-id")
                     scatterGroup.selectAll('.scatter-'+id).classed("unselectedscatter", false);
                     let chosenSamples;
                     if (selectedGroupby=="trial")
@@ -753,13 +753,48 @@ function updateFnirsAgg(){
         .attr('class', 'x-axis axisHide')
         .attr('transform', `translate(-19, -21)`)
         .call(xAxis)
+        .selectAll(".tick")
+        .on("click", (event, d)=>{
+            d3.select("#fnirs-dropdown").property("value",d);
+            selectedFnirs=d;
+            updateFnirsAgg();
+            updateEventTimeline();
+            updateMatrix();
+            updateFnirsSessions();
+        })
         .selectAll("text")
-        .style("font-family","Open Sans, Roboto, sans-serif");
+        .style("font-family","Open Sans, Roboto, sans-serif")
+
 
     fnirsGroup.append('g')
         .attr('class', 'y-axis axisHide')
         .attr('transform', `translate(40, 0)`)
         .call(yAxis)
+        .selectAll(".tick")
+        .on("click",(event, d)=>{
+            let id = d.split(" ")[1];
+
+            scatterGroup.selectAll(".lasso>path")
+            .attr("d","")
+
+            selectedItems = []
+            scatterGroup.selectAll('.scatterpoints').classed("unselectedscatter", true);
+
+            scatterGroup.selectAll('.scatter-'+id).classed("unselectedscatter", false);
+            let chosenSamples;
+            if (selectedGroupby=="trial")
+                chosenSamples = fnirsFilteredData.filter(d => d.trial == id)
+            else
+                chosenSamples = fnirsFilteredData.filter(d => d.subject == id)
+            chosenSamples.forEach((sample)=>{
+                selectedItems.push({trial:sample.trial ,subject:sample.subject})
+            })
+            updateFnirsAgg();
+            updateEventTimeline();
+            updateMatrix();
+            updateFnirsSessions();
+
+        })
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif");
     
