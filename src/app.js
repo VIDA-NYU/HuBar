@@ -34,7 +34,7 @@ const margins={
     scatterplot:{ top:40, left:30, right:110, bottom:15},
     fnirs:{top:50, left:35, right:0, bottom:15},
     video:{ top:0, left:0, right:0, bottom:0},
-    eventTimeline:{top:37, left:55, right:10, bottom:20},
+    eventTimeline:{top:37, left:55, right:16, bottom:20},
     matrix:{top:37, left:5, right:5, bottom:20},
     fnirsSessions:{top:37, left:10, right:10, bottom:20},
     hl2:{top:10, left:10, right:10, bottom:10}
@@ -432,6 +432,8 @@ function updateScatterplot(){
     
 
     scatterGroup.selectAll("*").remove()
+    scatterSvg.selectAll(".legendgroup").remove();
+    scatterSvg.selectAll(".legendrect").remove();
     scatterGroup.append("rect")
         .attr("x",0)
         .attr("y",0)
@@ -512,8 +514,9 @@ function updateScatterplot(){
                     return scatterScaleEncoding(d.trial)
                 else 
                     return scatterScaleEncoding(d.subject) 
-            }).size(64))
-            .attr("stroke","black")
+            }).size(55))
+            .attr("stroke","#737373")
+            .style("fill","#737373")
             .attr("transform", (d)=>{return `translate(${xScaleScatter(+d.x)},${yScaleScatter(+d.y)})`})
             .attr("class", (d)=>{
                 if (selectedGroupby=="trial")
@@ -528,7 +531,7 @@ function updateScatterplot(){
         .items(scatterGroup.selectAll('.scatterpoints'))
         .targetArea(scatterGroup)
         .on("end",lasso_end)
-        .on("start",()=>{lassoBrush.items().attr("class","scatterpoints");});
+        .on("start",()=>{lassoBrush.items().classed("unselectedscatter",false);});
 
     scatterGroup.call(lassoBrush);
 
@@ -538,15 +541,15 @@ function updateScatterplot(){
         let itemsBrushed=lassoBrush.selectedItems()["_groups"][0];
         if (itemsBrushed.length>0){
             
-            lassoBrush.notSelectedItems().attr("class","scatterpoints unselectedscatter");
-            lassoBrush.selectedItems().attr("class","scatterpoints");         
+            lassoBrush.notSelectedItems().classed("unselectedscatter",true);
+            lassoBrush.selectedItems().classed("unselectedscatter",false);         
             itemsBrushed.forEach((item)=>{
                 selectedItems.push({trial:item.__data__.trial ,subject:item.__data__.subject})
             })
         }
         //case where no nodes are selected - reset filters and inform parent
         else{
-            lassoBrush.items().attr("class","scatterpoints");
+            lassoBrush.items().classed("unselectedscatter",false);
         }
         updateFnirsAgg();
         updateEventTimeline();
@@ -564,8 +567,8 @@ function updateScatterplot(){
             .attr("height", yScaleScatter.range()[0]+5+ margins.scatterplot.bottom/2)
             .attr("rx",5)
             .attr("ry",5)
-            .style("fill-opacity", 0.3)
-            .style("fill", "#abf7b1")
+            .style("fill", "none")
+            .attr("class","legendrect")
         let domain = scatterScaleEncoding.domain()
 
         domain.forEach((element)=>{
@@ -573,10 +576,16 @@ function updateScatterplot(){
             let legendGroup = scatterSvg.append("g")
                 .attr("transform", `translate(${scatterSvg.attr("width") - margins.scatterplot.right}, ${margins.scatterplot.top})`)
                 .attr("width", margins.scatterplot.right )
+                .attr("class","legendgroup")
                 .attr("height", scatterSvg.attr("height") - margins.scatterplot.top - margins.scatterplot.bottom)
                 .on("click", (event)=>{
+                    scatterGroup.selectAll(".lasso>path")
+                        .attr("d","")
+
                     selectedItems = []
+                    scatterGroup.selectAll('.scatterpoints').classed("unselectedscatter", false);
                     scatterGroup.selectAll('.scatterpoints').classed("unselectedscatter", true);
+
                     let id = d3.select(event.target).attr("data-id")
                     scatterGroup.selectAll('.scatter-'+id).classed("unselectedscatter", false);
                     let chosenSamples;
@@ -594,8 +603,9 @@ function updateScatterplot(){
                 })
 
             legendGroup.append("path")
-                .attr("d", d3.symbol().type(scatterScaleEncoding(element)).size(25))
-                .attr("stroke","black")
+                .attr("d", d3.symbol().type(scatterScaleEncoding(element)).size(36))
+                .attr("stroke","#737373")
+                .style("fill", "#737373")
                 .attr("data-id",element)
                 .attr("transform", ()=>{return `translate(${33},${currentY})`})
             
@@ -662,33 +672,34 @@ function updateFnirsAgg(){
         .range([margins.fnirs.left, fnirsSvg.attr("width")- margins.fnirs.left - margins.fnirs.right])
         .padding(0.1)
 
+
     fnirsGroup.append("rect")
         .attr("x",categoryXScaleFnirs("workload"))
-        .attr("y",-23)
-        .attr("height", 9)
-        .attr("width", 9)
-        .attr("fill", "#eb5a4d");
-
-    fnirsGroup.append("text")     
-        .attr("x", categoryXScaleFnirs("workload") + 13)
-        .attr("y",-15)
-        .attr("text-anchor","start")
-        .style("font-size","10px" )
-        .text("Optimal");
-
-    fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("attention"))
         .attr("y", -23)
         .attr("height", 9)
         .attr("width", 9)
         .attr("fill", "#99070d");
     
     fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs("attention")+13)
+        .attr("x",categoryXScaleFnirs("workload")+13)
         .attr("y", -15)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Overload");
+
+    fnirsGroup.append("rect")
+        .attr("x",categoryXScaleFnirs("attention"))
+        .attr("y",-23)
+        .attr("height", 9)
+        .attr("width", 9)
+        .attr("fill", "#eb5a4d");
+
+    fnirsGroup.append("text")     
+        .attr("x", categoryXScaleFnirs("attention") + 13)
+        .attr("y",-15)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Optimal");
 
     fnirsGroup.append("rect")
         .attr("x",categoryXScaleFnirs("perception"))
@@ -747,44 +758,44 @@ function updateFnirsAgg(){
     
     
     // Create bars workload
-    fnirsGroup.selectAll('.workload-optimal')
+
+    fnirsGroup.selectAll('.workload.overload')
         .data(proportions.workload)
         .enter()
         .append('rect')
-        .attr('class', 'workload-optimal')
+        .attr('class', 'workload overload')
         .attr('x', categoryXScaleFnirs("workload"))
         .attr('y', (d) => {
             if (selectedGroupby=="trial")
-                return yScaleFnirs(`Trial ${d.trial}`)
+                return yScaleFnirs(`Trial ${d.trial}`) 
             else
                 return yScaleFnirs(`Sub ${d.subject}`)
-        })
-        .attr('width', d => xScaleFnirs(d.optimal))
-        .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#eb5a4d'); //#ef3b2c
-        
-
-    fnirsGroup.selectAll('.workload-overload')
-        .data(proportions.workload)
-        .enter()
-        .append('rect')
-        .attr('class', 'workload-overload')
-        .attr('x', categoryXScaleFnirs("workload"))
-        .attr('y', (d) => {
-            if (selectedGroupby=="trial")
-                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
-            else
-                return yScaleFnirs(`Sub ${d.subject}`)  +  yScaleFnirs.bandwidth()/3
         })
         .attr('width', d => xScaleFnirs(d.overload))
         .attr('height', yScaleFnirs.bandwidth()/3)
         .attr('fill', '#99070d');
 
-    fnirsGroup.selectAll('.workload-underload')
+    fnirsGroup.selectAll('.workload.optimal')
         .data(proportions.workload)
         .enter()
         .append('rect')
-        .attr('class', 'workload-underload')
+        .attr('class', 'workload optimal')
+        .attr('x', categoryXScaleFnirs("workload"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
+            else
+                return yScaleFnirs(`Sub ${d.subject}`) + yScaleFnirs.bandwidth()/3
+        })
+        .attr('width', d => xScaleFnirs(d.optimal))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#eb5a4d'); //#ef3b2c
+
+    fnirsGroup.selectAll('.workload.underload')
+        .data(proportions.workload)
+        .enter()
+        .append('rect')
+        .attr('class', 'workload underload')
         .attr('x',categoryXScaleFnirs("workload"))
         .attr('y', (d) => {
             if (selectedGroupby=="trial")
@@ -799,43 +810,43 @@ function updateFnirsAgg(){
     
     
     // Create bars attention
-    fnirsGroup.selectAll('.attention-optimal')
+    fnirsGroup.selectAll('.attention.overload')
         .data(proportions.attention)
         .enter()
         .append('rect')
-        .attr('class', 'attention-optimal')
+        .attr('class', 'attention overload')
         .attr('x', categoryXScaleFnirs("attention"))
         .attr('y', (d) => {
             if (selectedGroupby=="trial")
-                return yScaleFnirs(`Trial ${d.trial}`)
+                return yScaleFnirs(`Trial ${d.trial}`) 
             else
-                return yScaleFnirs(`Sub ${d.subject}`)
-        })
-        .attr('width', d => xScaleFnirs(d.optimal))
-        .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#eb5a4d');
-
-    fnirsGroup.selectAll('.attention-overload')
-        .data(proportions.attention)
-        .enter()
-        .append('rect')
-        .attr('class', 'attention-overload')
-        .attr('x', categoryXScaleFnirs("attention"))
-        .attr('y', (d) => {
-            if (selectedGroupby=="trial")
-                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
-            else
-                return yScaleFnirs(`Sub ${d.subject}`)  +  yScaleFnirs.bandwidth()/3
+                return yScaleFnirs(`Sub ${d.subject}`) 
         })
         .attr('width', d => xScaleFnirs(d.overload))
         .attr('height', yScaleFnirs.bandwidth()/3)
         .attr('fill', '#99070d'); //#a50f15
 
-    fnirsGroup.selectAll('.attention-underload')
+    fnirsGroup.selectAll('.attention.optimal')
         .data(proportions.attention)
         .enter()
         .append('rect')
-        .attr('class', 'attention-underload')
+        .attr('class', 'attention optimal')
+        .attr('x', categoryXScaleFnirs("attention"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
+            else
+                return yScaleFnirs(`Sub ${d.subject}`) + yScaleFnirs.bandwidth()/3
+        })
+        .attr('width', d => xScaleFnirs(d.optimal))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#eb5a4d');
+
+    fnirsGroup.selectAll('.attention.underload')
+        .data(proportions.attention)
+        .enter()
+        .append('rect')
+        .attr('class', 'attention underload')
         .attr('x',categoryXScaleFnirs("attention"))
         .attr('y', (d) => {
             if (selectedGroupby=="trial")
@@ -848,43 +859,44 @@ function updateFnirsAgg(){
         .attr('fill', "#ffb0b0");
 
     // Create bars perception
-    fnirsGroup.selectAll('.perception-optimal')
+
+    fnirsGroup.selectAll('.perception.overload')
         .data(proportions.perception)
         .enter()
         .append('rect')
-        .attr('class', 'perception-optimal')
+        .attr('class', 'perception overload')
         .attr('x', categoryXScaleFnirs("perception"))
         .attr('y', (d) => {
             if (selectedGroupby=="trial")
                 return yScaleFnirs(`Trial ${d.trial}`)
             else
-                return yScaleFnirs(`Sub ${d.subject}`)
-        })
-        .attr('width', d => xScaleFnirs(d.optimal))
-        .attr('height', yScaleFnirs.bandwidth()/3)
-        .attr('fill', '#eb5a4d');
-
-    fnirsGroup.selectAll('.perception-overload')
-        .data(proportions.perception)
-        .enter()
-        .append('rect')
-        .attr('class', 'perception-overload')
-        .attr('x', categoryXScaleFnirs("perception"))
-        .attr('y', (d) => {
-            if (selectedGroupby=="trial")
-                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
-            else
-                return yScaleFnirs(`Sub ${d.subject}`)  +  yScaleFnirs.bandwidth()/3
+                return yScaleFnirs(`Sub ${d.subject}`)  
         })
         .attr('width', d => xScaleFnirs(d.overload))
         .attr('height', yScaleFnirs.bandwidth()/3)
         .attr('fill', '#99070d');
 
-    fnirsGroup.selectAll('.perception-underload')
+    fnirsGroup.selectAll('.perception.optimal')
         .data(proportions.perception)
         .enter()
         .append('rect')
-        .attr('class', 'perception-underload')
+        .attr('class', 'perception optimal')
+        .attr('x', categoryXScaleFnirs("perception"))
+        .attr('y', (d) => {
+            if (selectedGroupby=="trial")
+                return yScaleFnirs(`Trial ${d.trial}`) + yScaleFnirs.bandwidth()/3
+            else
+                return yScaleFnirs(`Sub ${d.subject}`)  + yScaleFnirs.bandwidth()/3
+        })
+        .attr('width', d => xScaleFnirs(d.optimal))
+        .attr('height', yScaleFnirs.bandwidth()/3)
+        .attr('fill', '#eb5a4d');
+
+    fnirsGroup.selectAll('.perception.underload')
+        .data(proportions.perception)
+        .enter()
+        .append('rect')
+        .attr('class', 'perception underload')
         .attr('x',categoryXScaleFnirs("perception"))
         .attr('y', (d) => {
             if (selectedGroupby=="trial")
@@ -1007,7 +1019,7 @@ function updateEventTimeline(){
         .attr('transform', `translate(0, -25)`)
         .call(d3.axisBottom(xEventTimelineScale)
             .tickValues([0, maxTimestamp/2, maxTimestamp])
-            .tickFormat(d => Math.round(d) + "s"));
+            .tickFormat(d => Math.round(d/60) + "min"));
 
     selectedItems.forEach((item)=>{
         //filter Mission File
@@ -1062,7 +1074,7 @@ function updateEventTimeline(){
                     .attr("rx",5)
                     .attr("ry",5)
                     .attr("height", bbox.height + 6)
-                    .style("fill", "#FFB3B2");
+                    .style("fill", "none");
 
                 eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
                 currentY+=40
@@ -1447,22 +1459,21 @@ function updateFnirsSessions(){
 
             let variableName = selectedFnirs + "_classification_";
             
+            //Overload
+            fnirsSessionsGroup.append("rect")
+                .attr("x", 0)
+                .attr("y", currentY+21)
+                .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
+                .attr("height", 16)
+                .style("fill", "#99070d" );
 
             //optimal
             fnirsSessionsGroup.append("rect")
                 .attr("x", 0)
-                .attr("y", currentY+21)
+                .attr("y", currentY+37)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Optimal"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
                 .style("fill", "#eb5a4d" );
-
-            //Overload
-            fnirsSessionsGroup.append("rect")
-                .attr("x", 0)
-                .attr("y", currentY+37)
-                .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
-                .attr("height", 16)
-                .style("fill", "#99070d" );
 
             //underload
             fnirsSessionsGroup.append("rect")
