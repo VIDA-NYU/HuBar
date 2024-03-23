@@ -674,43 +674,43 @@ function updateFnirsAgg(){
 
 
     fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("workload"))
-        .attr("y", -23)
+        .attr("x",categoryXScaleFnirs("workload")+23)
+        .attr("y", -16)
         .attr("height", 9)
         .attr("width", 9)
         .attr("fill", "#99070d");
     
     fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs("workload")+13)
-        .attr("y", -15)
+        .attr("x",categoryXScaleFnirs("workload")+36)
+        .attr("y", -8)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Overload");
 
     fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("attention"))
-        .attr("y",-23)
+        .attr("x",categoryXScaleFnirs("attention")+23)
+        .attr("y",-16)
         .attr("height", 9)
         .attr("width", 9)
         .attr("fill", "#eb5a4d");
 
     fnirsGroup.append("text")     
-        .attr("x", categoryXScaleFnirs("attention") + 13)
-        .attr("y",-15)
+        .attr("x", categoryXScaleFnirs("attention") + 36)
+        .attr("y",-8)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Optimal");
 
     fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("perception"))
-        .attr("y", -23)
+        .attr("x",categoryXScaleFnirs("perception")+23)
+        .attr("y", -16)
         .attr("height", 9)
         .attr("width", 9)
         .attr("fill", "#ffb0b0");
     
     fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs("perception")+13)
-        .attr("y", -15)
+        .attr("x",categoryXScaleFnirs("perception")+36)
+        .attr("y", -8)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Underload");
@@ -738,13 +738,20 @@ function updateFnirsAgg(){
     }
     
     // Create axes
-    const xAxis = d3.axisTop(categoryXScaleFnirs);
+    const xAxis = d3.axisTop(categoryXScaleFnirs)
+        .tickFormat(function(d) {
+            if (d === "workload") 
+                return "Memory"; // Change "workload" to "Memory"
+             else 
+                return d.charAt(0).toUpperCase() + d.slice(1); // Capitalize other labels    
+        });
+
     const yAxis = d3.axisLeft(yScaleFnirs);
 
     // Append axes to SVG
     fnirsGroup.append('g')
         .attr('class', 'x-axis axisHide')
-        .attr('transform', `translate(0, -27)`)
+        .attr('transform', `translate(-19, -21)`)
         .call(xAxis)
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif");
@@ -1364,7 +1371,14 @@ function updateFnirsSessions(){
     let xScaleFnirsSessions=  d3.scaleLinear()
                                 .domain([0.0,1.0])
                                 .range([0, fnirsSessionsGroup.attr("width")/2 - 5 ])
+    
+    fnirsGroup.selectAll(".workload").classed("hide-workload",true)
+    fnirsGroup.selectAll(".attention").classed("hide-workload", true)
+    fnirsGroup.selectAll(".perception").classed("hide-workload",true)
 
+    fnirsGroup.selectAll("."+selectedFnirs).classed("hide-workload",false)
+
+    
     let xScaleCorrelations = d3.scaleLinear()
         .domain([-1,1])
         .range([fnirsSessionsGroup.attr("width")/2, fnirsSessionsGroup.attr("width")])

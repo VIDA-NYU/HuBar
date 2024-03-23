@@ -224,5 +224,7 @@ body{
 
 }
 
-
+.hide-workload{
+    opacity: 0.1;
+}
 
