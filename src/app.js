@@ -33,8 +33,8 @@ const stepColorScale = d3.scaleOrdinal()
 
 const margins={ 
     scatterplot:{ top:40, left:30, right:110, bottom:15},
-    fnirs:{top:46, left:47, right:10, bottom:10},
-    timeDist:{top:46, left:5, right:5, bottom: 10},
+    fnirs:{top:50, left:47, right:10, bottom:10},
+    timeDist:{top:30, left:30, right:30, bottom: 10},
     eventTimeline:{top:37, left:55, right:16, bottom:20},
     matrix:{top:37, left:5, right:5, bottom:20},
     fnirsSessions:{top:37, left:10, right:10, bottom:20},   
@@ -172,20 +172,63 @@ function initializeContainers(){
         .attr("width", scatterplotDiv.node().clientWidth -margins.scatterplot.left - margins.scatterplot.right )
         .attr("height", scatterplotDiv.node().clientHeight - margins.scatterplot.top - margins.scatterplot.bottom);
 
-      
-        
-    //eventtimeline
-    let eventTimelineDiv= d3.select("#event-timeline-container")  
-    eventTimelineSvg = eventTimelineDiv
-        .append("svg")
-        .attr("width", eventTimelineDiv.node().clientWidth)
-        .attr("height", 200)
-        
-    eventTimelineGroup= eventTimelineSvg.append("g")
-        .attr("transform", `translate(${margins.eventTimeline.left}, ${margins.eventTimeline.top})`)
-        .attr("width", eventTimelineDiv.node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right )
-        .attr("height", eventTimelineDiv.node().clientHeight - margins.eventTimeline.top - margins.eventTimeline.bottom);    
+    
+    //fnirs agg legend
 
+    let legendSvg = d3.select("#legend-svg")
+    
+    legendSvg.append("text")
+    .attr("x",5)
+    .attr("y", 13)
+    .attr("text-anchor","start")
+    .style("font-size","11px" )
+    .text("Mental")
+    .append("tspan")
+    .attr("x", 7)
+    .attr("dy","1.2em")
+    .text("State"); 
+
+    legendSvg.append("rect")
+        .attr("x",45)
+        .attr("y", 10)
+        .attr("height", 9)
+        .attr("width", 9)
+        .attr("fill", "#99070d");
+    
+    legendSvg.append("text")
+        .attr("x",55)
+        .attr("y", 18)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Overload");
+
+    legendSvg.append("rect")
+        .attr("x",105)
+        .attr("y",10)
+        .attr("height", 9)
+        .attr("width", 9)
+        .attr("fill", "#eb5a4d");
+
+    legendSvg.append("text")     
+        .attr("x", 115)
+        .attr("y",18)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Optimal");
+
+    legendSvg.append("rect")
+        .attr("x",160)
+        .attr("y", 10)
+        .attr("height", 8)
+        .attr("width", 8)
+        .attr("fill", "#ffb0b0");
+    
+    legendSvg.append("text")
+        .attr("x",170)
+        .attr("y", 18)
+        .attr("text-anchor","start")
+        .style("font-size","10px" )
+        .text("Underload");
 
     //fnirs agg 
     let fnirsDiv= d3.select("#fnirs-agg-container")  
@@ -198,7 +241,6 @@ function initializeContainers(){
         .attr("width", fnirsDiv.node().clientWidth -margins.fnirs.left - margins.fnirs.right )
         .attr("height", 400);    
 
-
     //add font
     let fontImportURL = 'https://fonts.googleapis.com/css?family=Lato|Open+Sans|Oswald|Raleway|Roboto|Indie+Flower|Gamja+Flower';
 
@@ -209,15 +251,27 @@ function initializeContainers(){
         .attr("type", "text/css")
         .text('@import url("' + fontImportURL + '");');
     
-    let timeDistDiv= d3.select("#time-distribution-container")  
+    let timeDistDiv= d3.select("#time-distribution-container") 
     timeDistSvg = timeDistDiv.append("svg")
         .attr("width", timeDistDiv.node().clientWidth)
         .attr("height", 500)
 
     timeDistGroup = timeDistSvg.append("g")
         .attr("transform", `translate(${margins.timeDist.left}, ${margins.timeDist.top})`)
-        .attr("width", timeDistDiv.node().clientWidth -margins.timeDist.left - margins.timeDist.right )
+        .attr("width", timeDistSvg.attr("width") - margins.timeDist.left - margins.timeDist.right )
         .attr("height", 400);    
+
+    //eventtimeline
+    let eventTimelineDiv= d3.select("#event-timeline-container")  
+    eventTimelineSvg = eventTimelineDiv
+        .append("svg")
+        .attr("width", eventTimelineDiv.node().clientWidth)
+        .attr("height", 200)
+        
+    eventTimelineGroup= eventTimelineSvg.append("g")
+        .attr("transform", `translate(${margins.eventTimeline.left}, ${margins.eventTimeline.top})`)
+        .attr("width", eventTimelineDiv.node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right )
+        .attr("height", eventTimelineDiv.node().clientHeight - margins.eventTimeline.top - margins.eventTimeline.bottom);    
 
     //matrix
     let matrixDiv= d3.select("#matrix-container")  
@@ -687,51 +741,7 @@ function updateFnirsAgg(){
         .domain(["workload", "attention", "perception"])
         .range([0, fnirsGroup.attr("width")])
         .paddingInner(0.20)
-
-    /*
-    fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs.range()[1]+5)
-        .attr("y", -36)
-        .attr("height", 9)
-        .attr("width", 9)
-        .attr("fill", "#99070d");
     
-    fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs.range()[1]+15)
-        .attr("y", -28)
-        .attr("text-anchor","start")
-        .style("font-size","10px" )
-        .text("Overload");
-
-    fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs.range()[1]+5)
-        .attr("y",-26)
-        .attr("height", 9)
-        .attr("width", 9)
-        .attr("fill", "#eb5a4d");
-
-    fnirsGroup.append("text")     
-        .attr("x", categoryXScaleFnirs.range()[1]+15)
-        .attr("y",-18)
-        .attr("text-anchor","start")
-        .style("font-size","10px" )
-        .text("Optimal");
-
-    fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs.range()[1]-60)
-        .attr("y", -36)
-        .attr("height", 8)
-        .attr("width", 8)
-        .attr("fill", "#ffb0b0");
-    
-    fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs.range()[1]-50)
-        .attr("y", -28)
-        .attr("text-anchor","start")
-        .style("font-size","10px" )
-        .text("Underload");
-    */
-
     const xScaleFnirs = d3.scaleLinear()
         .domain([0, 1]) // proportion scale
         .range([0, categoryXScaleFnirs.bandwidth()*0.49]);
@@ -771,9 +781,10 @@ function updateFnirsAgg(){
     // Append axes to SVG
     fnirsGroup.append('g')
         .attr('class', 'x-axis axisHide')
-        .attr('transform', `translate(${-categoryXScaleFnirs.bandwidth()*0.30}, 4)`)
+        .attr('transform', `translate(${-categoryXScaleFnirs.bandwidth()*0.25}, -15)`)
         .call(xAxis)
         .selectAll(".tick")
+        .attr("class", (d)=> "tick "+d)
         .on("click", (event, d)=>{
             d3.select("#fnirs-dropdown").property("value",d);
             selectedFnirs=d;
@@ -786,6 +797,23 @@ function updateFnirsAgg(){
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif")
         .style("font-size",  "12px")
+
+    
+    categoryXScaleFnirs.domain().forEach((domain)=>{
+        fnirsGroup.append('text')
+            .attr('x', categoryXScaleFnirs(domain) + 0.70 * categoryXScaleFnirs.bandwidth())
+            .attr('y',-30)
+            .style("font-family","Open Sans, Roboto, sans-serif")
+            .style("font-size",  "12px")
+            .style("font-weight","bold")
+            .attr("class",domain)
+            .text("Error")
+            .append("tspan")
+            .attr("dy","1.2em")
+            .attr("x", categoryXScaleFnirs(domain) + 0.60 * categoryXScaleFnirs.bandwidth())
+            .text(" Contribution")
+    })
+
 
     fnirsGroup.append('g')
         .attr('class', 'y-axis axisHide')
@@ -877,13 +905,23 @@ function updateFnirsAgg(){
         if(selectedGroupby=="trial"){
             correlations = dataFiles[8].trial_correlations
             groupArray = uniqueTrials
+            if (selectedFilter!="all"){
+                let trialFrequency = {};
+                dataFiles[4].forEach(obj => {
+                    trialFrequency[obj.trial] = (trialFrequency[obj.trial] || 0) + 1;
+                });
+                //Sort trials based on their frequencies
+                let topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
+                groupArray = topTrialValues.map(str => parseInt(str))
+            }
+
         }
         let selectedItemsArray =  selectedGroupby=="trial" ? selectedItems.map(obj => obj.trial) : selectedItems.map(obj => obj.subject) 
 
         groupArray.forEach((groupId)=>{
             if (selectedItems.length>0 && !selectedItemsArray.includes(groupId))
                 return   
-
+            
             let currentY = selectedGroupby=="trial" ? yScaleFnirs("Trial "+groupId) : yScaleFnirs("Sub "+groupId) 
             currentY += yScaleFnirs.bandwidth()/2
 
@@ -924,17 +962,11 @@ function updateFnirsAgg(){
                             .attr("fill", "#ffb0b0")
                             .attr("width", 9)
                             .attr("height", 9)
-                            .attr("class",fnirsVariable);
-                    
+                            .attr("class",fnirsVariable);         
                 }
             })
         })
 
-        /*
-        //correlations
-
-*/
-    
     // Create bars attention
     fnirsGroup.selectAll('.attention.overload')
         .data(proportions.attention)
@@ -1117,25 +1149,24 @@ function updateTimeDistribution(){
         });
         //Sort trials based on their frequencies
         topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
-        topTrialValues = topTrialValues.map(str => parseInt(str))}
-    console.log(topTrialValues)
-
+        topTrialValues = topTrialValues.map(str => parseInt(str))
+    }
+    else
+        topTrialValues=uniqueTrials;
     // Store filtered keys in an object
-        Object.keys(dataFiles[9]).forEach((subjectVal)=>{
-            filteredTimeFile[subjectVal] = {}
-            topTrialValues.forEach(trialVal => {
-            if (trialVal in dataFiles[9][subjectVal]) 
-                filteredTimeFile[subjectVal][trialVal] = dataFiles[9][subjectVal][trialVal];
-            //correct erroneous data
-            if (trialVal == "4" && subjectVal=="8708") 
-                filteredTimeFile[subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
+    Object.keys(dataFiles[9]).forEach((subjectVal)=>{
+        filteredTimeFile[subjectVal] = {}
+        topTrialValues.forEach(trialVal => {
+        if (trialVal in dataFiles[9][subjectVal]) 
+            filteredTimeFile[subjectVal][trialVal] = dataFiles[9][subjectVal][trialVal];
+        //correct erroneous data
+        if (trialVal == "4" && subjectVal=="8708") 
+            filteredTimeFile[subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
         })
     })
-    
-    console.log(filteredTimeFile)
+
     
     for (let subjectId in filteredTimeFile) {
-        console.log(subjectId)
         for (let trialId in filteredTimeFile[subjectId]) {
             filteredTimeData.push({
                 trial: trialId,
@@ -1145,7 +1176,6 @@ function updateTimeDistribution(){
         }
     }
 
-    console.log(filteredTimeData)
     // Check and filter if there's a matching subject and trial in selectedItems
     if (selectedItems.length>0){
         filteredTimeData = filteredTimeData.filter(obj => {
@@ -1191,7 +1221,7 @@ function updateTimeDistribution(){
             return indexA - indexB;
         });
     }
-    const totalHeight = averageTimeData.length * 30;
+    const totalHeight = averageTimeData.length * 50;
     const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
 
     timeDistSvg.attr('height', newHeight+50);
@@ -1203,7 +1233,7 @@ function updateTimeDistribution(){
         yScaleTimeDist = d3.scaleBand()
             .domain(averageTimeData.map(d => `Trial ${d.trial}`))
             .range([0, totalHeight])
-            .paddingInner(0.3)
+            .paddingInner(0.4)
             .paddingOuter(0.1);
     }
     else{
@@ -1214,20 +1244,27 @@ function updateTimeDistribution(){
             .paddingOuter(0.1);
     }
 
-    console.log(yScaleTimeDist.domain())
     let xScaleTimeDist = d3.scaleLinear()
         .domain([0,maxTimestamp])
-        .range([0, timeDistGroup.attr("width")])
+        .range([0, d3.select("#time-distribution-container").node().clientWidth - margins.timeDist.left - margins.timeDist.right])
 
     timeDistGroup.selectAll("rect")
         .data(averageTimeData)
         .enter()
         .append("rect")
-        .attr("x", margins.timeDist.left)
-        .attr("y", (d) => {return selectedGroupby=="trial" ? yScaleTimeDist("Trial "+d.trial): yScaleTimeDist("Sub "+d.subject)})
-        .attr("height", 20)
+        .attr("x", 0)
+        .attr("y", (d) => {return selectedGroupby=="trial" ? yScaleTimeDist("Trial "+d.trial) +10: yScaleTimeDist("Sub "+d.subject)+10})
+        .attr("height", 15)
         .attr("width", d => xScaleTimeDist(d.average))
         .attr("fill","#737373")
+
+    timeDistGroup.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(0, 0)`)
+        .call(d3.axisTop(xScaleTimeDist)
+            .tickValues([0, maxTimestamp/2, maxTimestamp])
+            .tickFormat(d => Math.round(d/60) + "min"));
+
     
 }
 
@@ -1423,9 +1460,9 @@ function updateEventTimeline(){
                 .attr("rx",5)
                 .attr("ry",5)
                 .attr("height", bbox.height + 6)
-                .style("fill", "#FFD166");
+                .style("fill", "none");
             
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 4).attr("y", currentY+3).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","#05668D")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 4).attr("y", currentY+3).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             currentY+=25;
 
             errorData.forEach(data => {
@@ -1624,11 +1661,6 @@ function updateFnirsSessions(){
     fnirsGroup.selectAll(".perception").classed("hide-workload",true)
 
     fnirsGroup.selectAll("."+selectedFnirs).classed("hide-workload",false)
-
-    
-    let xScaleCorrelations = d3.scaleLinear()
-        .domain([-1,1])
-        .range([fnirsSessionsGroup.attr("width")/2, fnirsSessionsGroup.attr("width")])
     
     selectedItems.forEach((item)=>{
         let tempObject = dataFiles[4].filter(obj => obj.subject == item.subject && obj.trial == item.trial);
@@ -1645,7 +1677,6 @@ function updateFnirsSessions(){
     let currentY = margins.fnirsSessions.top; 
     let groupArray = uniqueSubjects
     if(selectedGroupby=="trial"){
-        //correlations = dataFiles[8].trial_correlations
         groupArray = uniqueTrials
     }
     groupArray.forEach((id)=>{
@@ -1820,7 +1851,6 @@ function updateMatrix(){
             return
         groupedObj.forEach((session)=>{
             if (session.missing){
-                console.log("Missing", session)
                 let displayMissing= `Missing info for Subject:${session.subject} Trial:${session.trial}`
                 let missingText = matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
                 let bbox = missingText.node().getBBox();
@@ -1832,7 +1862,7 @@ function updateMatrix(){
                     .attr("rx",5)
                     .attr("ry",5)
                     .attr("height", bbox.height + 6)
-                    .style("fill", "#FFB3B2");
+                    .style("fill", "none");
 
                 matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
                 if(matrixSvg.attr("height")<=currentY+200){

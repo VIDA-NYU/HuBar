@@ -24,6 +24,7 @@ body{
     grid-template-columns: 3.5fr 8.5fr;
     overflow-y: hidden;
     padding: 0.5%;
+    overflow-x: hidden;
 }
 
 
@@ -44,7 +45,7 @@ body{
 #fnirs-agg-time-container{
     margin-left: 0.75%;
     overflow-y: scroll;
-    overflow-x: hidden;
+    overflow-x: clip;
     display: grid;
     grid-template-columns: 8fr 2fr;
 }
@@ -175,13 +176,14 @@ body{
 }
 
 .lasso path {
-    stroke: #beaed4;
-    stroke-width:3px;
+    stroke: black;
+    stroke-width:2px;
+    stroke-opacity: 0.5;
 }
 
 .lasso .drawn {
-    fill:  #beaed4;
-    fill-opacity:.3 ;
+    fill:  #737373;
+    fill-opacity:.15 ;
 }
 
 
@@ -236,15 +238,10 @@ body{
     opacity: 0.1;
 }
 
-#workload-title{
+.container-title{
     margin: none;
-    position: absolute;
-    left: 0%;
-    top:0%;
-    padding: 4px;
-    border-right:  1px solid black;
-    border-bottom: 1px solid black;
-    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
     z-index: 100;
     font-size: 14px;
     font-weight: bold;
