@@ -238,6 +238,9 @@ body{
     opacity: 0.1;
 }
 
+.hide-bar{
+    opacity: 0.1;
+}
 .container-title{
     margin: none;
     margin-top: 10px;

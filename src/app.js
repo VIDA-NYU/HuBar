@@ -1357,12 +1357,13 @@ function updateEventTimeline(){
                 let bbox = missingText.node().getBBox();
                 
                 eventTimelineGroup.append("rect")
-                    .attr("x", bbox.x - 3)
-                    .attr("y", bbox.y - 3)
-                    .attr("width", bbox.width + 6)
+                    .attr("x", bbox.x - 2)
+                    .attr("y", bbox.y - 2)
+                    .attr("width", bbox.width + 4)
                     .attr("rx",5)
                     .attr("ry",5)
-                    .attr("height", bbox.height + 6)
+                    .attr("height", bbox.height + 4)
+                    .attr("stroke", "black")
                     .style("fill", "none");
 
                 eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
@@ -1449,20 +1450,21 @@ function updateEventTimeline(){
         
            let sessionTitle
             if (selectedGroupby=="trial")
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 4).attr("y", currentY+3).text("Sub: "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Sub "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             else
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 4).attr("y", currentY+3).text("Trial: "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Trial "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             let bbox = sessionTitle.node().getBBox();
             eventTimelineGroup.append("rect")
-                .attr("x", bbox.x - 3)
-                .attr("y", bbox.y - 3)
-                .attr("width", bbox.width + 6)
+                .attr("x", bbox.x - 2)
+                .attr("y", bbox.y - 2)
+                .attr("width", bbox.width + 4)
                 .attr("rx",5)
                 .attr("ry",5)
-                .attr("height", bbox.height + 6)
+                .attr("height", bbox.height + 4)
+                .attr("stroke", "black")
                 .style("fill", "none");
             
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 4).attr("y", currentY+3).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 6).attr("y", currentY+3).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             currentY+=25;
 
             errorData.forEach(data => {
@@ -1580,7 +1582,9 @@ function updateEventTimeline(){
 
                 if (e.selection == null){
                     brushedSubject = null;
-                    brushedTrial = null;    
+                    brushedTrial = null; 
+                    d3.selectAll(".hide-bar")
+                        .classed("hide-bar",false);
                     updateHl2Details();
                     return
                 }
@@ -1597,6 +1601,13 @@ function updateEventTimeline(){
                     videoPlayer.play();
                 });
                 videoPlayer.load();
+
+                d3.selectAll(".error-session-bar")
+                    .classed("hide-bar",true);
+                d3.selectAll(".fnirs-session-bar")
+                    .classed("hide-bar",true);
+                d3.selectAll(".t"+brushedTrial+"-s"+brushedSubject)
+                    .classed("hide-bar",false)
                 updateHl2Details();
 
                 let sessionObject = dataFiles[1].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)[0]
@@ -1715,7 +1726,8 @@ function updateFnirsSessions(){
                 .attr("y", currentY+21)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
-                .style("fill", "#99070d" );
+                .style("fill", "#99070d" )
+                .attr("class","fnirs-session-bar t"+sessionObject.trial+"-s"+sessionObject.subject);
 
             //optimal
             fnirsSessionsGroup.append("rect")
@@ -1723,7 +1735,8 @@ function updateFnirsSessions(){
                 .attr("y", currentY+37)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Optimal"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
-                .style("fill", "#eb5a4d" );
+                .style("fill", "#eb5a4d" )
+                .attr("class","fnirs-session-bar t"+sessionObject.trial+"-s"+sessionObject.subject);
 
             //underload
             fnirsSessionsGroup.append("rect")
@@ -1731,7 +1744,8 @@ function updateFnirsSessions(){
                 .attr("y", currentY+53)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Underload"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
-                .style("fill", "#ffb0b0" );
+                .style("fill", "#ffb0b0" )                
+                .attr("class","fnirs-session-bar t"+sessionObject.trial+"-s"+sessionObject.subject);
 
 
             let errorData = dataFiles[5].filter(obj => obj.subject_id == sessionObject.subject && obj.trial_id == sessionObject.trial)[0];
@@ -1743,7 +1757,8 @@ function updateFnirsSessions(){
                     .attr("y", currentY+21)
                     .attr("width", xScaleFnirsSessions((100-errorData['percentage_error'])/100 ))
                     .attr("height", 16)
-                    .style("fill", "#AEAEAE" );
+                    .style("fill", "#AEAEAE" )
+                    .attr("class","error-session-bar t"+errorData.trial_id+"-s"+errorData.subject_id);
 
                 //Error
                 fnirsSessionsGroup.append("rect")
@@ -1751,7 +1766,8 @@ function updateFnirsSessions(){
                     .attr("y", currentY+36)
                     .attr("width", xScaleFnirsSessions(errorData['percentage_error']/100 ))
                     .attr("height", 16)
-                    .style("fill", "black" );
+                    .style("fill", "black" )
+                    .attr("class","error-session-bar t"+errorData.trial_id+"-s"+errorData.subject_id);
 
             }
 
@@ -1856,13 +1872,14 @@ function updateMatrix(){
                 let bbox = missingText.node().getBBox();
                 
                 matrixGroup.append("rect")
-                    .attr("x", bbox.x - 3)
-                    .attr("y", bbox.y - 3)
-                    .attr("width", bbox.width + 6)
+                    .attr("x", bbox.x - 2)
+                    .attr("y", bbox.y - 2)
+                    .attr("width", bbox.width + 4)
                     .attr("rx",5)
                     .attr("ry",5)
-                    .attr("height", bbox.height + 6)
-                    .style("fill", "none");
+                    .attr("height", bbox.height + 4)
+                    .style("fill", "none")
+                    .attr("stroke", "black");
 
                 matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
                 if(matrixSvg.attr("height")<=currentY+200){
