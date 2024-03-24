@@ -12,6 +12,7 @@ let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
     matrixSvg, matrixGroup,
     hl2Svg, hl2Group,
     fnirsSessionsSvg, fnirsSessionsGroup,
+    timeDistSvg, timeDistGroup,
     selectedGaze, selectedImu;
 
 let brushedTrial = null;
@@ -32,12 +33,13 @@ const stepColorScale = d3.scaleOrdinal()
 
 const margins={ 
     scatterplot:{ top:40, left:30, right:110, bottom:15},
-    fnirs:{top:50, left:35, right:0, bottom:15},
-    video:{ top:0, left:0, right:0, bottom:0},
+    fnirs:{top:46, left:47, right:10, bottom:10},
+    timeDist:{top:46, left:5, right:5, bottom: 10},
     eventTimeline:{top:37, left:55, right:16, bottom:20},
     matrix:{top:37, left:5, right:5, bottom:20},
-    fnirsSessions:{top:37, left:10, right:10, bottom:20},
-    hl2:{top:10, left:10, right:10, bottom:10}
+    fnirsSessions:{top:37, left:10, right:10, bottom:20},   
+    hl2:{top:10, left:10, right:10, bottom:10},
+    video:{ top:0, left:0, right:0, bottom:0},
 }
 
 Promise.all([
@@ -59,6 +61,8 @@ Promise.all([
         initializeContainers();
         updateScatterplot();
         updateFnirsAgg();
+        updateTimeDistribution();
+
     })
     .catch(function(err) {
     console.log(err)
@@ -88,6 +92,7 @@ function initializeContainers(){
         updateScatterplot();
         selectedItems = [];
         updateFnirsAgg();
+        updateTimeDistribution();
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
@@ -101,6 +106,7 @@ function initializeContainers(){
         updateScatterplot();
         selectedItems = [];
         updateFnirsAgg();
+        updateTimeDistribution();
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
@@ -114,6 +120,7 @@ function initializeContainers(){
         updateScatterplot();
         selectedItems = [];
         updateFnirsAgg();
+        updateTimeDistribution();
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
@@ -192,7 +199,7 @@ function initializeContainers(){
         .attr("height", 400);    
 
 
-
+    //add font
     let fontImportURL = 'https://fonts.googleapis.com/css?family=Lato|Open+Sans|Oswald|Raleway|Roboto|Indie+Flower|Gamja+Flower';
 
     let defs = fnirsSvg.append("defs");
@@ -202,7 +209,16 @@ function initializeContainers(){
         .attr("type", "text/css")
         .text('@import url("' + fontImportURL + '");');
     
-    
+    let timeDistDiv= d3.select("#time-distribution-container")  
+    timeDistSvg = timeDistDiv.append("svg")
+        .attr("width", timeDistDiv.node().clientWidth)
+        .attr("height", 500)
+
+    timeDistGroup = timeDistSvg.append("g")
+        .attr("transform", `translate(${margins.timeDist.left}, ${margins.timeDist.top})`)
+        .attr("width", timeDistDiv.node().clientWidth -margins.timeDist.left - margins.timeDist.right )
+        .attr("height", 400);    
+
     //matrix
     let matrixDiv= d3.select("#matrix-container")  
     matrixSvg = matrixDiv
@@ -216,7 +232,7 @@ function initializeContainers(){
         .attr("height", matrixDiv.node().clientHeight - margins.matrix.top - margins.matrix.bottom);
     
     //fnirssessions
-    let fnirsSessionsDiv= d3.select("#fnirs-sesions-container")  
+    let fnirsSessionsDiv= d3.select("#fnirs-sessions-container")  
     
     fnirsSessionsSvg = fnirsSessionsDiv
         .append("svg")
@@ -307,8 +323,6 @@ function initializeContainers(){
                 consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
             }
         });
-        console.log(trial)
-
         maxTimestamp= Math.max(consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedStepData'] = consolidatedStepData;
     })
@@ -552,6 +566,7 @@ function updateScatterplot(){
             lassoBrush.items().classed("unselectedscatter",false);
         }
         updateFnirsAgg();
+        updateTimeDistribution();
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
@@ -597,6 +612,7 @@ function updateScatterplot(){
                         selectedItems.push({trial:sample.trial ,subject:sample.subject})
                     })
                     updateFnirsAgg();
+                    updateTimeDistribution();
                     updateEventTimeline();
                     updateMatrix();
                     updateFnirsSessions();
@@ -660,65 +676,69 @@ function updateFnirsAgg(){
         fnirsFinalData = fnirsFilteredData
 
     const proportions = calculateProportions(fnirsFinalData);
-    const totalHeight = proportions.workload.length * 55;
+    const totalHeight = proportions.workload.length * 50;
     const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
 
-    fnirsSvg.attr('height', newHeight+170);
-    fnirsGroup.attr('height', newHeight+60);
+    fnirsSvg.attr('height', newHeight+50);
+    fnirsGroup.attr('height', newHeight+40);
     
 
     const categoryXScaleFnirs = d3.scaleBand()
         .domain(["workload", "attention", "perception"])
-        .range([margins.fnirs.left, fnirsSvg.attr("width")- margins.fnirs.left - margins.fnirs.right])
-        .padding(0.1)
+        .range([0, fnirsGroup.attr("width")])
+        .paddingInner(0.20)
 
-
+    /*
     fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("workload")+23)
-        .attr("y", -16)
+        .attr("x",categoryXScaleFnirs.range()[1]+5)
+        .attr("y", -36)
         .attr("height", 9)
         .attr("width", 9)
         .attr("fill", "#99070d");
     
     fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs("workload")+36)
-        .attr("y", -8)
+        .attr("x",categoryXScaleFnirs.range()[1]+15)
+        .attr("y", -28)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Overload");
 
     fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("attention")+23)
-        .attr("y",-16)
+        .attr("x",categoryXScaleFnirs.range()[1]+5)
+        .attr("y",-26)
         .attr("height", 9)
         .attr("width", 9)
         .attr("fill", "#eb5a4d");
 
     fnirsGroup.append("text")     
-        .attr("x", categoryXScaleFnirs("attention") + 36)
-        .attr("y",-8)
+        .attr("x", categoryXScaleFnirs.range()[1]+15)
+        .attr("y",-18)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Optimal");
 
     fnirsGroup.append("rect")
-        .attr("x",categoryXScaleFnirs("perception")+23)
-        .attr("y", -16)
-        .attr("height", 9)
-        .attr("width", 9)
+        .attr("x",categoryXScaleFnirs.range()[1]-60)
+        .attr("y", -36)
+        .attr("height", 8)
+        .attr("width", 8)
         .attr("fill", "#ffb0b0");
     
     fnirsGroup.append("text")
-        .attr("x",categoryXScaleFnirs("perception")+36)
-        .attr("y", -8)
+        .attr("x",categoryXScaleFnirs.range()[1]-50)
+        .attr("y", -28)
         .attr("text-anchor","start")
         .style("font-size","10px" )
         .text("Underload");
-    
+    */
 
     const xScaleFnirs = d3.scaleLinear()
         .domain([0, 1]) // proportion scale
-        .range([0, categoryXScaleFnirs.bandwidth()]);
+        .range([0, categoryXScaleFnirs.bandwidth()*0.49]);
+    
+    const xScaleCorrelations=d3.scaleLinear()
+        .domain([-1,1])
+        .range([categoryXScaleFnirs.bandwidth()*0.51, categoryXScaleFnirs.bandwidth()])
 
     let yScaleFnirs
 
@@ -741,9 +761,9 @@ function updateFnirsAgg(){
     const xAxis = d3.axisTop(categoryXScaleFnirs)
         .tickFormat(function(d) {
             if (d === "workload") 
-                return "Memory"; // Change "workload" to "Memory"
+                return "Memory %"; // Change "workload" to "Memory"
              else 
-                return d.charAt(0).toUpperCase() + d.slice(1); // Capitalize other labels    
+                return d.charAt(0).toUpperCase() + d.slice(1)+" %"; // Capitalize other labels    
         });
 
     const yAxis = d3.axisLeft(yScaleFnirs);
@@ -751,24 +771,25 @@ function updateFnirsAgg(){
     // Append axes to SVG
     fnirsGroup.append('g')
         .attr('class', 'x-axis axisHide')
-        .attr('transform', `translate(-19, -21)`)
+        .attr('transform', `translate(${-categoryXScaleFnirs.bandwidth()*0.30}, 4)`)
         .call(xAxis)
         .selectAll(".tick")
         .on("click", (event, d)=>{
             d3.select("#fnirs-dropdown").property("value",d);
             selectedFnirs=d;
             updateFnirsAgg();
+            updateTimeDistribution();
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
         })
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif")
-
+        .style("font-size",  "12px")
 
     fnirsGroup.append('g')
         .attr('class', 'y-axis axisHide')
-        .attr('transform', `translate(40, 0)`)
+        .attr('transform', `translate(5, 0)`)
         .call(yAxis)
         .selectAll(".tick")
         .on("click",(event, d)=>{
@@ -790,12 +811,14 @@ function updateFnirsAgg(){
                 selectedItems.push({trial:sample.trial ,subject:sample.subject})
             })
             updateFnirsAgg();
+            updateTimeDistribution();
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
 
         })
         .selectAll("text")
+        .style("font-size", "9px")
         .style("font-family","Open Sans, Roboto, sans-serif");
     
     
@@ -848,8 +871,69 @@ function updateFnirsAgg(){
         .attr('width', d => xScaleFnirs(d.underload))
         .attr('height', yScaleFnirs.bandwidth()/3)
         .attr('fill', "#ffb0b0");
+        
+        let groupArray = uniqueSubjects
+        let correlations = dataFiles[8].subject_correlations
+        if(selectedGroupby=="trial"){
+            correlations = dataFiles[8].trial_correlations
+            groupArray = uniqueTrials
+        }
+        let selectedItemsArray =  selectedGroupby=="trial" ? selectedItems.map(obj => obj.trial) : selectedItems.map(obj => obj.subject) 
 
-    
+        groupArray.forEach((groupId)=>{
+            if (selectedItems.length>0 && !selectedItemsArray.includes(groupId))
+                return   
+
+            let currentY = selectedGroupby=="trial" ? yScaleFnirs("Trial "+groupId) : yScaleFnirs("Sub "+groupId) 
+            currentY += yScaleFnirs.bandwidth()/2
+
+            categoryXScaleFnirs.domain().forEach((fnirsVariable)=>{
+                let currentX = categoryXScaleFnirs(fnirsVariable)
+
+                fnirsGroup.append('g')
+                    .attr('class', "x-axis "+fnirsVariable)
+                    .attr('transform', `translate(${currentX}, ${currentY})`)
+                    .call(d3.axisBottom(xScaleCorrelations)
+                    .tickValues([-1, -0.5, 0, 0.5, 1]));
+
+                if(correlations[groupId]){
+                    let optimalCorr = correlations[groupId][fnirsVariable+"_Optimal"]
+                    let overloadCorr = correlations[groupId][fnirsVariable+"_Overload"]
+                    let underloadCorr = correlations[groupId][fnirsVariable+"_Underload"]
+                    if(optimalCorr != null)
+                        fnirsGroup.append("rect")
+                            .attr("x", currentX + xScaleCorrelations(optimalCorr))
+                            .attr("y", currentY - 9)
+                            .attr("fill", "#eb5a4d")
+                            .attr("width", 9)
+                            .attr("height", 9)
+                            .attr("class",fnirsVariable);
+        
+                    if(overloadCorr != null)
+                        fnirsGroup.append("rect")
+                            .attr("x", currentX + xScaleCorrelations(overloadCorr))
+                            .attr("y", currentY - 9)
+                            .attr("fill", "#99070d")
+                            .attr("width", 9)
+                            .attr("height", 9)
+                            .attr("class",fnirsVariable);
+                    if(underloadCorr != null)
+                        fnirsGroup.append("rect")
+                            .attr("x",currentX + xScaleCorrelations(underloadCorr))
+                            .attr("y", currentY - 9)
+                            .attr("fill", "#ffb0b0")
+                            .attr("width", 9)
+                            .attr("height", 9)
+                            .attr("class",fnirsVariable);
+                    
+                }
+            })
+        })
+
+        /*
+        //correlations
+
+*/
     
     // Create bars attention
     fnirsGroup.selectAll('.attention.overload')
@@ -1021,6 +1105,132 @@ function calculateProportions(data) {
     return proportions;
 }
 
+function updateTimeDistribution(){
+    timeDistGroup.selectAll('*').remove();
+    let topTrialValues;
+    let filteredTimeFile = {};
+    let filteredTimeData = [];
+    if (selectedFilter!="all"){
+        let trialFrequency = {};
+        dataFiles[4].forEach(obj => {
+            trialFrequency[obj.trial] = (trialFrequency[obj.trial] || 0) + 1;
+        });
+        //Sort trials based on their frequencies
+        topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
+        topTrialValues = topTrialValues.map(str => parseInt(str))}
+    console.log(topTrialValues)
+
+    // Store filtered keys in an object
+        Object.keys(dataFiles[9]).forEach((subjectVal)=>{
+            filteredTimeFile[subjectVal] = {}
+            topTrialValues.forEach(trialVal => {
+            if (trialVal in dataFiles[9][subjectVal]) 
+                filteredTimeFile[subjectVal][trialVal] = dataFiles[9][subjectVal][trialVal];
+            //correct erroneous data
+            if (trialVal == "4" && subjectVal=="8708") 
+                filteredTimeFile[subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
+        })
+    })
+    
+    console.log(filteredTimeFile)
+    
+    for (let subjectId in filteredTimeFile) {
+        console.log(subjectId)
+        for (let trialId in filteredTimeFile[subjectId]) {
+            filteredTimeData.push({
+                trial: trialId,
+                subject: subjectId,
+                seconds: filteredTimeFile[subjectId][trialId].duration_seconds
+            });
+        }
+    }
+
+    console.log(filteredTimeData)
+    // Check and filter if there's a matching subject and trial in selectedItems
+    if (selectedItems.length>0){
+        filteredTimeData = filteredTimeData.filter(obj => {
+            return selectedItems.some(item => item.subject == obj.subject && item.trial == obj.trial);
+        }); 
+    }
+
+    const groupAndCalculateAverage = (data, selectedGroupBy) => {
+        const groupedData = data.reduce((groups, obj) => {
+            const key = obj[selectedGroupBy];
+            const group = groups.get(key) || { [selectedGroupBy]: key, totalSeconds: 0, count: 0 };
+            group.totalSeconds += obj.seconds;
+            group.count++;
+            groups.set(key, group);
+            return groups;
+        }, new Map());
+    
+        const averages = Array.from(groupedData.values(), group => ({
+            [selectedGroupBy]: group[selectedGroupBy],
+            average: group.totalSeconds / group.count
+        }));
+    
+        return averages;
+    };
+
+    
+    let averageTimeData = groupAndCalculateAverage(filteredTimeData, selectedGroupby)
+
+    if (selectedItems.length>0){
+        let groupArray = uniqueSubjects
+        if (selectedGroupby=="trial")
+            groupArray = uniqueTrials;
+
+        let indexMap = new Map();
+        groupArray.forEach((id, i) => {
+            indexMap.set(id, i);
+        });
+
+        // Sort data based on the order of selectedItems
+        averageTimeData.sort((a, b) => {
+            const indexA = indexMap.get(selectedGroupby == "trial" ? a.trial : a.subject);
+            const indexB = indexMap.get(selectedGroupby == "trial" ? b.trial : b.subject);
+            return indexA - indexB;
+        });
+    }
+    const totalHeight = averageTimeData.length * 30;
+    const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
+
+    timeDistSvg.attr('height', newHeight+50);
+    timeDistGroup.attr('height', newHeight+40);
+
+    let yScaleTimeDist
+
+    if(selectedGroupby=="trial"){
+        yScaleTimeDist = d3.scaleBand()
+            .domain(averageTimeData.map(d => `Trial ${d.trial}`))
+            .range([0, totalHeight])
+            .paddingInner(0.3)
+            .paddingOuter(0.1);
+    }
+    else{
+        yScaleTimeDist = d3.scaleBand()
+            .domain(averageTimeData.map(d => `Sub ${d.subject}`))
+            .range([0, totalHeight])
+            .paddingInner(0.3)
+            .paddingOuter(0.1);
+    }
+
+    console.log(yScaleTimeDist.domain())
+    let xScaleTimeDist = d3.scaleLinear()
+        .domain([0,maxTimestamp])
+        .range([0, timeDistGroup.attr("width")])
+
+    timeDistGroup.selectAll("rect")
+        .data(averageTimeData)
+        .enter()
+        .append("rect")
+        .attr("x", margins.timeDist.left)
+        .attr("y", (d) => {return selectedGroupby=="trial" ? yScaleTimeDist("Trial "+d.trial): yScaleTimeDist("Sub "+d.subject)})
+        .attr("height", 20)
+        .attr("width", d => xScaleTimeDist(d.average))
+        .attr("fill","#737373")
+    
+}
+
 function updateEventTimeline(){   
     brushedSubject = null;
     brushedTrial = null;
@@ -1055,7 +1265,7 @@ function updateEventTimeline(){
         .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
         .range([0.0, maxTimestamp])
 
-    //correlations
+    
     eventTimelineGroup.append('g')
         .attr('class', 'x-axis')
         .attr('transform', `translate(0, -25)`)
@@ -1193,9 +1403,11 @@ function updateEventTimeline(){
                     .style("fill", stepColorScale(data.value));
             });
 
+            let fnirsLabel= selectedFnirs=="workload" ? "Memory" : selectedFnirs[0].toUpperCase() + selectedFnirs.slice(1);
+        
             eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0] - 3).attr("y", currentY+18).text("Procedures").style("font-size", "9px").attr("text-anchor","end").style("fill","black")
             eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+36).text("Errors").style("font-size", "9px").attr("text-anchor","end").style("fill","black")
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+55).text(selectedFnirs[0].toUpperCase() + selectedFnirs.slice(1) ).style("font-size", "9px").attr("text-anchor","end").style("fill","black")
+            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+55).text(fnirsLabel).style("font-size", "9px").attr("text-anchor","end").style("fill","black")
             eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-3).attr("y", currentY+75).text("Phase").style("font-size", "9px").attr("text-anchor","end").style("fill","black")
         
            let sessionTitle
@@ -1432,9 +1644,8 @@ function updateFnirsSessions(){
 
     let currentY = margins.fnirsSessions.top; 
     let groupArray = uniqueSubjects
-    let correlations = dataFiles[8].subject_correlations
     if(selectedGroupby=="trial"){
-        correlations = dataFiles[8].trial_correlations
+        //correlations = dataFiles[8].trial_correlations
         groupArray = uniqueTrials
     }
     groupArray.forEach((id)=>{
@@ -1443,47 +1654,6 @@ function updateFnirsSessions(){
             groupedObj = filteredObjects.filter(obj => obj.trial == id)
         if (groupedObj.length==0)
             return
-
-        //correlations
-        fnirsSessionsGroup.append('g')
-            .attr('class', 'x-axis')
-            .attr('transform', `translate(0, ${currentY-25})`)
-            .call(d3.axisBottom(xScaleCorrelations)
-                .tickValues([-1, -0.5, 0, 0.5, 1]));
-        if(correlations[id]){
-            console.log(id)
-            console.log(correlations[id])
-            let optimalCorr = correlations[id][selectedFnirs+"_Optimal"]
-            let overloadCorr = correlations[id][selectedFnirs+"_Overload"]
-            let underloadCorr = correlations[id][selectedFnirs+"_Underload"]
-            console.log(optimalCorr, overloadCorr, underloadCorr)
-            if(optimalCorr != null)
-                fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleCorrelations(optimalCorr))
-                    .attr("y", currentY-34)
-                    .attr("fill", "#eb5a4d")
-                    .attr("width", 9)
-                    .attr("height", 9)
-                    .attr("class",`group-${id}`);
-
-            if(overloadCorr != null)
-                fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleCorrelations(overloadCorr))
-                    .attr("y", currentY-34)
-                    .attr("fill", "#99070d")
-                    .attr("width", 9)
-                    .attr("height", 9)
-                    .attr("class",`group-${id}`);
-            if(underloadCorr != null)
-                fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleCorrelations(underloadCorr))
-                    .attr("y", currentY-34)
-                    .attr("fill", "#ffb0b0")
-                    .attr("width", 9)
-                    .attr("height", 9)
-                    .attr("class",`group-${id}`);
-            
-        }
             
         groupedObj.forEach((session)=>{
             let sessionObject = {

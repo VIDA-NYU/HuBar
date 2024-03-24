@@ -21,8 +21,9 @@ body{
   
 #overview-panel{
     display: grid;
-    grid-template-columns: 3fr 4fr 3fr;
-    overflow-y:hidden;
+    grid-template-columns: 3.5fr 8.5fr;
+    overflow-y: hidden;
+    padding: 0.5%;
 }
 
 
@@ -30,23 +31,42 @@ body{
     display: grid;
     grid-template-columns:9fr 3fr;
     overflow-y:scroll;
+    overflow-x: hidden;
+    padding: 0.5%;
+}
 
+
+#scatterplot-container {
+    margin-right: 0.75%;
+}
+
+   
+#fnirs-agg-time-container{
+    margin-left: 0.75%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    display: grid;
+    grid-template-columns: 8fr 2fr;
+}
+
+#tlmatrix-container{
+    margin-right: 0.75%;
+    display: grid;
+    grid-template-columns: 3fr 3fr 2fr;
+    padding: none;
+}
+
+#vid-imu-container{
+    margin-left: 0.75%;
 }
 
 .cell{
     border: 1px solid #504a4a;
     border-radius: 8px;
-    margin:2%;
-    padding: 0%
+    padding: 0%;
 }
 
-#video-container{
-    border: none;
-    margin: 0%;
-}
-
-
-#scatterplot-container, #video-container, #event-timeline-container, #fnirs-sesions-container {
+#scatterplot-container, #video-container, #event-timeline-container, #fnirs-sessions-container {
     padding: 0;
 
     position: relative; /* Ensure relative positioning */
@@ -75,19 +95,25 @@ body{
     max-width:60%
 } 
 
-#tlmatrix-container{
-    margin: 1%;
-    display: grid;
-    grid-template-columns: 3fr 3fr 2fr;
-    padding: none;
-    border: 1px solid #504a4a;
-    border-radius: 8px;
-}
-#event-timeline-container, #matrix-container, #fnirs-sesions-container {
+#video-container{
+    height: 190px;
     border: none;
-    margin: none;
+    margin: 0%;
+}
+#video-player {
+    display: block;
+    margin: 2% auto;
+    max-height: 200px; 
+    max-width: 300px;
+    z-index: -100;
+    overflow:hidden;
 }
 
+#video-player video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
 #source-label{
     font-size: 0.8em;
@@ -148,25 +174,6 @@ body{
     z-index: 1;
 }
 
-
-#video-container{
-    height: 190px;
-}
-#video-player {
-    display: block;
-    margin: 2% auto;
-    max-height: 200px; 
-    max-width: 300px;
-    z-index: -100;
-    overflow:hidden;
-}
-
-#video-player video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
 .lasso path {
     stroke: #beaed4;
     stroke-width:3px;
@@ -198,8 +205,9 @@ body{
         stroke-width: 5px;
   }
 
-#fnirs-agg-container{
-    overflow-y: scroll;
+#fnirs-agg-container, #time-distribution-container{
+    position: relative;
+    padding: none;
 }
  
 .axisHide path {
@@ -219,7 +227,7 @@ body{
 
     fill: black;
     fill-opacity: 0.5;
-    stroke-width: 5px;
+    stroke-width: 6px;
     stroke:black;
 
 }
@@ -228,3 +236,32 @@ body{
     opacity: 0.1;
 }
 
+#workload-title{
+    margin: none;
+    position: absolute;
+    left: 0%;
+    top:0%;
+    padding: 4px;
+    border-right:  1px solid black;
+    border-bottom: 1px solid black;
+    border-radius: 8px;
+    z-index: 100;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#time-title 
+{
+    margin: none;
+    position: absolute;
+    left: 20%;
+    top:0%;
+    padding: 4px;
+    border-left: 1px solid black;
+    border-right:  1px solid black;
+    border-bottom: 1px solid black;
+    border-radius: 8px;
+    z-index: 100;
+    font-size: 14px;
+    font-weight: bold;
+}

@@ -18,90 +18,86 @@
     <div id="overview-panel">
       
       <div id = "scatterplot-container" class="cell">
+        
         <label id = "source-label" for="source-dropdown">Source:</label>
-        <select id="source-dropdown">
-            <!-- Options for the source dropdown -->
-        </select>
-
-
+        <select id="source-dropdown"></select>
+        
         <label id="groupby-label" for="groupby-dropdown">Groupby:</label>
         <select id="groupby-dropdown">
           <option selected value="subject">subject</option>
             <option value="trial">trial</option>
         </select>
 
-        <label id = "filter-label" for="filter-dropdown">Trial ID:</label>
+        <label id = "filter-label" for="filter-dropdown">Trials:</label>
         <select id="filter-dropdown">
           <option value="t5">Top 5</option>
           <option selected value="t10">Top 10</option>
           <option value="all">All</option>
         </select>
-      </div>
-
-      <div id="fnirs-agg-container" class="cell">
-
 
       </div>
-      <div class="cell">
 
-
-
-      <h4>TIME DISTRIBUTIONS HERE </h4>
+      <div id="fnirs-agg-time-container" class="cell">
+      
+        <div id="fnirs-agg-container">  <div id="workload-title">Workload</div> </div>
+        <div id="time-distribution-container">
+          <div id="time-title">Time Aggregation</div>
+  
+        </div>
       </div>
 
 
     </div>
 
     <div id="details-panel">
-      <div id="tlmatrix-container">
+      <div id="tlmatrix-container" class="cell">
         
-        <div id= "event-timeline-container" style="text-align: center;" class="cell">
+        <div id= "event-timeline-container" style="text-align: center;">
           <strong>Timeline</strong>
-
         </div>
         
-        <div id="matrix-container" style="text-align: center;" class="cell">
+        <div id="matrix-container" style="text-align: center;">
            <strong>Procedures</strong> 
-
         </div>
 
-        <div id ="fnirs-sesions-container" class="cell">
+        <div id ="fnirs-sessions-container">
+          
           <div style="display: grid; grid-template-columns: 1fr 1fr; text-align: center;">
-            <div><strong>Workload</strong> </div>
+            <div><strong>Workload %</strong> </div>
             <div><strong>Error %</strong></div>
           </div> 
-         <!-- <label id = "fnirs-label" for="fnirs-dropdown">FNIRS:</label>-->
+      
           <select id="fnirs-dropdown" style="visibility: hidden">
             <option selected value="workload">Memory</option>
             <option selected value="attention">Attention</option>
             <option value="perception">Perception</option>
           </select>
+
         </div>
       
       </div>
       
-      <div class="cell">      
+      <div id ="vid-imu-container" class="cell">      
         <div id = "video-container" class="cell">  
           <video id="video-player" controls muted="muted"></video>
         </div>
 
-      <div id="hl2-container">
-        <div id="gaze-header" style="visibility: hidden; margin: none;text-align: center;">
-          <strong>Gaze &nbsp;</strong>
-              <select id="gaze-dropdown">
-                <option value="origin_x">origin_x</option>
-                <option value="origin_y">origin_y</option>
-                <option value="origin_z">origin_z</option>
-                <option value="direction_x" selected>direction_x</option>
-                <option value="direction_y">direction_y</option>
-                <option value="direction_z">direction_z</option>
+        <div id="hl2-container">
+          <div id="gaze-header" style="visibility: hidden; margin: none;text-align: center;">
+            <strong>Gaze &nbsp;</strong>
+            <select id="gaze-dropdown">
+              <option value="origin_x">origin_x</option>
+              <option value="origin_y">origin_y</option>
+              <option value="origin_z">origin_z</option>
+              <option value="direction_x" selected>direction_x</option>
+              <option value="direction_y">direction_y</option>
+              <option value="direction_z">direction_z</option>
             </select>
         </div>
 
         <div id="imu-header">
           <div>          
               <strong>IMU &nbsp;</strong>
-          
               <select id="imu-dropdown">
                 <option value="orientation_x" selected>orientation_x</option>
                 <option value="orientation_y">orientation_y</option>
@@ -115,7 +111,6 @@
             </select>
           </div>
         </div>
-
       </div>
     </div>
     </div>
