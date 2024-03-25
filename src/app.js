@@ -1170,9 +1170,6 @@ function updateTimeDistribution(){
         topTrialValues.forEach(trialVal => {
         if (trialVal in dataFiles[9][subjectVal]) 
             filteredTimeFile[subjectVal][trialVal] = dataFiles[9][subjectVal][trialVal];
-        //correct erroneous data
-       // if (trialVal == "4" && subjectVal=="8708") 
-         //   filteredTimeFile[subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
         })
     })
 
@@ -1264,7 +1261,7 @@ function updateTimeDistribution(){
         .enter()
         .append("rect")
         .attr("x", 0)
-        .attr("y", (d) => {return selectedGroupby=="trial" ? yScaleTimeDist("Trial "+d.trial) +10: yScaleTimeDist("Sub "+d.subject)+10})
+        .attr("y", (d) => {return selectedGroupby=="trial" ? yScaleTimeDist("Trial "+d.trial) +10: yScaleTimeDist("Sub "+d.subject)+26})
         .attr("height", 15)
         .attr("width", d => xScaleTimeDist(d.average))
         .attr("fill","#737373")

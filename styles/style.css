@@ -32,7 +32,6 @@ body{
     display: grid;
     grid-template-columns:9fr 3fr;
     overflow-y:hidden;
-    overflow-x: hidden;
     padding: 0.5%;
 }
 
@@ -47,13 +46,13 @@ body{
     overflow-y: scroll;
     overflow-x: clip;
     display: grid;
-    grid-template-columns: 8fr 2fr;
+    grid-template-columns: 80% 20%;
 }
 
 #tlmatrix-container{
     margin-right: 0.75%;
     display: grid;
-    grid-template-columns: 3fr 3fr 2fr;
+    grid-template-columns: 37.5% 37.5% 25%;
     padding: none;
     overflow-y:scroll;
 
@@ -231,9 +230,7 @@ body{
     padding: none;
 }
  
-#time-distribution-container{
-    max-width: 220px;
-}
+
 .axisHide path {
     display: none;
 }
