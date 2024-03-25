@@ -15,12 +15,14 @@ let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
     timeDistSvg, timeDistGroup,
     selectedGaze, selectedImu;
 
+let allTimestamps = {}
 let brushedTrial = null;
 let brushedSubject = null;
 let vidStart = 0;
 let vidEnd = 5;
 let maxTimestamp=0.0;
-
+let brushesAdded=[]
+let brushIndices=[]
 const allSteps = ["a", "b", "c", "d", "e", "f", "?", "*", "1", "2", "v"]
 
 let modifiedSchemePaired = d3.schemePaired
@@ -62,7 +64,7 @@ Promise.all([
         updateScatterplot();
         updateFnirsAgg();
         updateTimeDistribution();
-
+        console.log(dataFiles[9]);
     })
     .catch(function(err) {
     console.log(err)
@@ -96,6 +98,7 @@ function initializeContainers(){
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
+        updateHl2Details();
     });
 
     const groupbyDropdown = d3.select("#groupby-dropdown");
@@ -110,6 +113,7 @@ function initializeContainers(){
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
+        updateHl2Details();
     });
     
     const filterDropdown = d3.select("#filter-dropdown");
@@ -124,6 +128,7 @@ function initializeContainers(){
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
+        updateHl2Details();
     });
 
     const fnirsDropdown = d3.select("#fnirs-dropdown");
@@ -133,6 +138,7 @@ function initializeContainers(){
         selectedFnirs = fnirsDropdown.property("value");
         updateEventTimeline();
         updateFnirsSessions();
+        updateHl2Details();
     });
 
     const gazeDropdown = d3.select("#gaze-dropdown");
@@ -312,8 +318,17 @@ function initializeContainers(){
         .attr("height", hl2DetailsDiv.node().clientHeight - margins.hl2.top - margins.hl2.bottom); 
     
 
-
-    //TIMESTAMP ADD FLOAT
+    
+    //TIMESTAMP
+    Object.keys(dataFiles[9]).forEach((subjectVal)=>{
+        Object.keys(dataFiles[9][subjectVal]).forEach((trialVal)=>{
+            if (trialVal == "4" && subjectVal=="8708") 
+                dataFiles[9][subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
+        
+            allTimestamps['t'+trialVal+"-s"+subjectVal]=dataFiles[9][subjectVal][trialVal].duration_seconds
+            maxTimestamp = Math.max(maxTimestamp,  dataFiles[9][subjectVal][trialVal].duration_seconds)
+        })
+    })
 
     dataFiles[1].forEach((trial)=>{
         //consolidate step data:
@@ -377,7 +392,7 @@ function initializeContainers(){
                 consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
             }
         });
-        maxTimestamp= Math.max(consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp, maxTimestamp)
+        //maxTimestamp= Math.max(consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedStepData'] = consolidatedStepData;
     })
 
@@ -408,7 +423,7 @@ function initializeContainers(){
         
         trial['data'].forEach(record=> {
 
-            if (record.seconds<0){
+            if (record.seconds<0 || record.seconds> allTimestamps['t'+trial.trial_id+"-s"+trial.subject_id]){
                 return
             }
             // Consolidate 'Workload' data
@@ -456,23 +471,13 @@ function initializeContainers(){
                 consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp = record.seconds;
             }
         });
-        maxTimestamp= Math.max(consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp, maxTimestamp)
+        //maxTimestamp= Math.max(consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedFNIRS'] = consolidatedFNIRS; 
     })
     //find global max timestamp
-    maxTimestamp = Math.max(maxTimestamp,dataFiles[6].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[6][0]["seconds"]));
-    maxTimestamp = Math.max(maxTimestamp,dataFiles[7].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[7][0]["seconds"]));
-    
+    //maxTimestamp = Math.max(maxTimestamp,dataFiles[6].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[6][0]["seconds"]));
+    //maxTimestamp = Math.max(maxTimestamp,dataFiles[7].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[7][0]["seconds"]));
 
-    //initialize color/glyphscales for scatterplot
-    
-    //TEMP VIDEO
-    videoPlayer.addEventListener('timeupdate', function() {
-        if (this.currentTime >= vidEnd) {
-          // Loop back to the start time
-          this.currentTime = vidStart;
-        }
-      });
 }
 
 function updateScatterplot(){
@@ -624,6 +629,7 @@ function updateScatterplot(){
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
+        updateHl2Details();
         
     }
     if (selectedGroupby =="subject" || selectedFilter !="all")
@@ -670,6 +676,7 @@ function updateScatterplot(){
                     updateEventTimeline();
                     updateMatrix();
                     updateFnirsSessions();
+                    updateHl2Details();
                 })
 
             legendGroup.append("path")
@@ -793,6 +800,7 @@ function updateFnirsAgg(){
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
+            updateHl2Details();
         })
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif")
@@ -843,6 +851,7 @@ function updateFnirsAgg(){
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
+            updateHl2Details();
 
         })
         .selectAll("text")
@@ -1160,8 +1169,8 @@ function updateTimeDistribution(){
         if (trialVal in dataFiles[9][subjectVal]) 
             filteredTimeFile[subjectVal][trialVal] = dataFiles[9][subjectVal][trialVal];
         //correct erroneous data
-        if (trialVal == "4" && subjectVal=="8708") 
-            filteredTimeFile[subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
+       // if (trialVal == "4" && subjectVal=="8708") 
+         //   filteredTimeFile[subjectVal][trialVal].duration_seconds = dataFiles[9][subjectVal][trialVal].duration_seconds - 84004.747   
         })
     })
 
@@ -1269,8 +1278,12 @@ function updateTimeDistribution(){
 }
 
 function updateEventTimeline(){   
+
     brushedSubject = null;
     brushedTrial = null;
+    brushesAdded.splice(0, brushesAdded.length)
+    brushIndices.splice(0, brushIndices.length)
+    let brushCount = 0  
     eventTimelineGroup.selectAll('*').remove();
 
     d3.select("#fnirs-dropdown")
@@ -1381,10 +1394,11 @@ function updateEventTimeline(){
                     });
                 
                     let variableName= selectedFnirs + "_confidence" 
+                    let duration= allTimestamps['t'+sessionFnirs.trial_id+"-s"+sessionFnirs.subject_id]
 
                     // Add the confidence line
                     eventTimelineGroup.append("path")
-                        .datum(sessionFnirs.data.filter(function(d) { return d.seconds >= 0; }))
+                        .datum(sessionFnirs.data.filter(function(d) { return d.seconds >= 0 && d.seconds<=duration; }))
                         .attr("fill", "none")
                         .attr("stroke", "#add8e6")
                         .attr("stroke-width", 1)
@@ -1413,9 +1427,13 @@ function updateEventTimeline(){
                     .extent([[0, currentY-90], [xEventTimelineScale.range()[1] , currentY-10]])
                     .on("start", brushstart)
                     .on("end", brushended);
+                
+                brushesAdded.push(brush)
+                brushIndices.push({trial:sessionMission.trial_id, subject:sessionMission.subject_id, brushAt:brushCount})
+                brushCount+=1
         
                 eventTimelineGroup.append("g")
-                    .attr("class", "brush timelinebrush")
+                    .attr("class", "brush timelinebrush brush-t"+sessionMission.trial_id+"-s"+sessionMission.subject_id)
                     .attr("data-trial",sessionMission.trial_id)
                     .attr("data-subject",sessionMission.subject_id)
                     .datum({brush:brush})
@@ -1486,10 +1504,10 @@ function updateEventTimeline(){
                     .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
             });
             let variableName= selectedFnirs + "_confidence" 
-
+            let duration= allTimestamps['t'+sessionFnirs.trial_id+"-s"+sessionFnirs.subject_id]
             // Add the confidence line
             eventTimelineGroup.append("path")
-                .datum(sessionFnirs.data.filter(function(d) { return d.seconds >= 0; }))
+                .datum(sessionFnirs.data.filter(function(d) { return d.seconds >= 0 && d.seconds<=duration }))
                 .attr("fill", "none")
                 .attr("stroke", "#add8e6")
                 .attr("stroke-width", 1)
@@ -1551,9 +1569,13 @@ function updateEventTimeline(){
                 .extent([[0, currentY-80], [xEventTimelineScale.range()[1] , currentY]])
                 .on("start", brushstart)
                 .on("end", brushended);
-        
+            
+            brushesAdded.push(brush)
+            brushIndices.push[{trial:sessionMission.trial_id, subject:sessionMission.subject_id, brushAt:brushCount}]
+            brushCount+=1
+
             eventTimelineGroup.append("g")
-                .attr("class", "brush timelinebrush")
+                .attr("class", "brush timelinebrush brush-t"+sessionMission.trial_id+"-s"+sessionMission.subject_id)
                 .attr("data-trial",sessionMission.trial_id)
                 .attr("data-subject",sessionMission.subject_id)
                 .datum({brush:brush})
@@ -1589,9 +1611,10 @@ function updateEventTimeline(){
                     return
                 }
 
-                
-                brushedTrial = e.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
-                brushedSubject = e.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
+                if (typeof e.sourceEvent != 'undefined') {
+                    brushedTrial = e.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
+                    brushedSubject = e.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
+                }
                 vidStart = reverseTimelineScale(e.selection[0])
                 vidEnd = reverseTimelineScale(e.selection[1])
                 videoPath = `data/video/${String(brushedSubject).padStart(4, '0')}/${brushedTrial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`
@@ -1602,13 +1625,20 @@ function updateEventTimeline(){
                 });
                 videoPlayer.load();
 
+
+                videoPlayer.addEventListener('timeupdate', function() {
+                    if (videoPlayer.currentTime >= vidEnd) {
+                      // Loop back to the start time
+                      videoPlayer.currentTime = vidStart;
+                    }
+                  });
+
                 d3.selectAll(".error-session-bar")
                     .classed("hide-bar",true);
                 d3.selectAll(".fnirs-session-bar")
                     .classed("hide-bar",true);
                 d3.selectAll(".t"+brushedTrial+"-s"+brushedSubject)
                     .classed("hide-bar",false)
-                updateHl2Details();
 
                 let sessionObject = dataFiles[1].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)[0]
                 let stepNames = new Set();
@@ -1639,8 +1669,9 @@ function updateEventTimeline(){
                     .style("fill-opacity",0.1)
                 matrixGroup.selectAll(".highlight-arcs")
                     .style("fill-opacity",1)
-               
+                updateHl2Details();
             }
+
             currentY+=10
 
             if (eventTimelineSvg.attr("height")<=currentY+200){
@@ -1946,7 +1977,6 @@ function updateMatrix(){
     }
 }
 
-
 function updateHl2Details(){
     hl2Group.selectAll('*').remove();
     d3.select("#gaze-header")
@@ -1954,25 +1984,35 @@ function updateHl2Details(){
     
     d3.select("#imu-header")
         .style("visibility","hidden")
-    if (brushedSubject == null)
-        return
 
+    d3.select("#fnirs-title-header")
+        .style("visibility","hidden")
+
+    if (brushedSubject == null){
+        videoPlayer.src=""
+        videoPlayer.load();
+        videoPlayer.removeAttribute('src');
+        videoPlayer.load();
+        return
+    }
     d3.select("#gaze-header")
         .style("visibility","visible")
 
     d3.select("#imu-header")
         .style("visibility","visible")
 
-    let maxGazeTimestamp = dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
-        .reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), 0);
-    
-    let maxImuTimestamp = dataFiles[7].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
-        .reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), 0);
-    
+    d3.select("#fnirs-title-header")
+        .style("visibility","visible")
+
+    let duration = allTimestamps['t'+brushedTrial+"-s"+brushedSubject]
 
     let xScaleHL2= d3.scaleLinear()
-        .domain([0, Math.max(maxImuTimestamp, maxGazeTimestamp)])
+        .domain([0, duration])
         .range([0,hl2Group.attr("width")])
+
+    let xScaleHL2reverse =  d3.scaleLinear()
+        .domain([0,hl2Group.attr("width")])
+        .range([0, duration])
 
     let yScaleGaze = d3.scaleLinear()
         .domain([1, -1])
@@ -1997,7 +2037,6 @@ function updateHl2Details(){
         .style("stroke-opacity", 0.7)
         .style("fill", "none")
         .style("fill-opacity", 0)
-        //.style("stroke-dasharray", "5,5");
 
     hl2Group.append("rect")
         .attr("x", 0)
@@ -2011,11 +2050,51 @@ function updateHl2Details(){
         .style("stroke-opacity", 0.7)
         .style("fill", "none")
         .style("fill-opacity", 0)
-        //.style("stroke-dasharray", "5,5");
-        
+
+    hl2Group.append("rect")
+        .attr("x", 0)
+        .attr("y", 320)
+        .attr("rx",5)
+        .attr("ry", 7)
+        .attr("width", xScaleHL2.range()[1])
+        .attr("height", 120)
+        .style("stroke", "black")
+        .style("stroke-width", "0.5px")
+        .style("stroke-opacity", 0.7)
+        .style("fill", "none")
+        .style("fill-opacity", 0)
+
+    let gazebrush = d3.brushX()
+        .extent([[0, 0], [ xScaleHL2.range()[1] , 120]])
+        .on("end", hl2brushend);
+    
+    let imubrush = d3.brushX()
+        .extent([[0, 160], [ xScaleHL2.range()[1] , 280]])
+        .on("end", hl2brushend);
+
+    let fnirsbrush = d3.brushX()
+        .extent([[0, 320], [ xScaleHL2.range()[1] , 440]])
+        .on("end", hl2brushend);
+
+    let gazeBrushGroup = hl2Group.append("g")
+        .attr("class", "brush gazebrush")
+        .call(gazebrush, [ xScaleHL2.range()[0],xScaleHL2.range()[1]]);
+
+    let imuBrushGroup = hl2Group.append("g")
+        .attr("class", "brush imubrush")
+        .call(imubrush);
+    
+    let fnirsBrushGroup = hl2Group.append("g")
+        .attr("class", "brush fnirsbrush")
+        .call(fnirsbrush);
+    
+    gazeBrushGroup.call(gazebrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    imuBrushGroup.call(imubrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+
 
     hl2Group.append("path")
-        .datum(dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial))
+        .datum(dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial && obj.seconds <= duration))
         .attr("fill", "none")
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1)    
@@ -2025,7 +2104,7 @@ function updateHl2Details(){
         .y(function(d) { return yScaleGaze(d[selectedGaze]) }))
 
     hl2Group.append("path")
-        .datum(dataFiles[7].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial))
+        .datum(dataFiles[7].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial && obj.seconds <= duration))
         .attr("fill", "none")
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1)    
@@ -2034,20 +2113,55 @@ function updateHl2Details(){
         .x(function(d) { return xScaleHL2(d.seconds) })
         .y(function(d) { return 160+ yScaleImu(d[selectedImu]) }))
     
-    hl2Group.append("rect")
-    .attr("class","frame-rectangle")
-    .attr("x",xScaleHL2(vidStart))
-    .attr("y",1)
-    .attr("height","118")
-    .attr("width", xScaleHL2(vidEnd) - xScaleHL2(vidStart))
 
-    hl2Group.append("rect")
-    .attr("class","frame-rectangle")
-    .attr("x",xScaleHL2(vidStart))
-    .attr("y",161)
-    .attr("height","118")
-    .attr("width", xScaleHL2(vidEnd)- xScaleHL2(vidStart))
+    let filteredFnirs = dataFiles[3].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
     
+    if (filteredFnirs.length==1){
+
+    let fnirsToDisplay = filteredFnirs[0]
+    
+    fnirsToDisplay.consolidatedFNIRS[selectedFnirs].forEach(data => {
+        hl2Group.append("rect")
+            .attr("x", xScaleHL2(data.startTimestamp))
+            .attr("y", 405)
+            .attr("width", xScaleHL2(data.endTimestamp) - xScaleHL2(data.startTimestamp)) 
+            .attr("height", 35)
+            .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
+    });
+    
+    let variableName= selectedFnirs + "_confidence" 
+
+    let yScaleLine =  d3.scaleLinear()
+    .domain([1.0,0])
+    .range([320,405])
+
+    hl2Group.append("path")
+        .datum(fnirsToDisplay.data.filter(function(d) { return d.seconds >= 0 && d.seconds<=duration }))
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1)
+        .attr("stroke-opacity", 0.8)
+        .attr("d", d3.line()
+        .x(function(d) { return xScaleHL2(d.seconds) })
+        .y(function(d) { return yScaleLine(d[variableName]) }))  
+
+    }
+    function hl2brushend(e){
+        if (typeof e.sourceEvent != 'undefined') {          
+            let newt1 = xScaleHL2reverse(e.selection[0])  
+            let newt2 = xScaleHL2reverse(e.selection[1])
+            let allBrushes = eventTimelineGroup.selectAll(".timelinebrush").nodes()
+            allBrushes.forEach((eachBrush)=>{
+                let className = "brush-t"+brushedTrial+"-s"+brushedSubject
+                if (d3.select(eachBrush).classed(className)){
+                    console.log("moving brush")
+                    let curBrush = d3.select(eachBrush)
+                    curBrush.call(brushesAdded[0].move, [xEventTimelineScale(newt1), xEventTimelineScale(newt2)]); 
+                }
+            })    
+        }
+
+    }
 }
 
 

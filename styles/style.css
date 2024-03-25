@@ -31,7 +31,7 @@ body{
 #details-panel{
     display: grid;
     grid-template-columns:9fr 3fr;
-    overflow-y:scroll;
+    overflow-y:hidden;
     overflow-x: hidden;
     padding: 0.5%;
 }
@@ -55,9 +55,13 @@ body{
     display: grid;
     grid-template-columns: 3fr 3fr 2fr;
     padding: none;
+    overflow-y:scroll;
+
 }
 
 #vid-imu-container{
+    overflow-y:scroll;
+
     margin-left: 0.75%;
 }
 
@@ -95,6 +99,21 @@ body{
 #imu-header > div > select{
     max-width:60%
 } 
+
+#fnirs-title-header {
+    visibility: hidden;
+    margin: 0;    
+    position: absolute;
+    top: 320px;
+    text-align: center;
+    left:50%;
+
+}
+
+#fnirs-title-header > div {
+    position: relative;
+    left:-50%;
+ }
 
 #video-container{
     height: 190px;
