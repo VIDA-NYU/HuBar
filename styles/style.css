@@ -231,6 +231,9 @@ body{
     padding: none;
 }
  
+#time-distribution-container{
+    max-width: 220px;
+}
 .axisHide path {
     display: none;
 }
