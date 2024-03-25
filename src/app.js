@@ -922,13 +922,15 @@ function updateFnirsAgg(){
                 //Sort trials based on their frequencies
                 let topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
                 groupArray = topTrialValues.map(str => parseInt(str))
+                console.log("Toptrialvals", topTrialValues)
+                console.log("groupArray", groupArray)
             }
 
         }
-        let selectedItemsArray =  selectedGroupby=="trial" ? selectedItems.map(obj => obj.trial) : selectedItems.map(obj => obj.subject) 
-
+        let selectedItemsArray =  selectedGroupby=="trial" ? selectedItems.map(obj => parseInt(obj.trial)) : selectedItems.map(obj => parseInt(obj.subject)) 
+        console.log("sel Item array", selectedItemsArray)
         groupArray.forEach((groupId)=>{
-            if (selectedItems.length>0 && !selectedItemsArray.includes(groupId))
+            if (selectedItems.length>0 && !selectedItemsArray.includes(parseInt(groupId)))
                 return   
             
             let currentY = selectedGroupby=="trial" ? yScaleFnirs("Trial "+groupId) : yScaleFnirs("Sub "+groupId) 
