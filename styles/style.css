@@ -81,11 +81,25 @@ body{
     margin: 0%;
 }
 
+#gaze-header {
+    visibility: hidden;
+    margin: 0;    
+    position: absolute;
+    top: 30px;
+    text-align: center;
+    left:50%;
+}
+
+#gaze-header > div {
+    position: relative;
+    left:-50%;
+}
+
 #imu-header{
     visibility: hidden;
     margin: 0;    
     position: absolute;
-    top: 160px;
+    top: 190px;
     text-align: center;
     left:50%;
 }
@@ -103,7 +117,7 @@ body{
     visibility: hidden;
     margin: 0;    
     position: absolute;
-    top: 320px;
+    top: 350px;
     text-align: center;
     left:50%;
 

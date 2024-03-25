@@ -40,7 +40,7 @@ const margins={
     eventTimeline:{top:37, left:55, right:16, bottom:20},
     matrix:{top:37, left:5, right:5, bottom:20},
     fnirsSessions:{top:37, left:10, right:10, bottom:20},   
-    hl2:{top:10, left:10, right:10, bottom:10},
+    hl2:{top:60, left:23, right:23, bottom:10},
     video:{ top:0, left:0, right:0, bottom:0},
 }
 
@@ -2009,6 +2009,13 @@ function updateHl2Details(){
         .domain([0, duration])
         .range([0,hl2Group.attr("width")])
 
+    hl2Group.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(0, -60)`)
+        .call(d3.axisBottom(xScaleHL2)
+            .tickValues([0, duration/2, duration])
+            .tickFormat(d => Math.round(d/60) + "min"));
+
     let xScaleHL2reverse =  d3.scaleLinear()
         .domain([0,hl2Group.attr("width")])
         .range([0, duration])
@@ -2075,23 +2082,6 @@ function updateHl2Details(){
         .extent([[0, 320], [ xScaleHL2.range()[1] , 440]])
         .on("end", hl2brushend);
 
-    let gazeBrushGroup = hl2Group.append("g")
-        .attr("class", "brush gazebrush")
-        .call(gazebrush, [ xScaleHL2.range()[0],xScaleHL2.range()[1]]);
-
-    let imuBrushGroup = hl2Group.append("g")
-        .attr("class", "brush imubrush")
-        .call(imubrush);
-    
-    let fnirsBrushGroup = hl2Group.append("g")
-        .attr("class", "brush fnirsbrush")
-        .call(fnirsbrush);
-    
-    gazeBrushGroup.call(gazebrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
-    imuBrushGroup.call(imubrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
-    fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
-
-
     hl2Group.append("path")
         .datum(dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial && obj.seconds <= duration))
         .attr("fill", "none")
@@ -2117,34 +2107,49 @@ function updateHl2Details(){
     
     if (filteredFnirs.length==1){
 
-    let fnirsToDisplay = filteredFnirs[0]
-    
-    fnirsToDisplay.consolidatedFNIRS[selectedFnirs].forEach(data => {
-        hl2Group.append("rect")
-            .attr("x", xScaleHL2(data.startTimestamp))
-            .attr("y", 405)
-            .attr("width", xScaleHL2(data.endTimestamp) - xScaleHL2(data.startTimestamp)) 
-            .attr("height", 35)
-            .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
-    });
-    
-    let variableName= selectedFnirs + "_confidence" 
+        let fnirsToDisplay = filteredFnirs[0]
+        
+        fnirsToDisplay.consolidatedFNIRS[selectedFnirs].forEach(data => {
+            hl2Group.append("rect")
+                .attr("x", xScaleHL2(data.startTimestamp))
+                .attr("y", 405)
+                .attr("width", xScaleHL2(data.endTimestamp) - xScaleHL2(data.startTimestamp)) 
+                .attr("height", 35)
+                .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
+        });
+        
+        let variableName= selectedFnirs + "_confidence" 
+        let yScaleLine =  d3.scaleLinear()
+        .domain([1.0,0])
+        .range([320,405])
 
-    let yScaleLine =  d3.scaleLinear()
-    .domain([1.0,0])
-    .range([320,405])
-
-    hl2Group.append("path")
-        .datum(fnirsToDisplay.data.filter(function(d) { return d.seconds >= 0 && d.seconds<=duration }))
-        .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 1)
-        .attr("stroke-opacity", 0.8)
-        .attr("d", d3.line()
-        .x(function(d) { return xScaleHL2(d.seconds) })
-        .y(function(d) { return yScaleLine(d[variableName]) }))  
-
+        hl2Group.append("path")
+            .datum(fnirsToDisplay.data.filter(function(d) { return d.seconds >= 0 && d.seconds<=duration }))
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 1)
+            .attr("stroke-opacity", 0.8)
+            .attr("d", d3.line()
+            .x(function(d) { return xScaleHL2(d.seconds) })
+            .y(function(d) { return yScaleLine(d[variableName]) }))  
     }
+
+    let gazeBrushGroup = hl2Group.append("g")
+        .attr("class", "brush gazebrush")
+        .call(gazebrush, [ xScaleHL2.range()[0],xScaleHL2.range()[1]]);
+
+    let imuBrushGroup = hl2Group.append("g")
+        .attr("class", "brush imubrush")
+        .call(imubrush);
+
+    let fnirsBrushGroup = hl2Group.append("g")
+        .attr("class", "brush fnirsbrush")
+        .call(fnirsbrush);
+
+    gazeBrushGroup.call(gazebrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    imuBrushGroup.call(imubrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    
     function hl2brushend(e){
         if (typeof e.sourceEvent != 'undefined') {          
             let newt1 = xScaleHL2reverse(e.selection[0])  
