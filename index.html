@@ -63,8 +63,9 @@
         <div id ="fnirs-sessions-container">
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; text-align: center;">
-            <div><strong>Workload %</strong> </div>
             <div><strong>Error %</strong></div>
+            <div><strong>Workload %</strong> </div>
+
           </div> 
       
           <select id="fnirs-dropdown" style="visibility: hidden">
@@ -84,6 +85,23 @@
 
         <div id="hl2-container">
 
+          <div id="imu-header">
+            <div>          
+                <strong>IMU &nbsp;</strong>
+                <select id="imu-dropdown">
+                  <option value="orientation_x" selected>orientation_x</option>
+                  <option value="orientation_y">orientation_y</option>
+                  <option value="orientation_z">orientation_z</option>
+                  <option value="linear_acceleration_x">linear_acceleration_x</option>
+                  <option value="linear_acceleration_y">linear_acceleration_y</option>
+                  <option value="linear_acceleration_z">linear_acceleration_z</option>
+                  <option value="angular_velocity_x">angular_velocity_x</option>
+                  <option value="angular_velocity_y">angular_velocity_y</option>
+                  <option value="angular_velocity_z">angular_velocity_z</option>
+              </select>
+            </div>
+          </div>
+
           <div id="gaze-header">
             <div>
             <strong>Gaze &nbsp;</strong>
@@ -98,26 +116,9 @@
             </div>        
           </div>
 
-        <div id="imu-header">
-          <div>          
-              <strong>IMU &nbsp;</strong>
-              <select id="imu-dropdown">
-                <option value="orientation_x" selected>orientation_x</option>
-                <option value="orientation_y">orientation_y</option>
-                <option value="orientation_z">orientation_z</option>
-                <option value="linear_acceleration_x">linear_acceleration_x</option>
-                <option value="linear_acceleration_y">linear_acceleration_y</option>
-                <option value="linear_acceleration_z">linear_acceleration_z</option>
-                <option value="angular_velocity_x">angular_velocity_x</option>
-                <option value="angular_velocity_y">angular_velocity_y</option>
-                <option value="angular_velocity_z">angular_velocity_z</option>
-            </select>
-          </div>
-        </div>
-
         <div id="fnirs-title-header">
           <div>          
-            <!-- <strong>Workload</strong> -->
+             <strong>Workload</strong> 
           </div>
         </div>
 

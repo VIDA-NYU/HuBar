@@ -1621,14 +1621,6 @@ function updateEventTimeline(){
                 });
                 videoPlayer.load();
 
-
-                videoPlayer.addEventListener('timeupdate', function() {
-                    if (videoPlayer.currentTime >= vidEnd) {
-                      // Loop back to the start time
-                      videoPlayer.currentTime = vidStart;
-                    }
-                  });
-
                 d3.selectAll(".error-session-bar")
                     .classed("hide-bar",true);
                 d3.selectAll(".fnirs-session-bar")
@@ -1767,7 +1759,7 @@ function updateFnirsSessions(){
             
             //Overload
             fnirsSessionsGroup.append("rect")
-                .attr("x", 0)
+                .attr("x", xScaleFnirsSessions.range()[1] + 15)
                 .attr("y", currentY+21)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
@@ -1776,7 +1768,7 @@ function updateFnirsSessions(){
 
             //optimal
             fnirsSessionsGroup.append("rect")
-                .attr("x", 0)
+                .attr("x", xScaleFnirsSessions.range()[1] + 15)
                 .attr("y", currentY+37)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Optimal"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
@@ -1785,7 +1777,7 @@ function updateFnirsSessions(){
 
             //underload
             fnirsSessionsGroup.append("rect")
-                .attr("x", 0)
+                .attr("x", xScaleFnirsSessions.range()[1] + 15)
                 .attr("y", currentY+53)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Underload"]/sessionObject[variableName+"Total"] ))
                 .attr("height", 16)
@@ -1798,7 +1790,7 @@ function updateFnirsSessions(){
             if (errorData){
                 //Non Error
                 fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleFnirsSessions.range()[1] + 15)
+                    .attr("x", 0)
                     .attr("y", currentY+21)
                     .attr("width", xScaleFnirsSessions((100-errorData['percentage_error'])/100 ))
                     .attr("height", 16)
@@ -1807,7 +1799,7 @@ function updateFnirsSessions(){
 
                 //Error
                 fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleFnirsSessions.range()[1] + 15)
+                    .attr("x", 0)
                     .attr("y", currentY+36)
                     .attr("width", xScaleFnirsSessions(errorData['percentage_error']/100 ))
                     .attr("height", 16)
@@ -1818,7 +1810,7 @@ function updateFnirsSessions(){
 
             else{
                 fnirsSessionsGroup.append("text")
-                    .attr("x", xScaleFnirsSessions.range()[1])
+                    .attr("x", 0)
                     .attr("y", currentY + 38)
                     .style("font-size", "10px")
                     .attr("text-anchor","start")
@@ -1887,6 +1879,16 @@ function updateMatrix(){
         .attr('class', 'x-axis axisHide')
         .attr('transform', `translate(0, 10)`)
         .call(xAxis);
+    
+    stepsPresent.forEach((step)=>{
+        
+        matrixGroup.append('rect')
+            .attr("x",xScaleMatrix(step)+ xScaleMatrix.bandwidth()*0.24)
+            .attr("y",-7)
+            .attr("fill",stepColorScale(step))
+            .attr("width",10)
+            .attr("height",10)
+    })
 
     const maxRadius = xScaleMatrix.bandwidth()/2;
     
@@ -1957,7 +1959,7 @@ function updateMatrix(){
                 .attr("class", "circle circle-" + step + "-"+row.subject +"-"+row.trial)
                 .attr('cy', currentY + 30)
                 .attr('r', radiusScale(total))
-                .attr('fill', ()=> error==0? stepColorScale(step) : "black");
+                .attr('fill', ()=> error==0? "#AEAEAE" : "black");
 
             return
         }
@@ -1965,7 +1967,7 @@ function updateMatrix(){
     
         const color = d3.scaleOrdinal()
             .domain(["None", "error"])
-            .range([stepColorScale(step), "black"]);
+            .range(["#AEAEAE", "black"]);
     
         const pie = d3.pie()([none, error]);
     
@@ -2038,6 +2040,13 @@ function updateHl2Details(){
         .call(d3.axisTop(xScaleHL2)
             .tickValues([0, duration/2, duration])
             .tickFormat(d => Math.round(d/60) + "min"));
+    
+    hl2Group.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(0, 375)`)
+        .call(d3.axisTop(xScaleHL2)
+        .tickValues([0, duration/2, duration])
+        .tickFormat(d => Math.round(d/60) + "min"));
 
 
 
@@ -2055,21 +2064,21 @@ function updateHl2Details(){
     let yScaleImu = d3.scaleLinear()
         .domain([minImu - ((maxImu-minImu)*0.1) ,maxImu + ((maxImu-minImu)*0.1)])
         .range([120,0])
-
+    
     hl2Group.append('g')
         .attr('class', 'y-axis')
         .attr('transform', `translate(-10, 0)`)
-        .call(d3.axisLeft(yScaleGaze)
-            .tickValues([-1,0,1])
-            .tickFormat(d=>Math.trunc(d)));
+        .call(d3.axisLeft(yScaleImu)
+            .tickValues([ yScaleImu.domain()[1], (maxImu+minImu)/2, yScaleImu.domain()[0]])
+            .tickFormat(d=>Math.round(d)));
 
     hl2Group.append('g')
         .attr('class', 'y-axis')
         .attr('transform', `translate(-10, 190)`)
-        .call(d3.axisLeft(yScaleImu)
-            .tickValues([ yScaleImu.domain()[1], (maxImu+minImu)/2, yScaleImu.domain()[0]])
-            .tickFormat(d=>Math.round(d)));
-    
+        .call(d3.axisLeft(yScaleGaze)
+            .tickValues([-1,0,1])
+            .tickFormat(d=>Math.trunc(d)));
+
     hl2Group.append("rect")
         .attr("x", 0)
         .attr("y", 0)
@@ -2110,27 +2119,38 @@ function updateHl2Details(){
         .style("fill", "none")
         .style("fill-opacity", 0)
     */
-    let gazebrush = d3.brushX()
+    // Draw a dashed vertical line
+    hl2Group.append("line")
+        .attr("class","seekline")
+        .attr("x1", xScaleHL2(videoPlayer.currentTime)) 
+        .attr("y1", 0) 
+        .attr("x2",  xScaleHL2(videoPlayer.currentTime)) 
+        .attr("y2", 120) 
+        .style("stroke", "black")
+        .attr("stroke-width", 2)
+        .style("stroke-dasharray", "5,5");
+
+    hl2Group.append("line")
+        .attr("class","seekline")
+        .attr("x1", xScaleHL2(videoPlayer.currentTime)) 
+        .attr("y1", 190) 
+        .attr("x2",  xScaleHL2(videoPlayer.currentTime)) 
+        .attr("y2", 310) 
+        .style("stroke", "black")
+        .attr("stroke-width", 2)
+        .style("stroke-dasharray", "5,5");
+
+    let imubrush = d3.brushX()
         .extent([[0, 0], [ xScaleHL2.range()[1] , 120]])
         .on("end", hl2brushend);
-    
-    let imubrush = d3.brushX()
+
+    let gazebrush = d3.brushX()
         .extent([[0, 190], [ xScaleHL2.range()[1] , 310]])
         .on("end", hl2brushend);
-
+    
     let fnirsbrush = d3.brushX()
-        .extent([[0, 360], [ xScaleHL2.range()[1] , 480]])
+        .extent([[0, 380], [ xScaleHL2.range()[1] , 415]])
         .on("end", hl2brushend);
-
-    hl2Group.append("path")
-        .datum(dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial && obj.seconds <= duration))
-        .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 1)    
-        .attr("stroke-opacity", 0.8)
-        .attr("d", d3.line()
-        .x(function(d) { return xScaleHL2(d.seconds) })
-        .y(function(d) { return yScaleGaze(d[selectedGaze]) }))
 
     hl2Group.append("path")
         .datum(dataFiles[7].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial && obj.seconds <= duration))
@@ -2140,9 +2160,18 @@ function updateHl2Details(){
         .attr("stroke-opacity", 0.8)
         .attr("d", d3.line()
         .x(function(d) { return xScaleHL2(d.seconds) })
-        .y(function(d) { return 160+ yScaleImu(d[selectedImu]) }))
+        .y(function(d) { return yScaleImu(d[selectedImu]) }))
+
+    hl2Group.append("path")
+        .datum(dataFiles[6].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial && obj.seconds <= duration))
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1)    
+        .attr("stroke-opacity", 0.8)
+        .attr("d", d3.line()
+        .x(function(d) { return xScaleHL2(d.seconds) })
+        .y(function(d) { return 190 + yScaleGaze(d[selectedGaze]) }))
     
-    /*
     let filteredFnirs = dataFiles[3].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
     
     if (filteredFnirs.length==1){
@@ -2152,12 +2181,12 @@ function updateHl2Details(){
         fnirsToDisplay.consolidatedFNIRS[selectedFnirs].forEach(data => {
             hl2Group.append("rect")
                 .attr("x", xScaleHL2(data.startTimestamp))
-                .attr("y", 405)
+                .attr("y", 380)
                 .attr("width", xScaleHL2(data.endTimestamp) - xScaleHL2(data.startTimestamp)) 
                 .attr("height", 35)
                 .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
         });
-        
+        /*
         let variableName= selectedFnirs + "_confidence" 
         let yScaleLine =  d3.scaleLinear()
         .domain([1.0,0])
@@ -2172,8 +2201,9 @@ function updateHl2Details(){
             .attr("d", d3.line()
             .x(function(d) { return xScaleHL2(d.seconds) })
             .y(function(d) { return yScaleLine(d[variableName]) }))  
+            */
     }
-    */
+    
     let gazeBrushGroup = hl2Group.append("g")
         .attr("class", "brush gazebrush")
         .call(gazebrush, [ xScaleHL2.range()[0],xScaleHL2.range()[1]]);
@@ -2188,8 +2218,27 @@ function updateHl2Details(){
 
     gazeBrushGroup.call(gazebrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
     imuBrushGroup.call(imubrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
-    //fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
     
+    let timeupdate=0
+    videoPlayer.addEventListener('timeupdate', function() {
+        let curTime = videoPlayer.currentTime
+        d3.selectAll(".seekline")
+            .attr("x1",xScaleHL2(curTime))
+            .attr("x2",xScaleHL2(curTime))
+        if (videoPlayer.currentTime >= vidEnd) {
+          // Loop back to the start time
+          videoPlayer.currentTime = vidStart;
+        }
+
+        else if ( videoPlayer.currentTime<vidStart && timeupdate>5){
+            videoPlayer.currentTime = vidStart;
+            timeupdate=0
+
+        }
+        timeupdate+=1 
+      });
+
     function hl2brushend(e){
         if (typeof e.sourceEvent != 'undefined') {          
             let newt1 = xScaleHL2reverse(e.selection[0])  
