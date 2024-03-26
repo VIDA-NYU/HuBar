@@ -85,7 +85,7 @@ body{
     visibility: hidden;
     margin: 0;    
     position: absolute;
-    top: 30px;
+    top: 1px;
     text-align: center;
     left:50%;
 }

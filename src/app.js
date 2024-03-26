@@ -37,10 +37,10 @@ const margins={
     scatterplot:{ top:40, left:30, right:110, bottom:15},
     fnirs:{top:50, left:47, right:10, bottom:10},
     timeDist:{top:30, left:30, right:30, bottom: 10},
-    eventTimeline:{top:37, left:55, right:16, bottom:20},
-    matrix:{top:37, left:5, right:5, bottom:20},
-    fnirsSessions:{top:37, left:10, right:10, bottom:20},   
-    hl2:{top:60, left:23, right:23, bottom:10},
+    eventTimeline:{top:25, left:55, right:16, bottom:20},
+    matrix:{top:25, left:5, right:5, bottom:20},
+    fnirsSessions:{top:25, left:10, right:10, bottom:20},   
+    hl2:{top:55, left:45, right:23, bottom:10},
     video:{ top:0, left:0, right:0, bottom:0},
 }
 
@@ -55,7 +55,6 @@ Promise.all([
         d3.csv("data/imu_sampled.csv"),
         d3.json("data/all_correlations.json"),
         d3.json("data/sessions_metadata.json"),
-
     ])
     
     .then(function(files) {
@@ -64,7 +63,6 @@ Promise.all([
         updateScatterplot();
         updateFnirsAgg();
         updateTimeDistribution();
-        console.log(dataFiles[9]);
     })
     .catch(function(err) {
     console.log(err)
@@ -392,12 +390,8 @@ function initializeContainers(){
                 consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
             }
         });
-        //maxTimestamp= Math.max(consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedStepData'] = consolidatedStepData;
     })
-
-    
-
 
     //consolidate FNIRS Data
     dataFiles[3].forEach((trial)=>{
@@ -471,13 +465,8 @@ function initializeContainers(){
                 consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp = record.seconds;
             }
         });
-        //maxTimestamp= Math.max(consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp, maxTimestamp)
         trial['consolidatedFNIRS'] = consolidatedFNIRS; 
     })
-    //find global max timestamp
-    //maxTimestamp = Math.max(maxTimestamp,dataFiles[6].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[6][0]["seconds"]));
-    //maxTimestamp = Math.max(maxTimestamp,dataFiles[7].reduce((tempMax, obj) => Math.max(tempMax, obj["seconds"]), dataFiles[7][0]["seconds"]));
-
 }
 
 function updateScatterplot(){
@@ -751,7 +740,7 @@ function updateFnirsAgg(){
     
     const xScaleFnirs = d3.scaleLinear()
         .domain([0, 1]) // proportion scale
-        .range([0, categoryXScaleFnirs.bandwidth()*0.49]);
+        .range([0, categoryXScaleFnirs.bandwidth()*0.45]);
     
     const xScaleCorrelations=d3.scaleLinear()
         .domain([-1,1])
@@ -784,7 +773,7 @@ function updateFnirsAgg(){
         });
 
     const yAxis = d3.axisLeft(yScaleFnirs);
-
+    
     // Append axes to SVG
     fnirsGroup.append('g')
         .attr('class', 'x-axis axisHide')
@@ -820,7 +809,16 @@ function updateFnirsAgg(){
             .attr("dy","1.2em")
             .attr("x", categoryXScaleFnirs(domain) + 0.60 * categoryXScaleFnirs.bandwidth())
             .text(" Contribution")
+    
+        fnirsGroup.append('g')
+            .attr('class', 'x-axis '+domain)
+            .attr('transform', `translate(${categoryXScaleFnirs(domain)}, -3)`)
+            .call(d3.axisTop(xScaleFnirs)
+            .tickValues([0, 0.5, 1])
+            .tickFormat(d=>Math.round(d*100)));
     })
+
+    
 
 
     fnirsGroup.append('g')
@@ -922,13 +920,10 @@ function updateFnirsAgg(){
                 //Sort trials based on their frequencies
                 let topTrialValues = Object.keys(trialFrequency).sort((a, b) => trialFrequency[b] - trialFrequency[a]).slice(0,selectedFilter=="t10"? 10 : 5);
                 groupArray = topTrialValues.map(str => parseInt(str))
-                console.log("Toptrialvals", topTrialValues)
-                console.log("groupArray", groupArray)
             }
 
         }
         let selectedItemsArray =  selectedGroupby=="trial" ? selectedItems.map(obj => parseInt(obj.trial)) : selectedItems.map(obj => parseInt(obj.subject)) 
-        console.log("sel Item array", selectedItemsArray)
         groupArray.forEach((groupId)=>{
             if (selectedItems.length>0 && !selectedItemsArray.includes(parseInt(groupId)))
                 return   
@@ -1136,12 +1131,11 @@ function calculateProportions(data) {
         optimal = (sumOfValues['workload_classification_Optimal'] || 0) / total;
         underload = (sumOfValues['workload_classification_Underload'] || 0) / total;
         overload = (sumOfValues['workload_classification_Overload'] || 0) / total;
+        
         if (selectedGroupby == "trial")
             proportions['workload'].push({ trial: groupID,  optimal: optimal, underload: underload, overload: overload });
         else
             proportions['workload'].push({subject: groupID, optimal: optimal, underload: underload, overload: overload });
-
-
 
     });
 
@@ -1268,7 +1262,7 @@ function updateTimeDistribution(){
 
     timeDistGroup.append('g')
         .attr('class', 'x-axis')
-        .attr('transform', `translate(0, 0)`)
+        .attr('transform', `translate(0, -10)`)
         .call(d3.axisTop(xScaleTimeDist)
             .tickValues([0, maxTimestamp/2, maxTimestamp])
             .tickFormat(d => Math.round(d/60) + "min"));
@@ -1314,14 +1308,6 @@ function updateEventTimeline(){
         .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
         .range([0.0, maxTimestamp])
 
-    
-    eventTimelineGroup.append('g')
-        .attr('class', 'x-axis')
-        .attr('transform', `translate(0, -25)`)
-        .call(d3.axisBottom(xEventTimelineScale)
-            .tickValues([0, maxTimestamp/2, maxTimestamp])
-            .tickFormat(d => Math.round(d/60) + "min"));
-
     selectedItems.forEach((item)=>{
         //filter Mission File
         let tempObject = dataFiles[1].filter(obj => obj.subject_id == item.subject && obj.trial_id == item.trial);
@@ -1354,6 +1340,17 @@ function updateEventTimeline(){
             eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2 - margins.eventTimeline.left/2).attr("y", currentY-24).text("Subject "+ id).style("font-size", "16px").attr("text-anchor","middle").style("fill","black")
         else
             return
+
+        currentY+=5
+        eventTimelineGroup.append('g')
+            .attr('class', 'x-axis')
+            .attr('transform', `translate(0, ${currentY})`)
+            .call(d3.axisTop(xEventTimelineScale)
+                .tickValues([0, maxTimestamp/2, maxTimestamp])
+                .tickFormat(d => Math.round(d/60) + "min"));
+        
+        currentY+=15
+
 
         groupedObj.forEach((sessionMission)=>{
             let sessionFnirs = filteredFnirs.filter(obj => obj.subject_id == sessionMission.subject_id && obj.trial_id == sessionMission.trial_id)[0]  
@@ -1695,7 +1692,7 @@ function updateFnirsSessions(){
     let filteredObjects = []
     let xScaleFnirsSessions=  d3.scaleLinear()
                                 .domain([0.0,1.0])
-                                .range([0, fnirsSessionsGroup.attr("width")/2 - 5 ])
+                                .range([0, fnirsSessionsGroup.attr("width")/2 - 10 ])
     
     fnirsGroup.selectAll(".workload").classed("hide-workload",true)
     fnirsGroup.selectAll(".attention").classed("hide-workload", true)
@@ -1727,6 +1724,24 @@ function updateFnirsSessions(){
         if (groupedObj.length==0)
             return
             
+    currentY+=10
+    
+    fnirsSessionsGroup.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(0, ${currentY})`)
+        .call(d3.axisTop(xScaleFnirsSessions)
+            .tickValues([0, 0.5, 1])
+            .tickFormat(d => Math.round(d*100)));
+    
+    fnirsSessionsGroup.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(${xScaleFnirsSessions.range()[1]+15}, ${currentY})`)
+        .call(d3.axisTop(xScaleFnirsSessions)
+            .tickValues([0, 0.5, 1])
+            .tickFormat(d => (d*100)));
+
+    currentY+=10
+
         groupedObj.forEach((session)=>{
             let sessionObject = {
                 subject: 0,
@@ -1783,7 +1798,7 @@ function updateFnirsSessions(){
             if (errorData){
                 //Non Error
                 fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleFnirsSessions.range()[1] + 5)
+                    .attr("x", xScaleFnirsSessions.range()[1] + 15)
                     .attr("y", currentY+21)
                     .attr("width", xScaleFnirsSessions((100-errorData['percentage_error'])/100 ))
                     .attr("height", 16)
@@ -1792,7 +1807,7 @@ function updateFnirsSessions(){
 
                 //Error
                 fnirsSessionsGroup.append("rect")
-                    .attr("x", xScaleFnirsSessions.range()[1] + 5)
+                    .attr("x", xScaleFnirsSessions.range()[1] + 15)
                     .attr("y", currentY+36)
                     .attr("width", xScaleFnirsSessions(errorData['percentage_error']/100 ))
                     .attr("height", 16)
@@ -1895,6 +1910,7 @@ function updateMatrix(){
             groupedObj = filteredObjects.filter(obj => obj.trial == id)
         if (groupedObj.length==0)
             return
+        currentY +=20;
         groupedObj.forEach((session)=>{
             if (session.missing){
                 let displayMissing= `Missing info for Subject:${session.subject} Trial:${session.trial}`
@@ -2005,16 +2021,25 @@ function updateHl2Details(){
 
     let duration = allTimestamps['t'+brushedTrial+"-s"+brushedSubject]
 
-    let xScaleHL2= d3.scaleLinear()
+    let xScaleHL2 = d3.scaleLinear()
         .domain([0, duration])
         .range([0,hl2Group.attr("width")])
 
     hl2Group.append('g')
         .attr('class', 'x-axis')
-        .attr('transform', `translate(0, -60)`)
-        .call(d3.axisBottom(xScaleHL2)
+        .attr('transform', `translate(0, -5)`)
+        .call(d3.axisTop(xScaleHL2)
             .tickValues([0, duration/2, duration])
             .tickFormat(d => Math.round(d/60) + "min"));
+
+    hl2Group.append('g')
+        .attr('class', 'x-axis')
+        .attr('transform', `translate(0, 185)`)
+        .call(d3.axisTop(xScaleHL2)
+            .tickValues([0, duration/2, duration])
+            .tickFormat(d => Math.round(d/60) + "min"));
+
+
 
     let xScaleHL2reverse =  d3.scaleLinear()
         .domain([0,hl2Group.attr("width")])
@@ -2031,6 +2056,20 @@ function updateHl2Details(){
         .domain([minImu - ((maxImu-minImu)*0.1) ,maxImu + ((maxImu-minImu)*0.1)])
         .range([120,0])
 
+    hl2Group.append('g')
+        .attr('class', 'y-axis')
+        .attr('transform', `translate(-10, 0)`)
+        .call(d3.axisLeft(yScaleGaze)
+            .tickValues([-1,0,1])
+            .tickFormat(d=>Math.trunc(d)));
+
+    hl2Group.append('g')
+        .attr('class', 'y-axis')
+        .attr('transform', `translate(-10, 190)`)
+        .call(d3.axisLeft(yScaleImu)
+            .tickValues([ yScaleImu.domain()[1], (maxImu+minImu)/2, yScaleImu.domain()[0]])
+            .tickFormat(d=>Math.round(d)));
+    
     hl2Group.append("rect")
         .attr("x", 0)
         .attr("y", 0)
@@ -2046,7 +2085,7 @@ function updateHl2Details(){
 
     hl2Group.append("rect")
         .attr("x", 0)
-        .attr("y", 160)
+        .attr("y", 190)
         .attr("rx",5)
         .attr("ry", 7)
         .attr("width", xScaleHL2.range()[1])
@@ -2057,9 +2096,10 @@ function updateHl2Details(){
         .style("fill", "none")
         .style("fill-opacity", 0)
 
+    /*
     hl2Group.append("rect")
         .attr("x", 0)
-        .attr("y", 320)
+        .attr("y", 360)
         .attr("rx",5)
         .attr("ry", 7)
         .attr("width", xScaleHL2.range()[1])
@@ -2069,17 +2109,17 @@ function updateHl2Details(){
         .style("stroke-opacity", 0.7)
         .style("fill", "none")
         .style("fill-opacity", 0)
-
+    */
     let gazebrush = d3.brushX()
         .extent([[0, 0], [ xScaleHL2.range()[1] , 120]])
         .on("end", hl2brushend);
     
     let imubrush = d3.brushX()
-        .extent([[0, 160], [ xScaleHL2.range()[1] , 280]])
+        .extent([[0, 190], [ xScaleHL2.range()[1] , 310]])
         .on("end", hl2brushend);
 
     let fnirsbrush = d3.brushX()
-        .extent([[0, 320], [ xScaleHL2.range()[1] , 440]])
+        .extent([[0, 360], [ xScaleHL2.range()[1] , 480]])
         .on("end", hl2brushend);
 
     hl2Group.append("path")
@@ -2102,7 +2142,7 @@ function updateHl2Details(){
         .x(function(d) { return xScaleHL2(d.seconds) })
         .y(function(d) { return 160+ yScaleImu(d[selectedImu]) }))
     
-
+    /*
     let filteredFnirs = dataFiles[3].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)
     
     if (filteredFnirs.length==1){
@@ -2133,7 +2173,7 @@ function updateHl2Details(){
             .x(function(d) { return xScaleHL2(d.seconds) })
             .y(function(d) { return yScaleLine(d[variableName]) }))  
     }
-
+    */
     let gazeBrushGroup = hl2Group.append("g")
         .attr("class", "brush gazebrush")
         .call(gazebrush, [ xScaleHL2.range()[0],xScaleHL2.range()[1]]);
@@ -2148,7 +2188,7 @@ function updateHl2Details(){
 
     gazeBrushGroup.call(gazebrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
     imuBrushGroup.call(imubrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
-    fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
+    //fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
     
     function hl2brushend(e){
         if (typeof e.sourceEvent != 'undefined') {          
