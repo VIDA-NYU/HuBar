@@ -585,6 +585,19 @@ function updateScatterplot(){
                     return "scatterpoints scatter-"+(d.trial)
                 else 
                     return "scatterpoints scatter-"+(d.subject)
+            })
+            .on("mouseover", function(d) {
+                scatterTooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                    scatterTooltip.html(`<strong>Trial:</strong> ${d.target.__data__.trial}<br><strong>Subject:</strong> ${d.target.__data__.subject}`)
+                    .style("left", (d.layerX + 10) + "px")
+                    .style("top", (d.layerY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                scatterTooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
             });
         
     }
