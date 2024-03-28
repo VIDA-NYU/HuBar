@@ -527,7 +527,8 @@ function updateScatterplot(){
     // Append tooltip
     let scatterTooltip =scatterplotDiv.append("div")
         .attr("class", "tooltip")
-        .style("opacity", 0)
+        .style("opacity",0.9)
+        .style("visibility","hidden")
         .style("position", "absolute")
         //.style("width","150px")
         .style("background-color", "white")
@@ -554,7 +555,7 @@ function updateScatterplot(){
             .on("mouseover", function(d) {
                 scatterTooltip.transition()
                     .duration(200)
-                    .style("opacity", .9);
+                    .style("visibility", "visible");
                     scatterTooltip.html(`<strong>Trial:</strong> ${d.target.__data__.trial}<br><strong>Subject:</strong> ${d.target.__data__.subject}`)
                     .style("left", (d.layerX + 10) + "px")
                     .style("top", (d.layerY - 28) + "px");
@@ -562,7 +563,7 @@ function updateScatterplot(){
             .on("mouseout", function(d) {
                 scatterTooltip.transition()
                     .duration(500)
-                    .style("opacity", 0);
+                    .style("visibility", "hidden");
             });
     }
 
@@ -589,7 +590,7 @@ function updateScatterplot(){
             .on("mouseover", function(d) {
                 scatterTooltip.transition()
                     .duration(200)
-                    .style("opacity", .9);
+                    .style("visibility", "visible");
                     scatterTooltip.html(`<strong>Trial:</strong> ${d.target.__data__.trial}<br><strong>Subject:</strong> ${d.target.__data__.subject}`)
                     .style("left", (d.layerX + 10) + "px")
                     .style("top", (d.layerY - 28) + "px");
@@ -597,7 +598,7 @@ function updateScatterplot(){
             .on("mouseout", function(d) {
                 scatterTooltip.transition()
                     .duration(500)
-                    .style("opacity", 0);
+                    .style("visibility","hidden");
             });
         
     }
