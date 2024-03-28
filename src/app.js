@@ -139,6 +139,10 @@ function initializeContainers(){
         updateHl2Details();
     });
 
+    d3.select("#corr-checkbox").on("change", function() {
+        updateFnirsSessions();
+    });
+
     const gazeDropdown = d3.select("#gaze-dropdown");
 
     gazeDropdown.on("change", function() {
@@ -1296,11 +1300,23 @@ function updateEventTimeline(){
     d3.select("#fnirs-dropdown")
         .style("visibility","hidden");
 
+    d3.select("#corr-checkbox")
+        .style("visibility","hidden");
+
+    d3.select("#corr-checkbox-label")
+        .style("visibility","hidden");
+
     if (selectedItems.length == 0){
         return;
     }
 
     d3.select("#fnirs-dropdown")
+        .style("visibility","visible");
+
+    d3.select("#corr-checkbox")
+        .style("visibility","visible");
+
+    d3.select("#corr-checkbox-label")
         .style("visibility","visible");
 
     let filteredMissionData=[];
@@ -1774,30 +1790,31 @@ function updateFnirsSessions(){
             //Overload
             fnirsSessionsGroup.append("rect")
                 .attr("x", xScaleFnirsSessions.range()[1] + 15)
-                .attr("y", currentY+21)
+                .attr("y", currentY+5)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Overload"]/sessionObject[variableName+"Total"] ))
-                .attr("height", 16)
+                .attr("height", 15)
                 .style("fill", "#99070d" )
                 .attr("class","fnirs-session-bar t"+sessionObject.trial+"-s"+sessionObject.subject);
 
             //optimal
             fnirsSessionsGroup.append("rect")
                 .attr("x", xScaleFnirsSessions.range()[1] + 15)
-                .attr("y", currentY+37)
+                .attr("y", currentY+20)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Optimal"]/sessionObject[variableName+"Total"] ))
-                .attr("height", 16)
+                .attr("height", 15)
                 .style("fill", "#eb5a4d" )
                 .attr("class","fnirs-session-bar t"+sessionObject.trial+"-s"+sessionObject.subject);
 
             //underload
             fnirsSessionsGroup.append("rect")
                 .attr("x", xScaleFnirsSessions.range()[1] + 15)
-                .attr("y", currentY+53)
+                .attr("y", currentY+35)
                 .attr("width", xScaleFnirsSessions(sessionObject[variableName+"Underload"]/sessionObject[variableName+"Total"] ))
-                .attr("height", 16)
+                .attr("height", 15)
                 .style("fill", "#ffb0b0" )                
                 .attr("class","fnirs-session-bar t"+sessionObject.trial+"-s"+sessionObject.subject);
 
+            
 
             let errorData = dataFiles[5].filter(obj => obj.subject_id == sessionObject.subject && obj.trial_id == sessionObject.trial)[0];
             
@@ -1805,18 +1822,18 @@ function updateFnirsSessions(){
                 //Non Error
                 fnirsSessionsGroup.append("rect")
                     .attr("x", 0)
-                    .attr("y", currentY+21)
+                    .attr("y", currentY+5)
                     .attr("width", xScaleFnirsSessions((100-errorData['percentage_error'])/100 ))
-                    .attr("height", 16)
+                    .attr("height", 15)
                     .style("fill", "#AEAEAE" )
                     .attr("class","error-session-bar t"+errorData.trial_id+"-s"+errorData.subject_id);
 
                 //Error
                 fnirsSessionsGroup.append("rect")
                     .attr("x", 0)
-                    .attr("y", currentY+36)
+                    .attr("y", currentY+20)
                     .attr("width", xScaleFnirsSessions(errorData['percentage_error']/100 ))
-                    .attr("height", 16)
+                    .attr("height", 15)
                     .style("fill", "black" )
                     .attr("class","error-session-bar t"+errorData.trial_id+"-s"+errorData.subject_id);
 
@@ -1825,11 +1842,57 @@ function updateFnirsSessions(){
             else{
                 fnirsSessionsGroup.append("text")
                     .attr("x", 0)
-                    .attr("y", currentY + 38)
+                    .attr("y", currentY + 25)
                     .style("font-size", "10px")
                     .attr("text-anchor","start")
                     .style("fill","black")
                     .text("Error data not found")
+            }
+
+            const xScaleCorrelations=d3.scaleLinear()
+                .domain([-1,1])
+                .range(xScaleFnirsSessions.range())
+
+            if (d3.select("#corr-checkbox").property("checked") == true){
+
+                fnirsSessionsGroup.append('g')
+                    .attr('class', "x-axis t"+sessionObject.trial+"-s"+sessionObject.subject)
+                    .attr('transform', `translate(0, ${currentY+60})`)
+                    .call(d3.axisBottom(xScaleCorrelations)
+                    .tickValues([-1, -0.5, 0, 0.5, 1]));
+                
+                let correlations = dataFiles[8].pair_correlations[sessionObject.subject][sessionObject.trial]
+                console.log(correlations)
+                if (correlations!= null){
+                    let optimalCorr = correlations[selectedFnirs+"_Optimal"]
+                    let overloadCorr = correlations[selectedFnirs+"_Overload"]
+                    let underloadCorr = correlations[selectedFnirs+"_Underload"]
+                    if(optimalCorr != null)
+                        fnirsSessionsGroup.append("rect")
+                            .attr("x", xScaleCorrelations(optimalCorr))
+                            .attr("y", currentY +51)
+                            .attr("fill", "#eb5a4d")
+                            .attr("width", 9)
+                            .attr("height", 9)
+                            .attr("class","t"+sessionObject.trial+"-s"+sessionObject.subject);    
+                    if(overloadCorr != null)
+                        fnirsSessionsGroup.append("rect")
+                            .attr("x", xScaleCorrelations(overloadCorr))
+                            .attr("y", currentY +51)
+                            .attr("fill", "#99070d")
+                            .attr("width", 9)
+                            .attr("height", 9)
+                            .attr("class","t"+sessionObject.trial+"-s"+sessionObject.subject);
+                    if(underloadCorr != null)
+                        fnirsSessionsGroup.append("rect")
+                            .attr("x", xScaleCorrelations(underloadCorr))
+                            .attr("y", currentY +51)
+                            .attr("fill", "#ffb0b0")
+                            .attr("width", 9)
+                            .attr("height", 9)
+                            .attr("class","t"+sessionObject.trial+"-s"+sessionObject.subject);
+                }
+        
             }
             currentY+=90
             if (fnirsSessionsSvg.attr("height")<=currentY+200){

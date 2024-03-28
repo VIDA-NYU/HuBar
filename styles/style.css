@@ -164,7 +164,7 @@ body{
 #source-dropdown {
     position: absolute; /* Position dropdown absolutely */
     top: 4px; /* Adjust top position as needed */
-    left: 16%; /* Adjust right position as needed */
+    left: 15%; /* Adjust right position as needed */
     z-index: 1; /* Ensure dropdown is above other elements */
 }
 
@@ -186,7 +186,7 @@ body{
 #filter-label{
     font-size: 0.8em;
     position: absolute; /* Position dropdown absolutely */
-    left:72%;
+    left:73%;   
     top:5px;
 }
 
@@ -211,6 +211,14 @@ body{
     top: 35px; /* Adjust top position as needed */
     right: 8%; /* Adjust left position as needed */
     z-index: 1;
+}
+
+#corr-checkbox-div{
+    position: absolute;
+    margin: 0%;
+    left: 0px;
+    font-size: 12px;
+    top: 30px;
 }
 
 .lasso path {
