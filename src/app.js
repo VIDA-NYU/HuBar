@@ -1392,7 +1392,7 @@ function updateEventTimeline(){
                 if (sessionFnirs.missing)
                     displayMissing= `Missing Mission & FNIRS info for Subject:${sessionMission.subject_id} Trial:${sessionMission.trial_id}`
   
-                let missingText = eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
+                let missingText = eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black").style("fill-opacity", 0.5)
                 let bbox = missingText.node().getBBox();
                 
                 eventTimelineGroup.append("rect")
@@ -1403,9 +1403,9 @@ function updateEventTimeline(){
                     .attr("ry",5)
                     .attr("height", bbox.height + 4)
                     .attr("stroke", "black")
+                    .style("stroke-opacity", 0.5)
                     .style("fill", "none");
 
-                eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
                 currentY+=40
 
                 if(!sessionFnirs.missing){
@@ -1508,7 +1508,6 @@ function updateEventTimeline(){
                 .attr("stroke", "black")
                 .style("fill", "none");
             
-            eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]- margins.eventTimeline.left + 6).attr("y", currentY+3).text(sessionTitle.text()).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
             currentY+=25;
 
             errorData.forEach(data => {
@@ -1846,7 +1845,9 @@ function updateFnirsSessions(){
                     .style("font-size", "10px")
                     .attr("text-anchor","start")
                     .style("fill","black")
-                    .text("Error data not found")
+                    .text("Error data not found") 
+                    .style("fill-opacity",0.5)  
+                    
             }
 
             const xScaleCorrelations=d3.scaleLinear()
@@ -1993,7 +1994,7 @@ function updateMatrix(){
         groupedObj.forEach((session)=>{
             if (session.missing){
                 let displayMissing= `Missing info for Subject:${session.subject} Trial:${session.trial}`
-                let missingText = matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
+                let missingText = matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black").style("fill-opacity", 0.5)
                 let bbox = missingText.node().getBBox();
                 
                 matrixGroup.append("rect")
@@ -2004,9 +2005,9 @@ function updateMatrix(){
                     .attr("ry",5)
                     .attr("height", bbox.height + 4)
                     .style("fill", "none")
+                    .style("stroke-opacity", 0.5)
                     .attr("stroke", "black");
 
-                matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black")
                 if(matrixSvg.attr("height")<=currentY+200){
                     matrixGroup.attr("height",currentY+200)
                     matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
