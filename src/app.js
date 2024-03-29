@@ -1388,6 +1388,26 @@ function updateEventTimeline(){
                 let sessionTitle
             if (selectedGroupby=="trial")
                 sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Sub "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
+                .on("click",(event, d) =>{
+
+                    let trialToRemove;
+                    let subjectToRemove;
+                    if (typeof event.target != 'undefined') {
+                        trialToRemove = event.srcElement.getAttribute("data-trial")
+                        subjectToRemove = event.srcElement.getAttribute("data-subject")
+                    }
+                    else{    
+                        return
+                    }
+                    selectedItems = selectedItems.filter(function(item) {
+                        return !(item.trial == trialToRemove && item.subject == subjectToRemove);
+                    });
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                    updateHl2Details();
+                    
+                })
             else
                 sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Trial "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
                 .on("click",(event, d) =>{
@@ -1553,6 +1573,26 @@ function updateEventTimeline(){
            let sessionTitle
             if (selectedGroupby=="trial")
                 sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Sub "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
+                .on("click",(event, d) =>{
+
+                    let trialToRemove;
+                    let subjectToRemove;
+                    if (typeof event.target != 'undefined') {
+                        trialToRemove = event.srcElement.getAttribute("data-trial")
+                        subjectToRemove = event.srcElement.getAttribute("data-subject")
+                    }
+                    else{    
+                        return
+                    }
+                    selectedItems = selectedItems.filter(function(item) {
+                        return !(item.trial == trialToRemove && item.subject == subjectToRemove);
+                    });
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                    updateHl2Details();
+                    
+                })
             else
                 sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Trial "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
                 .on("click",(event, d) =>{
