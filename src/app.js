@@ -1385,6 +1385,64 @@ function updateEventTimeline(){
         groupedObj.forEach((sessionMission)=>{
             let sessionFnirs = filteredFnirs.filter(obj => obj.subject_id == sessionMission.subject_id && obj.trial_id == sessionMission.trial_id)[0]  
             if (sessionMission.missing){
+                let sessionTitle
+            if (selectedGroupby=="trial")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Sub "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
+            else
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Trial "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
+                .on("click",(event, d) =>{
+
+                    let trialToRemove;
+                    let subjectToRemove;
+                    if (typeof event.target != 'undefined') {
+                        trialToRemove = event.srcElement.getAttribute("data-trial")
+                        subjectToRemove = event.srcElement.getAttribute("data-subject")
+                    }
+                    else{    
+                        return
+                    }
+                    selectedItems = selectedItems.filter(function(item) {
+                        return !(item.trial == trialToRemove && item.subject == subjectToRemove);
+                    });
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                    updateHl2Details();
+                    
+                })
+
+            let titlebbox = sessionTitle.node().getBBox();
+            eventTimelineGroup.append("rect")
+                .attr("x", titlebbox.x - 2)
+                .attr("y", titlebbox.y - 2)
+                .attr("width", titlebbox.width + 4)
+                .attr("rx",5)
+                .attr("ry",5)
+                .attr("data-trial", sessionMission.trial_id)
+                .attr("data-subject", sessionMission.subject_id)
+                .attr("height", titlebbox.height + 4)
+                .attr("stroke", "black")
+                .style("fill", "none")
+                .on("click", (event, d) => {
+                    let trialToRemove;
+                    let subjectToRemove;
+                    if (typeof event.target != 'undefined') {
+                        trialToRemove = event.srcElement.getAttribute("data-trial")
+                        subjectToRemove = event.srcElement.getAttribute("data-subject")
+                    }
+
+                    else{
+                        return
+                    }
+                    selectedItems = selectedItems.filter(function(item) {
+                        return !(item.trial == trialToRemove && item.subject == subjectToRemove);
+                    });
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                    updateHl2Details();
+
+                });
 
                     
                 let displayMissing= `Missing mission info for Subject:${sessionMission.subject_id} Trial:${sessionMission.trial_id}`
