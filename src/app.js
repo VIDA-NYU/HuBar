@@ -1494,9 +1494,30 @@ function updateEventTimeline(){
         
            let sessionTitle
             if (selectedGroupby=="trial")
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Sub "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Sub "+ sessionMission.subject_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
             else
-                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Trial "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black")
+                sessionTitle=eventTimelineGroup.append("text").attr("x", xEventTimelineScale.range()[0]-margins.eventTimeline.left + 6).attr("y", currentY+3).text("Trial "+ sessionMission.trial_id).style("font-size", "10px").attr("text-anchor","start").style("fill","black").attr("data-trial", sessionMission.trial_id).attr("data-subject", sessionMission.subject_id)
+                .on("click",(event, d) =>{
+
+                    let trialToRemove;
+                    let subjectToRemove;
+                    if (typeof event.target != 'undefined') {
+                        trialToRemove = event.srcElement.getAttribute("data-trial")
+                        subjectToRemove = event.srcElement.getAttribute("data-subject")
+                    }
+                    else{    
+                        return
+                    }
+                    selectedItems = selectedItems.filter(function(item) {
+                        return !(item.trial == trialToRemove && item.subject == subjectToRemove);
+                    });
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                    updateHl2Details();
+                    
+                })
+
             let bbox = sessionTitle.node().getBBox();
             eventTimelineGroup.append("rect")
                 .attr("x", bbox.x - 2)
@@ -1504,9 +1525,32 @@ function updateEventTimeline(){
                 .attr("width", bbox.width + 4)
                 .attr("rx",5)
                 .attr("ry",5)
+                .attr("data-trial", sessionMission.trial_id)
+                .attr("data-subject", sessionMission.subject_id)
                 .attr("height", bbox.height + 4)
                 .attr("stroke", "black")
-                .style("fill", "none");
+                .style("fill", "none")
+                .on("click", (event, d) => {
+                    let trialToRemove;
+                    let subjectToRemove;
+                    if (typeof event.target != 'undefined') {
+                        trialToRemove = event.srcElement.getAttribute("data-trial")
+                        subjectToRemove = event.srcElement.getAttribute("data-subject")
+                    }
+
+                    else{
+                        return
+                    }
+                    selectedItems = selectedItems.filter(function(item) {
+                        return !(item.trial == trialToRemove && item.subject == subjectToRemove);
+                    });
+                    updateEventTimeline();
+                    updateMatrix();
+                    updateFnirsSessions();
+                    updateHl2Details();
+
+                });
+
             
             currentY+=25;
 
@@ -1863,7 +1907,6 @@ function updateFnirsSessions(){
                     .tickValues([-1, -0.5, 0, 0.5, 1]));
                 
                 let correlations = dataFiles[8].pair_correlations[sessionObject.subject][sessionObject.trial]
-                console.log(correlations)
                 if (correlations!= null){
                     let optimalCorr = correlations[selectedFnirs+"_Optimal"]
                     let overloadCorr = correlations[selectedFnirs+"_Overload"]
@@ -2325,7 +2368,6 @@ function updateHl2Details(){
             allBrushes.forEach((eachBrush)=>{
                 let className = "brush-t"+brushedTrial+"-s"+brushedSubject
                 if (d3.select(eachBrush).classed(className)){
-                    console.log("moving brush")
                     let curBrush = d3.select(eachBrush)
                     curBrush.call(brushesAdded[0].move, [xEventTimelineScale(newt1), xEventTimelineScale(newt2)]); 
                 }
