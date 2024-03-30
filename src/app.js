@@ -9,7 +9,7 @@ let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
     scatterSvg, scatterGroup, scatterScaleEncoding, 
     fnirsSvg, fnirsGroup,
     eventTimelineSvg , eventTimelineGroup, xEventTimelineScale, reverseTimelineScale,
-    matrixSvg, matrixGroup,
+    matrixSvg, matrixGroup, matrixTooltip,
     hl2Svg, hl2Group,
     fnirsSessionsSvg, fnirsSessionsGroup,
     timeDistSvg, timeDistGroup,
@@ -135,6 +135,7 @@ function initializeContainers(){
     fnirsDropdown.on("change", function() {
         selectedFnirs = fnirsDropdown.property("value");
         updateEventTimeline();
+        updateMatrix();
         updateFnirsSessions();
         updateHl2Details();
     });
@@ -293,6 +294,19 @@ function initializeContainers(){
         .attr("width", matrixDiv.node().clientWidth -margins.matrix.left - margins.matrix.right )
         .attr("height", matrixDiv.node().clientHeight - margins.matrix.top - margins.matrix.bottom);
     
+    matrixTooltip =matrixDiv.append("div")
+        .attr("class", "tooltip")
+        .style("opacity",0.9)
+        .style("visibility","hidden")
+        .style("position", "absolute")
+        .style("font-size","0.75em")
+        //.style("width","150px")
+        .style("z-index",1000)
+        .style("background-color", "white")
+        .style("padding", "8px")
+        .style("border-radius", "5px")
+        .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)")
+        .style("text-align", "left"); // Add text-align: left to align text left;
     //fnirssessions
     let fnirsSessionsDiv= d3.select("#fnirs-sessions-container")  
     
@@ -2004,7 +2018,7 @@ function updateFnirsSessions(){
                     .call(d3.axisBottom(xScaleCorrelations)
                     .tickValues([-1, -0.5, 0, 0.5, 1]));
                 
-                let correlations = dataFiles[8].pair_correlations[sessionObject.subject][sessionObject.trial]
+                let correlations = dataFiles[8].session_correlations[sessionObject.subject][sessionObject.trial]
                 if (correlations!= null){
                     let optimalCorr = correlations[selectedFnirs+"_Optimal"]
                     let overloadCorr = correlations[selectedFnirs+"_Overload"]
@@ -2155,8 +2169,10 @@ function updateMatrix(){
                 }
                 currentY+=90;
                 return
-            }            
+            }
+                        
             stepsPresent.forEach(step => createPie( session, step));
+
             currentY+=90;
         })
         currentY+=50
@@ -2167,6 +2183,12 @@ function updateMatrix(){
     })    
 
     function createPie(row, step) {
+        let overloadCorr, optimalCorr, underloadCorr;
+        if (dataFiles[8].procedure_correlations[row.subject][row.trial] && dataFiles[8].procedure_correlations[row.subject][row.trial][step]){
+            overloadCorr =  dataFiles[8].procedure_correlations[row.subject][row.trial][step][selectedFnirs+"_Overload"]
+            optimalCorr  = dataFiles[8].procedure_correlations[row.subject][row.trial][step][selectedFnirs+"_Optimal"]
+            underloadCorr = dataFiles[8].procedure_correlations[row.subject][row.trial][step][selectedFnirs+"_Underload"] 
+        }
         const total = row[step] ?? 0;
         const none = row[step + "_None"] ?? 0;
         const error = row[step + "_error"] ?? 0;
@@ -2178,7 +2200,21 @@ function updateMatrix(){
                 .attr("class", "circle circle-" + step + "-"+row.subject +"-"+row.trial)
                 .attr('cy', currentY + 30)
                 .attr('r', radiusScale(total))
-                .attr('fill', ()=> error==0? "#AEAEAE" : "black");
+                .attr('fill', ()=> error==0? "#AEAEAE" : "black")
+                .on("mouseover", function(d) {
+                    console.log(d)
+                    matrixTooltip.transition()
+                        .duration(200)
+                        .style("visibility", "visible")
+                        matrixTooltip.html(`<strong>${ selectedFnirs.charAt(0).toUpperCase() + selectedFnirs.slice(1)} Error Contribution </strong><br> Overload: ${overloadCorr} <br> Optimal: ${optimalCorr} <br> Underload: ${underloadCorr}`)
+                        .style("left", (d.clientX + 10) + "px")
+                        .style("top", (d.clientY - 28) + "px");
+                })
+                .on("mouseout", function(d) {
+                    matrixTooltip.transition()
+                        .duration(500)
+                        .style("visibility", "hidden");
+                });
 
             return
         }
@@ -2203,7 +2239,21 @@ function updateMatrix(){
     
         arcs.append("path")
             .attr("fill", (d, i) => color(i === 0 ? "None" : "error"))
-            .attr("d", arc);
+            .attr("d", arc)
+            .on("mouseover", function(d) {
+                console.log(d)
+                matrixTooltip.transition()
+                    .duration(200)
+                    .style("visibility", "visible");
+                    matrixTooltip.html(`<strong>${ selectedFnirs.charAt(0).toUpperCase() + selectedFnirs.slice(1)} Error Contribution </strong><br> Overload: ${overloadCorr} <br> Optimal: ${optimalCorr} <br> Underload: ${underloadCorr}`)
+                    .style("left", (d.clientX + 10) + "px")
+                    .style("top", (d.clientY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                matrixTooltip.transition()
+                    .duration(500)
+                    .style("visibility", "hidden");
+            });
     
         //arcs.append("text")
           //  .attr("transform", d => "translate(" + arc.centroid(d) + ")")
