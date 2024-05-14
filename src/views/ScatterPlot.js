@@ -1,13 +1,14 @@
 import * as d3 from 'd3';
 import lasso from './../lasso.js'; // Adjust the path if necessary
-import { updateFnirsAgg, 
+import { 
     updateTimeDistribution,
     updateEventTimeline,
     updateMatrix,
     updateFnirsSessions,
     updateHl2Details } from '../app.js'
+import {updateFnirsAgg } from './FnirsAggregations.js'
 
-export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, scatterScaleEncoding, selectedItems){
+export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, scatterScaleEncoding, selectedItems){
     if (selectedGroupby=="trial" && selectedFilter=="all")
         margins.scatterplot.right=30;
     else
@@ -164,7 +165,7 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
         else{
             lassoBrush.items().classed("unselectedscatter",false);
         }
-        updateFnirsAgg(selectedItems);
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, margins, dataFiles);
         updateTimeDistribution();
         updateEventTimeline();
         updateMatrix();
