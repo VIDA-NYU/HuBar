@@ -1,14 +1,15 @@
 import * as d3 from 'd3';
 import lasso from './../lasso.js'; // Adjust the path if necessary
 import { 
-    updateTimeDistribution,
     updateEventTimeline,
     updateMatrix,
     updateFnirsSessions,
     updateHl2Details } from '../app.js'
 import {updateFnirsAgg } from './FnirsAggregations.js'
+import {updateTimeDistribution } from './TimeDistribution.js'
 
-export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, scatterScaleEncoding, selectedItems){
+
+export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, scatterScaleEncoding, selectedItems){
     if (selectedGroupby=="trial" && selectedFilter=="all")
         margins.scatterplot.right=30;
     else
@@ -165,8 +166,8 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
         else{
             lassoBrush.items().classed("unselectedscatter",false);
         }
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, margins, dataFiles);
-        updateTimeDistribution();
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
@@ -212,8 +213,8 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
                     chosenSamples.forEach((sample)=>{
                         selectedItems.push({trial:sample.trial ,subject:sample.subject})
                     })
-                    updateFnirsAgg(selectedItems);
-                    updateTimeDistribution();
+                    updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+                    updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
                     updateEventTimeline();
                     updateMatrix();
                     updateFnirsSessions();

@@ -1,14 +1,14 @@
 import * as d3 from 'd3';
 import {
-    updateTimeDistribution,
     updateEventTimeline,
     updateMatrix,
     updateFnirsSessions,
     updateHl2Details } from '../app.js';
 
 import {calculateProportions} from './utils.js';
+import {updateTimeDistribution } from './TimeDistribution.js'
 
-export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, margins, dataFiles){
+export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles){
     console.log("updateFnirs")
 
     // Extract unique sources from the data
@@ -103,8 +103,8 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, f
         .on("click", (event, d)=>{
             d3.select("#fnirs-dropdown").property("value",d);
             selectedFnirs=d;
-            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, margins, dataFiles);
-            updateTimeDistribution();
+            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+            updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
@@ -163,8 +163,8 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, f
             chosenSamples.forEach((sample)=>{
                 selectedItems.push({trial:sample.trial ,subject:sample.subject})
             })
-            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, margins, dataFiles);
-            updateTimeDistribution();
+            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+            updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
