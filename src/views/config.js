@@ -1,4 +1,5 @@
 
+import * as d3 from 'd3';
 let allTimestamps = {}
 let maxTimestamp=0.0;
 
@@ -21,4 +22,22 @@ export function get_allTimestamps(){
 export function get_maxTimestamp(){
     return maxTimestamp;
 }
+
+
+
+export function get_stepColorScale(){
+    const allSteps = ["a", "b", "c", "d", "e", "f", "?", "*", "1", "2", "v"]
+
+    let modifiedSchemePaired = d3.schemePaired
+    modifiedSchemePaired.splice(4,2);
+    modifiedSchemePaired.push("white")
+
+    const stepColorScale = d3.scaleOrdinal()
+        .domain(allSteps)
+        .range(modifiedSchemePaired);
+
+    return stepColorScale;
+}
+
+
     

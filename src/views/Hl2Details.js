@@ -19,7 +19,7 @@ export function cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group){
         return
     }
 }
-export function updateHl2Details( brushedTrial, brushedSubject, videoPlayer, hl2Group, dataFiles){
+export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, eventTimelineGroup, eventTimelineSvg, vidStart, vidEnd, videoPlayer, hl2Group, selectedFnirs, dataFiles){
     cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group);
     // hl2Group.selectAll('*').remove();
     // d3.select("#gaze-header")

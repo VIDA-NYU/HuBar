@@ -1,16 +1,16 @@
 import * as d3 from 'd3';
 import lasso from './../lasso.js'; // Adjust the path if necessary
-import { 
-    updateEventTimeline,
+import {
     updateMatrix,
     updateFnirsSessions } from '../app.js'
 import {updateFnirsAgg } from './FnirsAggregations.js'
 import {updateTimeDistribution } from './TimeDistribution.js'
 import {cleanUpdateHl2Details } from './Hl2Details.js'
+import { updateEventTimeline } from './EventTimeline.js'
 
 
 export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles,
-    scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer,
+    scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs,
     maxTimestamp, scatterScaleEncoding, selectedItems){
     if (selectedGroupby=="trial" && selectedFilter=="all")
         margins.scatterplot.right=30;
@@ -168,9 +168,9 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
         else{
             lassoBrush.items().classed("unselectedscatter",false);
         }
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, maxTimestamp, margins, dataFiles);
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
         updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-        updateEventTimeline();
+        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
         updateMatrix();
         updateFnirsSessions();
         // updateHl2Details();
@@ -216,9 +216,9 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
                     chosenSamples.forEach((sample)=>{
                         selectedItems.push({trial:sample.trial ,subject:sample.subject})
                     })
-                    updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, maxTimestamp, margins, dataFiles);
+                    updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
                     updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-                    updateEventTimeline();
+                    updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
                     updateMatrix();
                     updateFnirsSessions();
                     // updateHl2Details();
