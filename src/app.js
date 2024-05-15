@@ -6,12 +6,16 @@ import {updateTimeDistribution } from './views/TimeDistribution.js'
 // import {maxTimestamp} from './views/config.js'
 import { cleanUpdateHl2Details } from './views/Hl2Details.js'
 import { updateEventTimeline } from './views/EventTimeline.js'
-import { get_allTimestamps, get_maxTimestamp, process_timestamps, get_stepColorScale } from './views/config.js'
+import { get_allTimestamps, get_maxTimestamp, process_timestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, compute_unique_data, get_unique_sources, set_selectedFnirs, get_selectedFnirs } from './views/config.js'
+import { updateMatrix } from './views/MatrixView.js';
 
 const videoFolder = "data/video/"
 const videoPlayer = document.getElementById('video-player');
-let dataFiles, videoPath, selectedItems,uniqueTrials, uniqueSubjects,
-    selectedScatterSource, selectedGroupby, selectedFilter, selectedFnirs,
+let dataFiles, 
+    // videoPath, 
+    selectedItems,uniqueTrials, uniqueSubjects,
+    selectedScatterSource, selectedGroupby, selectedFilter, 
+    //selectedFnirs,
     scatterSvg, scatterGroup, scatterScaleEncoding, 
     fnirsSvg, fnirsGroup,
     eventTimelineSvg , 
@@ -44,16 +48,17 @@ let maxTimestamp=0.0;
 //   .range(modifiedSchemePaired);
 
 
-const margins={ 
-    scatterplot:{ top:40, left:30, right:110, bottom:15},
-    fnirs:{top:50, left:47, right:10, bottom:10},
-    timeDist:{top:30, left:30, right:30, bottom: 10},
-    eventTimeline:{top:25, left:55, right:16, bottom:20},
-    matrix:{top:25, left:5, right:5, bottom:20},
-    fnirsSessions:{top:25, left:10, right:10, bottom:20},   
-    hl2:{top:55, left:45, right:23, bottom:10},
-    video:{ top:0, left:0, right:0, bottom:0},
-}
+// const margins={ 
+//     scatterplot:{ top:40, left:30, right:110, bottom:15},
+//     fnirs:{top:50, left:47, right:10, bottom:10},
+//     timeDist:{top:30, left:30, right:30, bottom: 10},
+//     eventTimeline:{top:25, left:55, right:16, bottom:20},
+//     matrix:{top:25, left:5, right:5, bottom:20},
+//     fnirsSessions:{top:25, left:10, right:10, bottom:20},   
+//     hl2:{top:55, left:45, right:23, bottom:10},
+//     video:{ top:0, left:0, right:0, bottom:0},
+// }
+const margins = get_margins();
 
 Promise.all([
         d3.csv("data/scatterplot_imu_gaze_complete.csv"),
@@ -71,10 +76,10 @@ Promise.all([
     .then(function(files) {
         dataFiles = files;
         initializeContainers();
-        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg,
-            fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, scatterScaleEncoding, selectedItems);
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
-        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  dataFiles, scatterGroup, scatterSvg,
+            fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, scatterScaleEncoding, selectedItems);
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
+        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
     })
     .catch(function(err) {
     console.log(err)
@@ -85,9 +90,11 @@ function initializeContainers(){
     console.log("initializing")
     
     // Extract unique sources from the data
-    const sources = [...new Set(dataFiles[0].map(d => d.source))];
-    uniqueTrials = [...new Set(dataFiles[0].map(d => d.trial))]
-    uniqueSubjects = [...new Set(dataFiles[0].map(d => d.subject))]
+    compute_unique_data(dataFiles);
+    const sources = get_unique_sources();
+    uniqueTrials = get_unique_trials();
+    uniqueSubjects = get_unique_subjects();
+
     // Populate dropdown with options
     const sourceDropdown = d3.select("#source-dropdown");
     sourceDropdown.selectAll("option")
@@ -101,13 +108,13 @@ function initializeContainers(){
     // Add onchange event to get dropdown source and update scatterplot
     sourceDropdown.on("change", function() {
         selectedScatterSource = sourceDropdown.property("value");
-        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg,
-            timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, scatterScaleEncoding, selectedItems);
+        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg,
+            timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, scatterScaleEncoding, selectedItems);
         // selectedItems = [];
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
-        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
-        updateMatrix();
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
+        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
+        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixTooltip, dataFiles );
+        updateMatrix(selectedItems, selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
         updateFnirsSessions();
         // updateHl2Details();
         cleanUpdateHl2Details( null, videoPlayer, hl2Group);
@@ -118,13 +125,13 @@ function initializeContainers(){
     // Add onchange event to get groupBy and update scatterplot
     groupbyDropdown.on("change", function() {
         selectedGroupby = groupbyDropdown.property("value");
-        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg,
-            timeDistGroup, timeDistSvg,hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, scatterScaleEncoding, selectedItems);
+        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg,
+            timeDistGroup, timeDistSvg,hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, scatterScaleEncoding, selectedItems);
         // selectedItems = [];
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
-        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs,  margins, dataFiles );
-        updateMatrix();
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
+        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
+        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg, matrixTooltip, dataFiles );
+        updateMatrix(selectedItems, selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
         updateFnirsSessions();
         // updateHl2Details();
         cleanUpdateHl2Details( null, videoPlayer, hl2Group);
@@ -135,13 +142,13 @@ function initializeContainers(){
     // Add onchange event to get groupBy and update scatterplot
     filterDropdown.on("change", function() {
         selectedFilter = filterDropdown.property("value");
-        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg,
-            timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, scatterScaleEncoding, selectedItems);
+        updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg,
+            timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, scatterScaleEncoding, selectedItems);
         // selectedItems = [];
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
-        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
-        updateMatrix();
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
+        updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
+        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg, matrixTooltip, dataFiles );
+        updateMatrix(selectedItems, selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
         updateFnirsSessions();
         // updateHl2Details();
         cleanUpdateHl2Details( null, videoPlayer, hl2Group);
@@ -151,9 +158,10 @@ function initializeContainers(){
     
     // Add onchange event to get groupBy and update scatterplot
     fnirsDropdown.on("change", function() {
-        selectedFnirs = fnirsDropdown.property("value");
-        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
-        updateMatrix();
+        set_selectedFnirs(fnirsDropdown.property("value"))
+        // selectedFnirs = fnirsDropdown.property("value");
+        updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg, matrixTooltip, dataFiles );
+        updateMatrix(selectedItems, selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
         updateFnirsSessions();
         // updateHl2Details();
         cleanUpdateHl2Details( null, videoPlayer, hl2Group);
@@ -184,7 +192,8 @@ function initializeContainers(){
     selectedScatterSource = sourceDropdown.property("value");
     selectedGroupby=groupbyDropdown.property("value");
     selectedFilter = filterDropdown.property("value");
-    selectedFnirs = fnirsDropdown.property("value");
+    // selectedFnirs = fnirsDropdown.property("value");
+    set_selectedFnirs(fnirsDropdown.property("value"));
     selectedItems = [];
     selectedGaze = gazeDropdown.property("value");
     selectedImu = imuDropdown.property("value")
@@ -515,6 +524,7 @@ export function updateFnirsSessions(){
     console.log("Updatefnirssessions")
     fnirsSessionsGroup.selectAll('*').remove();
     
+    let selectedFnirs = get_selectedFnirs();
     if (selectedItems.length<1)
         return
     let filteredObjects = []
@@ -714,208 +724,3 @@ export function updateFnirsSessions(){
         }
     })
 }
-
-
-
-export function updateMatrix(){
-    matrixGroup.selectAll('*').remove();
-
-    let stepColorScale = get_stepColorScale(); // Add by Sonia 
-
-    let filteredObjects = []
-    selectedItems.forEach((item)=>{
-        let tempObject = dataFiles[2].filter(obj => obj.subject == item.subject && obj.trial == item.trial);
-        if (tempObject.length==0){
-            console.log("ERROR: NO MATCH FOUND FOR SUBJECT AND TRIAL ID")
-            tempObject= [{subject: item.subject, trial: item.trial, missing:true}]
-        }
-        
-        else
-            tempObject[0]["missing"]=false
-        filteredObjects.push(tempObject[0]) 
-    })
-    
-    let stepsToKeep = ["a","b","c","d","e","f"]
-    const valuesByStep = stepsToKeep.map(step =>
-        filteredObjects.map(obj => obj[step]).filter(value => value !== undefined)
-    );
-
-    const minValuesByStep = valuesByStep.map(values => d3.min(values));
-    
-    const maxValuesByStep = valuesByStep.map(values => d3.max(values));
-
-    let nullIndices = [];
-    minValuesByStep.forEach((element, index) => {
-        if (element == null) {
-            nullIndices.push(index);
-        }
-    });
-    
-    const stepsPresent = stepsToKeep.filter((value, index) => !nullIndices.includes(index));
-        
-    const xScaleMatrix = d3.scaleBand()
-        .domain(stepsPresent)
-        .range([0,  d3.select("#matrix-container").node().clientWidth -margins.matrix.left - margins.matrix.right ])
-        .padding(0.1);
-
-
-    const xAxis = d3.axisTop(xScaleMatrix);
-
-    // Append axes to SVG
-    matrixGroup.append('g')
-        .attr('class', 'x-axis axisHide')
-        .attr('transform', `translate(0, 10)`)
-        .call(xAxis);
-    
-    stepsPresent.forEach((step)=>{
-        
-        matrixGroup.append('rect')
-            .attr("x",xScaleMatrix(step)+ xScaleMatrix.bandwidth()*0.24)
-            .attr("y",-7)
-            .attr("fill",stepColorScale(step))
-            .attr("width",10)
-            .attr("height",10)
-    })
-
-    const maxRadius = xScaleMatrix.bandwidth()/2;
-    
-    // Calculate min and max total values across all steps and objects
-    const minTotal = d3.min(minValuesByStep);
-    const maxTotal = d3.max(maxValuesByStep);
-    
-    const radiusScale = d3.scaleLinear()
-        .domain([minTotal, maxTotal])
-        .range([8,maxRadius]); 
-
-    let currentY = margins.matrix.top; 
-    
-    let groupArray = uniqueSubjects
-    if(selectedGroupby=="trial")
-        groupArray = uniqueTrials
-
-    groupArray.forEach((id)=>{
-        let groupedObj = filteredObjects.filter(obj => obj.subject == id)
-        if (selectedGroupby=="trial")
-            groupedObj = filteredObjects.filter(obj => obj.trial == id)
-        if (groupedObj.length==0)
-            return
-        currentY +=20;
-        groupedObj.forEach((session)=>{
-            if (session.missing){
-                let displayMissing= `Missing info for Subject:${session.subject} Trial:${session.trial}`
-                let missingText = matrixGroup.append("text").attr("x", xScaleMatrix.range()[1]/2).attr("y", currentY+28).text(displayMissing).style("font-size", "11px").attr("text-anchor","middle").style("fill","black").style("fill-opacity", 0.5)
-                let bbox = missingText.node().getBBox();
-                
-                matrixGroup.append("rect")
-                    .attr("x", bbox.x - 2)
-                    .attr("y", bbox.y - 2)
-                    .attr("width", bbox.width + 4)
-                    .attr("rx",5)
-                    .attr("ry",5)
-                    .attr("height", bbox.height + 4)
-                    .style("fill", "none")
-                    .style("stroke-opacity", 0.5)
-                    .attr("stroke", "black");
-
-                if(matrixSvg.attr("height")<=currentY+200){
-                    matrixGroup.attr("height",currentY+200)
-                    matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
-                }
-                currentY+=90;
-                return
-            }
-                        
-            stepsPresent.forEach(step => createPie( session, step));
-
-            currentY+=90;
-        })
-        currentY+=50
-        if(matrixSvg.attr("height")<=currentY+200){
-            matrixGroup.attr("height",currentY+200)
-            matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
-        } 
-    })    
-
-    function createPie(row, step) {
-        let overloadCorr, optimalCorr, underloadCorr;
-        if (dataFiles[8].procedure_correlations[row.subject][row.trial] && dataFiles[8].procedure_correlations[row.subject][row.trial][step]){
-            overloadCorr =  dataFiles[8].procedure_correlations[row.subject][row.trial][step][selectedFnirs+"_Overload"]
-            optimalCorr  = dataFiles[8].procedure_correlations[row.subject][row.trial][step][selectedFnirs+"_Optimal"]
-            underloadCorr = dataFiles[8].procedure_correlations[row.subject][row.trial][step][selectedFnirs+"_Underload"] 
-        }
-        const total = row[step] ?? 0;
-        const none = row[step + "_None"] ?? 0;
-        const error = row[step + "_error"] ?? 0;
-        if (total==0)
-            return
-        else if (error==0 || none==0){
-            matrixGroup.append('circle')
-                .attr('cx', xScaleMatrix(step)+maxRadius)
-                .attr("class", "circle circle-" + step + "-"+row.subject +"-"+row.trial)
-                .attr('cy', currentY + 30)
-                .attr('r', radiusScale(total))
-                .attr('fill', ()=> error==0? "#AEAEAE" : "black")
-                .on("mouseover", function(d) {
-                    console.log(d)
-                    matrixTooltip.transition()
-                        .duration(200)
-                        .style("visibility", "visible")
-                        matrixTooltip.html(`<strong>${ selectedFnirs.charAt(0).toUpperCase() + selectedFnirs.slice(1)} Error Contribution </strong><br> Overload: ${overloadCorr} <br> Optimal: ${optimalCorr} <br> Underload: ${underloadCorr}`)
-                        .style("left", (d.clientX + 10) + "px")
-                        .style("top", (d.clientY - 28) + "px");
-                })
-                .on("mouseout", function(d) {
-                    matrixTooltip.transition()
-                        .duration(500)
-                        .style("visibility", "hidden");
-                });
-
-            return
-        }
-        const radius = radiusScale(total); // Scale the radius according to the total
-    
-        const color = d3.scaleOrdinal()
-            .domain(["None", "error"])
-            .range(["#AEAEAE", "black"]);
-    
-        const pie = d3.pie()([none, error]);
-    
-        const arc = d3.arc()
-            .innerRadius(0)
-            .outerRadius(radius);
-    
-        const arcs = matrixGroup.selectAll(".arc-" + step + "-"+row.subject +"-"+row.trial)
-            .data(pie)
-            .enter()
-            .append("g")
-            .attr("class", "arc arc-" + step + "-"+row.subject +"-"+row.trial)
-            .attr("transform", "translate(" + (xScaleMatrix(step)+maxRadius) + "," + (currentY + 30) + ")");
-    
-        arcs.append("path")
-            .attr("fill", (d, i) => color(i === 0 ? "None" : "error"))
-            .attr("d", arc)
-            .on("mouseover", function(d) {
-                console.log(d)
-                matrixTooltip.transition()
-                    .duration(200)
-                    .style("visibility", "visible");
-                    matrixTooltip.html(`<strong>${ selectedFnirs.charAt(0).toUpperCase() + selectedFnirs.slice(1)} Error Contribution </strong><br> Overload: ${overloadCorr} <br> Optimal: ${optimalCorr} <br> Underload: ${underloadCorr}`)
-                    .style("left", (d.clientX + 10) + "px")
-                    .style("top", (d.clientY - 28) + "px");
-            })
-            .on("mouseout", function(d) {
-                matrixTooltip.transition()
-                    .duration(500)
-                    .style("visibility", "hidden");
-            });
-    
-        //arcs.append("text")
-          //  .attr("transform", d => "translate(" + arc.centroid(d) + ")")
-            //.attr("text-anchor", "middle")
-            //.attr("fill", "white")
-            //.text(d => d.value);
-    }
-}
-
-
-  

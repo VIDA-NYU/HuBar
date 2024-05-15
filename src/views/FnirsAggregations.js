@@ -1,21 +1,25 @@
 import * as d3 from 'd3';
 import {
-    updateMatrix,
     updateFnirsSessions } from '../app.js';
 
 import {calculateProportions} from './utils.js';
 import {updateTimeDistribution } from './TimeDistribution.js'
 import {cleanUpdateHl2Details } from './Hl2Details.js'
 import { updateEventTimeline } from './EventTimeline.js'
+import { updateMatrix } from './MatrixView.js';
+import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials} from './config.js'
 
 export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter,
-    fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs,
-    maxTimestamp, margins, dataFiles){
+    fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip,
+    maxTimestamp, dataFiles){
+
+    const margins = get_margins();
+
     console.log("updateFnirs")
 
     // Extract unique sources from the data
-    let uniqueTrials = [...new Set(dataFiles[0].map(d => d.trial))]
-    let uniqueSubjects = [...new Set(dataFiles[0].map(d => d.subject))];
+    let uniqueTrials = get_unique_trials();
+    let uniqueSubjects = get_unique_subjects();
 
     fnirsGroup.selectAll('*').remove();
     let fnirsFilteredData = dataFiles[4]
@@ -105,10 +109,11 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter,
         .on("click", (event, d)=>{
             d3.select("#fnirs-dropdown").property("value",d);
             selectedFnirs=d;
-            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
-            updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-            updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
-            updateMatrix();
+            set_selectedFnirs(d)
+            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
+            updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
+            updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg,matrixTooltip, dataFiles );
+            updateMatrix(selectedItems, selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
             updateFnirsSessions();
             // updateHl2Details();
             cleanUpdateHl2Details( null, videoPlayer, hl2Group);
@@ -166,10 +171,10 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter,
             chosenSamples.forEach((sample)=>{
                 selectedItems.push({trial:sample.trial ,subject:sample.subject})
             })
-            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, selectedFnirs, maxTimestamp, margins, dataFiles);
-            updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
-            updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, selectedFnirs, margins, dataFiles );
-            updateMatrix();
+            updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
+            updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
+            updateEventTimeline(selectedItems, selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg, matrixTooltip, dataFiles );
+            updateMatrix(selectedItems, selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
             updateFnirsSessions();
             // updateHl2Details();
             cleanUpdateHl2Details( null, videoPlayer, hl2Group);

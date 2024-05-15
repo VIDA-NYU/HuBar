@@ -39,5 +39,50 @@ export function get_stepColorScale(){
     return stepColorScale;
 }
 
+export function get_margins(){
+    const margins={ 
+        scatterplot:{ top:40, left:30, right:110, bottom:15},
+        fnirs:{top:50, left:47, right:10, bottom:10},
+        timeDist:{top:30, left:30, right:30, bottom: 10},
+        eventTimeline:{top:25, left:55, right:16, bottom:20},
+        matrix:{top:25, left:5, right:5, bottom:20},
+        fnirsSessions:{top:25, left:10, right:10, bottom:20},   
+        hl2:{top:55, left:45, right:23, bottom:10},
+        video:{ top:0, left:0, right:0, bottom:0},
+    }
+    return margins;
+}
+
+// Compute unique sources, trials and subjects
+let sources, uniqueTrials, uniqueSubjects;
+export function compute_unique_data(dataFiles){
+    sources = [...new Set(dataFiles[0].map(d => d.source))];
+    uniqueTrials = [...new Set(dataFiles[0].map(d => d.trial))]
+    uniqueSubjects = [...new Set(dataFiles[0].map(d => d.subject))]
+}
+
+export function get_unique_sources(){
+    return sources;
+}
+export function get_unique_trials(){
+    return uniqueTrials;
+}
+export function get_unique_subjects(){
+    return uniqueSubjects;
+}
+
+// Update selected Fnirs (ex. Memory, Attention, or Perception)
+let selectedFnirs;
+export function set_selectedFnirs(option){
+    selectedFnirs = option;
+}
+export function get_selectedFnirs(){
+    return selectedFnirs;
+}
+
+// get video path
+export function get_videoPath(brushedSubject, brushedTrial){
+    return `data/video/${String(brushedSubject).padStart(4, '0')}/${brushedTrial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`;
+}
 
     
