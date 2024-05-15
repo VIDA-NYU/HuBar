@@ -7,7 +7,7 @@ import {updateTimeDistribution } from './TimeDistribution.js'
 import {cleanUpdateHl2Details } from './Hl2Details.js'
 import { updateEventTimeline } from './EventTimeline.js'
 import { updateMatrix } from './MatrixView.js';
-import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials} from './config.js'
+import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, set_selectedFnirs} from './config.js'
 
 export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter,
     fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip,
@@ -108,7 +108,7 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter,
         .attr("class", (d)=> "tick "+d)
         .on("click", (event, d)=>{
             d3.select("#fnirs-dropdown").property("value",d);
-            selectedFnirs=d;
+            // selectedFnirs=d;
             set_selectedFnirs(d)
             updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, maxTimestamp, dataFiles);
             updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles);
