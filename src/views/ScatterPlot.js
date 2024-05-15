@@ -3,13 +3,15 @@ import lasso from './../lasso.js'; // Adjust the path if necessary
 import { 
     updateEventTimeline,
     updateMatrix,
-    updateFnirsSessions,
-    updateHl2Details } from '../app.js'
+    updateFnirsSessions } from '../app.js'
 import {updateFnirsAgg } from './FnirsAggregations.js'
 import {updateTimeDistribution } from './TimeDistribution.js'
+import {cleanUpdateHl2Details } from './Hl2Details.js'
 
 
-export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles, scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, scatterScaleEncoding, selectedItems){
+export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatterSource,  margins, dataFiles,
+    scatterGroup, scatterSvg, fnirsGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer,
+    maxTimestamp, scatterScaleEncoding, selectedItems){
     if (selectedGroupby=="trial" && selectedFilter=="all")
         margins.scatterplot.right=30;
     else
@@ -166,12 +168,13 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
         else{
             lassoBrush.items().classed("unselectedscatter",false);
         }
-        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+        updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, maxTimestamp, margins, dataFiles);
         updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
         updateEventTimeline();
         updateMatrix();
         updateFnirsSessions();
-        updateHl2Details();
+        // updateHl2Details();
+        cleanUpdateHl2Details( null, videoPlayer, hl2Group);
         
     }
     if (selectedGroupby =="subject" || selectedFilter !="all")
@@ -213,12 +216,13 @@ export function updateScatterplot(selectedGroupby, selectedFilter, selectedScatt
                     chosenSamples.forEach((sample)=>{
                         selectedItems.push({trial:sample.trial ,subject:sample.subject})
                     })
-                    updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
+                    updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, maxTimestamp, margins, dataFiles);
                     updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles);
                     updateEventTimeline();
                     updateMatrix();
                     updateFnirsSessions();
-                    updateHl2Details();
+                    // updateHl2Details();
+                    cleanUpdateHl2Details( null, videoPlayer, hl2Group);
                 })
 
             legendGroup.append("path")

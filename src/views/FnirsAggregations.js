@@ -2,13 +2,15 @@ import * as d3 from 'd3';
 import {
     updateEventTimeline,
     updateMatrix,
-    updateFnirsSessions,
-    updateHl2Details } from '../app.js';
+    updateFnirsSessions } from '../app.js';
 
 import {calculateProportions} from './utils.js';
 import {updateTimeDistribution } from './TimeDistribution.js'
+import {cleanUpdateHl2Details } from './Hl2Details.js'
 
-export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, maxTimestamp, margins, dataFiles){
+export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter,
+    fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer,
+    maxTimestamp, margins, dataFiles){
     console.log("updateFnirs")
 
     // Extract unique sources from the data
@@ -108,7 +110,8 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, f
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
-            updateHl2Details();
+            // updateHl2Details();
+            cleanUpdateHl2Details( null, videoPlayer, hl2Group);
         })
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif")
@@ -168,7 +171,8 @@ export function updateFnirsAgg(selectedItems, selectedGroupby, selectedFilter, f
             updateEventTimeline();
             updateMatrix();
             updateFnirsSessions();
-            updateHl2Details();
+            // updateHl2Details();
+            cleanUpdateHl2Details( null, videoPlayer, hl2Group);
 
         })
         .selectAll("text")
