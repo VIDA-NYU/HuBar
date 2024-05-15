@@ -6,7 +6,7 @@ import {updateTimeDistribution } from './views/TimeDistribution.js'
 // import {maxTimestamp} from './views/config.js'
 import { cleanUpdateHl2Details } from './views/Hl2Details.js'
 import { updateEventTimeline } from './views/EventTimeline.js'
-import { get_allTimestamps, get_maxTimestamp, process_timestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, compute_unique_data, get_unique_sources, set_selectedFnirs, get_selectedFnirs } from './views/config.js'
+import { get_allTimestamps, get_maxTimestamp, process_timestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, compute_unique_data, get_unique_sources, set_selectedFnirs, get_selectedFnirs, set_selectedImu, set_selectedGaze } from './views/config.js'
 import { updateMatrix } from './views/MatrixView.js';
 
 const videoFolder = "data/video/"
@@ -25,8 +25,9 @@ let dataFiles,
     matrixSvg, matrixGroup, matrixTooltip,
     hl2Svg, hl2Group,
     fnirsSessionsSvg, fnirsSessionsGroup,
-    timeDistSvg, timeDistGroup,
-    selectedGaze, selectedImu;
+    timeDistSvg, timeDistGroup;
+    // selectedGaze;
+    //, selectedImu;
 
 // let allTimestamps = {}
 // let brushedTrial = null;
@@ -174,7 +175,8 @@ function initializeContainers(){
     const gazeDropdown = d3.select("#gaze-dropdown");
 
     gazeDropdown.on("change", function() {
-        selectedGaze = gazeDropdown.property("value");
+        // selectedGaze = gazeDropdown.property("value");
+        set_selectedGaze(gazeDropdown.property("value"));
         // updateHl2Details();
         cleanUpdateHl2Details( null, videoPlayer, hl2Group);
 
@@ -183,7 +185,8 @@ function initializeContainers(){
     const imuDropdown = d3.select("#imu-dropdown");
 
     imuDropdown.on("change", function() {
-        selectedImu = imuDropdown.property("value");
+        // selectedImu = imuDropdown.property("value");
+        set_selectedImu(imuDropdown.property("value"));
         // updateHl2Details();
         cleanUpdateHl2Details( null, videoPlayer, hl2Group);
     });;
@@ -195,8 +198,11 @@ function initializeContainers(){
     // selectedFnirs = fnirsDropdown.property("value");
     set_selectedFnirs(fnirsDropdown.property("value"));
     selectedItems = [];
-    selectedGaze = gazeDropdown.property("value");
-    selectedImu = imuDropdown.property("value")
+    // selectedGaze = gazeDropdown.property("value");
+    set_selectedGaze(gazeDropdown.property("value"));
+    // selectedImu = imuDropdown.property("value")
+    set_selectedImu(imuDropdown.property("value"));
+
     //initialise svgs
 
     //scatterplot

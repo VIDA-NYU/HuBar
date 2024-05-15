@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { get_selectedFnirs, get_allTimestamps } from './config';
+import { get_selectedFnirs, get_allTimestamps, get_selectedImu, get_selectedGaze } from './config';
 export function cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group){
     hl2Group.selectAll('*').remove();
     d3.select("#gaze-header")
@@ -21,6 +21,7 @@ export function cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group){
     }
 }
 export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, eventTimelineGroup, eventTimelineSvg, vidStart, vidEnd, videoPlayer, hl2Group, dataFiles){
+
     cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group);
     // hl2Group.selectAll('*').remove();
     // d3.select("#gaze-header")
@@ -40,6 +41,9 @@ export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xE
     //     console.log("start return initialization");
     //     return
     // }
+
+    let selectedImu = get_selectedImu();
+    let selectedGaze = get_selectedGaze();
     console.log("end initialization");
     d3.select("#gaze-header")
         .style("visibility","visible")

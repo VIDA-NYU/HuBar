@@ -80,6 +80,24 @@ export function get_selectedFnirs(){
     return selectedFnirs;
 }
 
+// Update selected imu 
+let selectedImu;
+export function set_selectedImu(option){
+    selectedImu = option;
+}
+export function get_selectedImu(){
+    return selectedImu;
+}
+
+// Update selected gaze 
+let selectedGaze;
+export function set_selectedGaze(option){
+    selectedGaze = option;
+}
+export function get_selectedGaze(){
+    return selectedGaze;
+}
+
 // get video path
 export function get_videoPath(brushedSubject, brushedTrial){
     return `data/video/${String(brushedSubject).padStart(4, '0')}/${brushedTrial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`;
