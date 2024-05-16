@@ -1,12 +1,13 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials} from './config.js'
+import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedItems} from './config.js'
 
-export function updateTimeDistribution(selectedItems, selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles){
+export function updateTimeDistribution(selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg, maxTimestamp, dataFiles){
 
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
     const margins = get_margins();
+    let selectedItems = get_selectedItems();
 
     timeDistGroup.selectAll('*').remove();
     let topTrialValues;

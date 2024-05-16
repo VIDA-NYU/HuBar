@@ -103,4 +103,14 @@ export function get_videoPath(brushedSubject, brushedTrial){
     return `data/video/${String(brushedSubject).padStart(4, '0')}/${brushedTrial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`;
 }
 
+let selectedItems;
+// Update selected items 
+export function set_selectedItems(items){
+    // Clone the items array to avoid mutability issues
+    selectedItems = [...items];
+}
+export function get_selectedItems(){
+    return selectedItems;
+}
+
     
