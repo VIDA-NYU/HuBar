@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems} from './config.js'
+import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems} from './config.js'
 
 export function updateMatrix(selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles ){
     // Extract unique sources from the data
