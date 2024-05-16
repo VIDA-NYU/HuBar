@@ -1,7 +1,8 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedItems} from './config.js'
+import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedItems, get_selectedGroupby, get_selectedFilter} from './config.js'
+import { get_timeDistGroup, get_timeDistSvg } from './containersSVG.js';
 
-export function updateTimeDistribution(selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg,  dataFiles){
+export function updateTimeDistribution( dataFiles ){
 
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
@@ -9,6 +10,12 @@ export function updateTimeDistribution(selectedFilter, selectedGroupby, timeDist
     const margins = get_margins();
     let selectedItems = get_selectedItems();
     let maxTimestamp = get_maxTimestamp();
+    let selectedGroupby = get_selectedGroupby();
+    let selectedFilter = get_selectedFilter();
+
+    // get svgs
+    let timeDistGroup = get_timeDistGroup();
+    let timeDistSvg = get_timeDistSvg();
 
     timeDistGroup.selectAll('*').remove();
     let topTrialValues;

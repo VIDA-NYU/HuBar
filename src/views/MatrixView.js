@@ -1,14 +1,21 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems} from './config.js'
+import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems, get_selectedGroupby} from './config.js'
+import { get_matrixGroup, get_matrixSvg, get_matrixTooltip } from './containersSVG.js';
 
-export function updateMatrix(selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles ){
+export function updateMatrix( dataFiles ){
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
     let selectedFnirs = get_selectedFnirs();
     let selectedItems  = get_selectedItems();
     const margins = get_margins();
+    let selectedGroupby = get_selectedGroupby();
     
+    // get svgs
+    let matrixGroup = get_matrixGroup();
+    let matrixSvg = get_matrixSvg();
+    let matrixTooltip = get_matrixTooltip();
+
     matrixGroup.selectAll('*').remove();
 
     let stepColorScale = get_stepColorScale();

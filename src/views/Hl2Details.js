@@ -1,6 +1,10 @@
 import * as d3 from 'd3';
 import { get_selectedFnirs, get_allTimestamps, get_selectedImu, get_selectedGaze } from './config';
-export function cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group){
+import { get_eventTimelineGroup, get_hl2Group } from './containersSVG';
+export function cleanUpdateHl2Details( brushedSubject, videoPlayer ){
+    // get svgs
+    let hl2Group = get_hl2Group();
+
     hl2Group.selectAll('*').remove();
     d3.select("#gaze-header")
         .style("visibility","hidden")
@@ -20,9 +24,13 @@ export function cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group){
         return
     }
 }
-export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, eventTimelineGroup, eventTimelineSvg, vidStart, vidEnd, videoPlayer, hl2Group, dataFiles){
+export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles){
 
-    cleanUpdateHl2Details( brushedSubject, videoPlayer, hl2Group);
+    // get svgs
+    let eventTimelineGroup = get_eventTimelineGroup();
+    let hl2Group = get_hl2Group();
+
+    cleanUpdateHl2Details( brushedSubject, videoPlayer );
     // hl2Group.selectAll('*').remove();
     // d3.select("#gaze-header")
     //     .style("visibility","hidden")

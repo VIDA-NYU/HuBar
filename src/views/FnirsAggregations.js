@@ -6,14 +6,21 @@ import { updateEventTimeline } from './EventTimeline.js'
 import { updateMatrix } from './MatrixView.js';
 import { updateFnirsSessions } from './FnirsErrorSessions.js';
 
-import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, set_selectedFnirs, get_selectedItems, set_selectedItems} from './config.js'
+import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, set_selectedFnirs, get_selectedItems, set_selectedItems, get_selectedGroupby, get_selectedFilter} from './config.js'
+import { get_fnirsGroup, get_fnirsSvg, get_scatterGroup } from './containersSVG.js';
 
-export function updateFnirsAgg(selectedGroupby, selectedFilter,
-    fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip,
-    fnirsSessionsGroup, fnirsSessionsSvg,   dataFiles){
+export function updateFnirsAgg(videoPlayer, dataFiles){
 
     const margins = get_margins();
+    let selectedGroupby = get_selectedGroupby();
+    let selectedFilter = get_selectedFilter();
 
+    //get svgs
+    let fnirsGroup = get_fnirsGroup();
+    let fnirsSvg = get_fnirsSvg();
+    let scatterGroup = get_scatterGroup();
+
+    
     console.log("updateFnirs")
 
     let selectedItems = get_selectedItems();
@@ -110,13 +117,13 @@ export function updateFnirsAgg(selectedGroupby, selectedFilter,
             d3.select("#fnirs-dropdown").property("value",d);
             // selectedFnirs=d;
             set_selectedFnirs(d)
-            updateFnirsAgg(selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, fnirsSessionsGroup, fnirsSessionsSvg,   dataFiles);
-            updateTimeDistribution(selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg,  dataFiles);
-            updateEventTimeline(selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg,matrixTooltip, fnirsSessionsGroup, fnirsSessionsSvg,  dataFiles );
-            updateMatrix(selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
-            updateFnirsSessions(selectedGroupby, fnirsGroup, fnirsSessionsGroup, fnirsSessionsSvg,  dataFiles)
+            updateFnirsAgg(videoPlayer, dataFiles)
+            updateTimeDistribution( dataFiles );
+            updateEventTimeline( videoPlayer, dataFiles )
+            updateMatrix( dataFiles )
+            updateFnirsSessions( dataFiles)
             // updateHl2Details();
-            cleanUpdateHl2Details( null, videoPlayer, hl2Group);
+            cleanUpdateHl2Details( null, videoPlayer );
         })
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif")
@@ -172,13 +179,13 @@ export function updateFnirsAgg(selectedGroupby, selectedFilter,
                 selectedItems.push({trial:sample.trial ,subject:sample.subject})
             })
             set_selectedItems(selectedItems);
-            updateFnirsAgg(selectedGroupby, selectedFilter, fnirsGroup, scatterGroup, fnirsSvg, timeDistGroup, timeDistSvg, hl2Group, videoPlayer, eventTimelineGroup, eventTimelineSvg, matrixGroup, matrixSvg, matrixTooltip, fnirsSessionsGroup, fnirsSessionsSvg,   dataFiles);
-            updateTimeDistribution(selectedFilter, selectedGroupby, timeDistGroup, timeDistSvg,  dataFiles);
-            updateEventTimeline(selectedGroupby, eventTimelineGroup, eventTimelineSvg, videoPlayer, hl2Group, matrixGroup, matrixSvg, matrixTooltip, fnirsSessionsGroup, fnirsSessionsSvg,  dataFiles );
-            updateMatrix(selectedGroupby, matrixGroup, matrixSvg, matrixTooltip, dataFiles);
-            updateFnirsSessions(selectedGroupby, fnirsGroup, fnirsSessionsGroup, fnirsSessionsSvg,  dataFiles)
+            updateFnirsAgg(videoPlayer, dataFiles)
+            updateTimeDistribution( dataFiles );
+            updateEventTimeline( videoPlayer, dataFiles )
+            updateMatrix( dataFiles )
+            updateFnirsSessions( dataFiles)
             // updateHl2Details();
-            cleanUpdateHl2Details( null, videoPlayer, hl2Group);
+            cleanUpdateHl2Details( null, videoPlayer );
 
         })
         .selectAll("text")

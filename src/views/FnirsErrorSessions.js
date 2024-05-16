@@ -1,10 +1,19 @@
 import * as d3 from 'd3';
-import { get_selectedFnirs, get_allTimestamps, get_selectedImu, get_selectedGaze, get_margins, get_unique_trials, get_unique_subjects, get_selectedItems } from './config';
+import { get_selectedFnirs, get_allTimestamps, get_selectedImu, get_selectedGaze, get_margins, get_unique_trials, get_unique_subjects, get_selectedItems, get_selectedGroupby } from './config';
+import { get_fnirsGroup, get_fnirsSessionsGroup, get_fnirsSessionsSvg } from './containersSVG';
 
-export function updateFnirsSessions(selectedGroupby, fnirsGroup, fnirsSessionsGroup, fnirsSessionsSvg, dataFiles){
+export function updateFnirsSessions( dataFiles){
     console.log("Updatefnirssessions")
 
+    // get svgs
+    let fnirsGroup = get_fnirsGroup();
+    let fnirsSessionsGroup = get_fnirsSessionsGroup();
+    let fnirsSessionsSvg = get_fnirsSessionsSvg();
+
+
     let selectedItems = get_selectedItems();
+    let selectedGroupby = get_selectedGroupby();
+
     fnirsSessionsGroup.selectAll('*').remove();
     
     let selectedFnirs = get_selectedFnirs();

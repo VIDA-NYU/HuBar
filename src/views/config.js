@@ -113,4 +113,29 @@ export function get_selectedItems(){
     return selectedItems;
 }
 
-    
+// Update selected ScatterSource 
+let selectedScatterSource;
+export function set_selectedScatterSource(option){
+    selectedScatterSource = option;
+}
+export function get_selectedScatterSource(){
+    return selectedScatterSource;
+}
+
+// Update selected Groupby 
+let selectedGroupby;
+export function set_selectedGroupby(option){
+    selectedGroupby = option;
+}
+export function get_selectedGroupby(){
+    return selectedGroupby;
+}
+
+// Update selected Filter
+let selectedFilter;
+export function set_selectedFilter(option){
+    selectedFilter = option;
+}
+export function get_selectedFilter(){
+    return selectedFilter;
+}
