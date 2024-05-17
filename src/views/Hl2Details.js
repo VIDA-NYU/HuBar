@@ -2,6 +2,8 @@ import * as d3 from 'd3';
 import { get_selectedFnirs, get_allTimestamps, get_selectedImu, get_selectedGaze } from './config';
 import { get_eventTimelineGroup, get_hl2Group } from './containersSVG';
 import { addTimeUpdateListener, get_videoPlayer, reset_videoPlayer } from './videoPlayerUtils';
+import { get_brushedSubject, get_brushedTrial, get_brushesAdded, get_vidEnd, get_vidStart } from './configHl2Details';
+import { get_xEventTimelineScale } from './EventTimeline';
 export function cleanUpdateHl2Details( brushedSubject ){
     // get svgs
     let hl2Group = get_hl2Group();
@@ -23,13 +25,19 @@ export function cleanUpdateHl2Details( brushedSubject ){
         return
     }
 }
-export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles){
+export function updateHl2Details( dataFiles){
 
     console.log("updateHl2Details");
-    console.log(vidStart);
+
     // get svgs
     let eventTimelineGroup = get_eventTimelineGroup();
     let hl2Group = get_hl2Group();
+    let brushedSubject = get_brushedSubject();
+    let brushedTrial = get_brushedTrial();
+    let brushesAdded = get_brushesAdded();
+    let xEventTimelineScale= get_xEventTimelineScale();
+    let vidStart = get_vidStart();
+    let vidEnd = get_vidEnd();
 
     cleanUpdateHl2Details( brushedSubject );
 

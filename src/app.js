@@ -4,7 +4,7 @@ import { updateScatterplot } from './views/ScatterPlot.js';
 import { updateFnirsAgg } from './views/FnirsAggregations.js';
 import {updateTimeDistribution } from './views/TimeDistribution.js'
 // import {maxTimestamp} from './views/config.js'
-import { cleanUpdateHl2Details } from './views/Hl2Details.js'
+import { cleanUpdateHl2Details, updateHl2Details } from './views/Hl2Details.js'
 import { updateEventTimeline } from './views/EventTimeline.js'
 import { get_allTimestamps, process_timestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, compute_unique_data, get_unique_sources, set_selectedFnirs, get_selectedFnirs, set_selectedImu, set_selectedGaze, set_selectedItems, set_selectedScatterSource, set_selectedGroupby, set_selectedFilter } from './views/config.js'
 import { updateMatrix } from './views/MatrixView.js';
@@ -13,7 +13,6 @@ import { initialise_svgs } from './views/containersSVG.js';
 import { add_legendFnirs } from './views/legendFnirs.js';
 
 const videoFolder = "data/video/"
-// const videoPlayer = document.getElementById('video-player');
 let dataFiles; 
     // videoPath, 
     // selectedItems,
@@ -181,9 +180,7 @@ function initializeContainers(){
     gazeDropdown.on("change", function() {
         // selectedGaze = gazeDropdown.property("value");
         set_selectedGaze(gazeDropdown.property("value"));
-        // updateHl2Details();
-        cleanUpdateHl2Details( null );
-
+        updateHl2Details(dataFiles);
     });
 
     const imuDropdown = d3.select("#imu-dropdown");
@@ -191,8 +188,7 @@ function initializeContainers(){
     imuDropdown.on("change", function() {
         // selectedImu = imuDropdown.property("value");
         set_selectedImu(imuDropdown.property("value"));
-        // updateHl2Details();
-        cleanUpdateHl2Details( null );
+        updateHl2Details(dataFiles);
     });;
 
     //initialise select variables

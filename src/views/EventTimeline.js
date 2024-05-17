@@ -5,7 +5,16 @@ import { updateMatrix } from './MatrixView.js';
 import { updateFnirsSessions } from './FnirsErrorSessions.js';
 import { get_eventTimelineGroup, get_eventTimelineSvg, get_matrixGroup } from './containersSVG.js';
 import { playVideoWithStartTime } from './videoPlayerUtils.js';
+import { get_brushedSubject, get_brushedTrial, get_vidEnd, get_vidStart, set_brushedSubject, set_brushedTrial, set_brushesAdded, set_vidEnd, set_vidStart } from './configHl2Details.js';
 
+export function get_xEventTimelineScale(){
+    let maxTimestamp = get_maxTimestamp();
+    let margins = get_margins();
+    let xEventTimelineScale= d3.scaleLinear()
+    .domain([0.0, maxTimestamp])
+    .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
+    return xEventTimelineScale;
+}
 export function updateEventTimeline( dataFiles ){   
 
     console.log("updateEventTimeline");
@@ -23,14 +32,18 @@ export function updateEventTimeline( dataFiles ){
     let matrixGroup = get_matrixGroup();
 
     // brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, eventTimelineGroup, eventTimelineSvg, vidStart, vidEnd, videoPlayer, hl2Group, dataFiles
-    let brushedTrial = null;
-    let brushedSubject = null;
+    // let brushedTrial = null;
+    // let brushedSubject = null;
+    let brushedTrial = get_brushedTrial();
+    let brushedSubject = get_brushedSubject();
     let brushesAdded=[];
     let brushIndices=[];
+    // set_brushesAdded([]);
+    // set_brushedSubject(null);
     let xEventTimelineScale;
     let reverseTimelineScale;
-    let vidStart = 0;
-    let vidEnd = 5;
+    let vidStart = get_vidStart();
+    let vidEnd = get_vidEnd();
     let maxTimestamp = get_maxTimestamp();
     let allTimestamps = get_allTimestamps();
     let stepColorScale = get_stepColorScale(); // Add by Sonia 
@@ -39,6 +52,8 @@ export function updateEventTimeline( dataFiles ){
 
     // brushedSubject = null;
     // brushedTrial = null;
+    set_brushedTrial(null);
+    set_brushedSubject(null);
     brushesAdded.splice(0, brushesAdded.length)
     brushIndices.splice(0, brushIndices.length)
     let brushCount = 0  
@@ -78,9 +93,7 @@ export function updateEventTimeline( dataFiles ){
                         .range([1,25])
                          
 
-    xEventTimelineScale= d3.scaleLinear()
-        .domain([0.0, maxTimestamp])
-        .range([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])  
+    xEventTimelineScale= get_xEventTimelineScale();
     reverseTimelineScale = d3.scaleLinear()
         .domain([0, d3.select("#event-timeline-container").node().clientWidth -margins.eventTimeline.left - margins.eventTimeline.right ])
         .range([0.0, maxTimestamp])
@@ -153,7 +166,7 @@ export function updateEventTimeline( dataFiles ){
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                    updateHl2Details( dataFiles);
                     
                 })
             else
@@ -177,7 +190,7 @@ export function updateEventTimeline( dataFiles ){
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                    updateHl2Details( dataFiles);
                     
                 })
 
@@ -212,7 +225,7 @@ export function updateEventTimeline( dataFiles ){
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                    updateHl2Details( dataFiles);
 
                 });
 
@@ -343,7 +356,7 @@ export function updateEventTimeline( dataFiles ){
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                    updateHl2Details( dataFiles);
                     
                 })
             else
@@ -366,7 +379,7 @@ export function updateEventTimeline( dataFiles ){
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                    updateHl2Details( dataFiles);
                     
                 })
 
@@ -400,7 +413,7 @@ export function updateEventTimeline( dataFiles ){
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                    updateHl2Details( dataFiles);
 
                 });
 
@@ -525,20 +538,28 @@ export function updateEventTimeline( dataFiles ){
 
 
                 if (e.selection == null){
-                    brushedSubject = null;
-                    brushedTrial = null; 
+                    // brushedSubject = null;
+                    // brushedTrial = null; 
+                    set_brushedTrial(null);
+                    set_brushedSubject(null);
                     d3.selectAll(".hide-bar")
                         .classed("hide-bar",false);
-                        updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                        updateHl2Details( dataFiles);
                     return
                 }
 
                 if (typeof e.sourceEvent != 'undefined') {
                     brushedTrial = e.sourceEvent.srcElement.parentElement.getAttribute("data-trial")
                     brushedSubject = e.sourceEvent.srcElement.parentElement.getAttribute("data-subject")
+                    set_brushedTrial(brushedTrial);
+                    set_brushedSubject(brushedSubject);
                 }
+                brushedSubject = get_brushedSubject();
+                brushedTrial = get_brushedTrial();  
                 vidStart = reverseTimelineScale(e.selection[0])
                 vidEnd = reverseTimelineScale(e.selection[1])
+                set_vidStart(vidStart);
+                set_vidEnd(vidEnd);
                 let videoPath = get_videoPath(brushedSubject, brushedTrial);
                 playVideoWithStartTime(videoPath, vidStart);
 
@@ -578,7 +599,7 @@ export function updateEventTimeline( dataFiles ){
                     .style("fill-opacity",0.1)
                 matrixGroup.selectAll(".highlight-arcs")
                     .style("fill-opacity",1)
-                updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
+                updateHl2Details( dataFiles);
 
             }
 
@@ -595,4 +616,5 @@ export function updateEventTimeline( dataFiles ){
             eventTimelineSvg.attr("height",currentY+250+margins.eventTimeline.top+margins.eventTimeline.bottom)     
         }
     })
+    set_brushesAdded(brushesAdded);
 }
