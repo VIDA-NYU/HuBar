@@ -10,11 +10,13 @@ import { updateFnirsSessions } from './FnirsErrorSessions.js';
 import { get_allTimestamps, get_stepColorScale, get_margins, get_selectedItems, set_selectedItems, get_selectedScatterSource, get_selectedGroupby, get_selectedFilter} from './config.js'
 import { get_scatterGroup, get_scatterSvg } from './containersSVG.js';
 
-export function updateScatterplot( dataFiles, videoPlayer){
+export function updateScatterplot( dataFiles ){
 
     console.log("updateScatterplot");  
     const margins = get_margins();
     let selectedItems = get_selectedItems();
+
+    // get selected value from dropdown menus
     let selectedScatterSource = get_selectedScatterSource();
     let selectedGroupby = get_selectedGroupby();
     let selectedFilter = get_selectedFilter();
@@ -181,13 +183,13 @@ export function updateScatterplot( dataFiles, videoPlayer){
             lassoBrush.items().classed("unselectedscatter",false);
         }
         set_selectedItems(selectedItems);
-        updateFnirsAgg(videoPlayer, dataFiles)
+        updateFnirsAgg( dataFiles)
         updateTimeDistribution( dataFiles );
-        updateEventTimeline( videoPlayer, dataFiles )
+        updateEventTimeline( dataFiles )
         updateMatrix( dataFiles )
         updateFnirsSessions( dataFiles)
         // updateHl2Details();
-        cleanUpdateHl2Details( null, videoPlayer );
+        cleanUpdateHl2Details( null );
         
     }
     if (selectedGroupby =="subject" || selectedFilter !="all")
@@ -230,13 +232,13 @@ export function updateScatterplot( dataFiles, videoPlayer){
                         selectedItems.push({trial:sample.trial ,subject:sample.subject})
                     })
                     set_selectedItems(selectedItems);
-                    updateFnirsAgg(videoPlayer, dataFiles)
+                    updateFnirsAgg( dataFiles)
                     updateTimeDistribution( dataFiles );
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
                     // updateHl2Details();
-                    cleanUpdateHl2Details( null, videoPlayer );
+                    cleanUpdateHl2Details( null );
                 })
 
             legendGroup.append("path")

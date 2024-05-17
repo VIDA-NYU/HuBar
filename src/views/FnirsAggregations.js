@@ -9,9 +9,11 @@ import { updateFnirsSessions } from './FnirsErrorSessions.js';
 import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, set_selectedFnirs, get_selectedItems, set_selectedItems, get_selectedGroupby, get_selectedFilter} from './config.js'
 import { get_fnirsGroup, get_fnirsSvg, get_scatterGroup } from './containersSVG.js';
 
-export function updateFnirsAgg(videoPlayer, dataFiles){
+export function updateFnirsAgg( dataFiles){
 
     const margins = get_margins();
+
+    // get selected value from dropdown menus
     let selectedGroupby = get_selectedGroupby();
     let selectedFilter = get_selectedFilter();
 
@@ -117,13 +119,13 @@ export function updateFnirsAgg(videoPlayer, dataFiles){
             d3.select("#fnirs-dropdown").property("value",d);
             // selectedFnirs=d;
             set_selectedFnirs(d)
-            updateFnirsAgg(videoPlayer, dataFiles)
+            updateFnirsAgg( dataFiles)
             updateTimeDistribution( dataFiles );
-            updateEventTimeline( videoPlayer, dataFiles )
+            updateEventTimeline( dataFiles )
             updateMatrix( dataFiles )
             updateFnirsSessions( dataFiles)
             // updateHl2Details();
-            cleanUpdateHl2Details( null, videoPlayer );
+            cleanUpdateHl2Details( null );
         })
         .selectAll("text")
         .style("font-family","Open Sans, Roboto, sans-serif")
@@ -179,13 +181,13 @@ export function updateFnirsAgg(videoPlayer, dataFiles){
                 selectedItems.push({trial:sample.trial ,subject:sample.subject})
             })
             set_selectedItems(selectedItems);
-            updateFnirsAgg(videoPlayer, dataFiles)
+            updateFnirsAgg( dataFiles)
             updateTimeDistribution( dataFiles );
-            updateEventTimeline( videoPlayer, dataFiles )
+            updateEventTimeline( dataFiles )
             updateMatrix( dataFiles )
             updateFnirsSessions( dataFiles)
             // updateHl2Details();
-            cleanUpdateHl2Details( null, videoPlayer );
+            cleanUpdateHl2Details( null );
 
         })
         .selectAll("text")

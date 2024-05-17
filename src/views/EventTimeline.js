@@ -4,14 +4,17 @@ import { updateHl2Details } from './Hl2Details.js'
 import { updateMatrix } from './MatrixView.js';
 import { updateFnirsSessions } from './FnirsErrorSessions.js';
 import { get_eventTimelineGroup, get_eventTimelineSvg, get_matrixGroup } from './containersSVG.js';
+import { playVideoWithStartTime } from './videoPlayerUtils.js';
 
-export function updateEventTimeline( videoPlayer, dataFiles ){   
+export function updateEventTimeline( dataFiles ){   
 
     console.log("updateEventTimeline");
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
     let selectedItems = get_selectedItems();
+
+    // get selected value from dropdown menus
     let selectedGroupby = get_selectedGroupby();
 
     // get svgs
@@ -147,10 +150,10 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                         return !(item.trial == trialToRemove && item.subject == subjectToRemove);
                     });
                     set_selectedItems(selectedItems);
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
                     
                 })
             else
@@ -171,10 +174,10 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                         return !(item.trial == trialToRemove && item.subject == subjectToRemove);
                     });
                     set_selectedItems(selectedItems);
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
                     
                 })
 
@@ -206,10 +209,10 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                         return !(item.trial == trialToRemove && item.subject == subjectToRemove);
                     });
                     set_selectedItems(selectedItems);
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
 
                 });
 
@@ -337,10 +340,10 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                         return !(item.trial == trialToRemove && item.subject == subjectToRemove);
                     });
                     set_selectedItems(selectedItems);
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
                     
                 })
             else
@@ -360,10 +363,10 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                         return !(item.trial == trialToRemove && item.subject == subjectToRemove);
                     });
                     set_selectedItems(selectedItems);
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
                     
                 })
 
@@ -394,10 +397,10 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                         return !(item.trial == trialToRemove && item.subject == subjectToRemove);
                     });
                     set_selectedItems(selectedItems);
-                    updateEventTimeline( videoPlayer, dataFiles )
+                    updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)
-                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                    updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
 
                 });
 
@@ -526,7 +529,7 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                     brushedTrial = null; 
                     d3.selectAll(".hide-bar")
                         .classed("hide-bar",false);
-                        updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                        updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
                     return
                 }
 
@@ -537,12 +540,7 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                 vidStart = reverseTimelineScale(e.selection[0])
                 vidEnd = reverseTimelineScale(e.selection[1])
                 let videoPath = get_videoPath(brushedSubject, brushedTrial);
-                videoPlayer.src = videoPath;
-                videoPlayer.addEventListener('loadeddata', function() {
-                    videoPlayer.currentTime = vidStart;
-                    videoPlayer.play();
-                });
-                videoPlayer.load();
+                playVideoWithStartTime(videoPath, vidStart);
 
                 d3.selectAll(".error-session-bar")
                     .classed("hide-bar",true);
@@ -580,7 +578,7 @@ export function updateEventTimeline( videoPlayer, dataFiles ){
                     .style("fill-opacity",0.1)
                 matrixGroup.selectAll(".highlight-arcs")
                     .style("fill-opacity",1)
-                updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles);
+                updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles);
 
             }
 

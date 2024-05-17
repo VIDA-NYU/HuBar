@@ -1,7 +1,8 @@
 import * as d3 from 'd3';
 import { get_selectedFnirs, get_allTimestamps, get_selectedImu, get_selectedGaze } from './config';
 import { get_eventTimelineGroup, get_hl2Group } from './containersSVG';
-export function cleanUpdateHl2Details( brushedSubject, videoPlayer ){
+import { addTimeUpdateListener, get_videoPlayer, reset_videoPlayer } from './videoPlayerUtils';
+export function cleanUpdateHl2Details( brushedSubject ){
     // get svgs
     let hl2Group = get_hl2Group();
 
@@ -15,22 +16,26 @@ export function cleanUpdateHl2Details( brushedSubject, videoPlayer ){
     d3.select("#fnirs-title-header")
         .style("visibility","hidden")
     console.log("start initialization");
+    
     if (brushedSubject == null){
-        videoPlayer.src=""
-        videoPlayer.load();
-        videoPlayer.removeAttribute('src');
-        videoPlayer.load();
+        reset_videoPlayer()
         console.log("start return initialization");
         return
     }
 }
-export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, videoPlayer, dataFiles){
+export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, vidStart, vidEnd, dataFiles){
 
+    console.log("updateHl2Details");
+    console.log(vidStart);
     // get svgs
     let eventTimelineGroup = get_eventTimelineGroup();
     let hl2Group = get_hl2Group();
 
-    cleanUpdateHl2Details( brushedSubject, videoPlayer );
+    cleanUpdateHl2Details( brushedSubject );
+
+    if (brushedSubject == null){
+        return
+    }
     // hl2Group.selectAll('*').remove();
     // d3.select("#gaze-header")
     //     .style("visibility","hidden")
@@ -50,8 +55,10 @@ export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xE
     //     return
     // }
 
+    // get selected value from dropdown menus
     let selectedImu = get_selectedImu();
     let selectedGaze = get_selectedGaze();
+
     console.log("end initialization");
     d3.select("#gaze-header")
         .style("visibility","visible")
@@ -165,9 +172,11 @@ export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xE
     // Draw a dashed vertical line
     hl2Group.append("line")
         .attr("class","seekline")
-        .attr("x1", xScaleHL2(videoPlayer.currentTime)) 
+        // .attr("x1", xScaleHL2(videoPlayer.currentTime))
+        .attr("x1", xScaleHL2(get_videoPlayer().currentTime)) 
         .attr("y1", 0) 
-        .attr("x2",  xScaleHL2(videoPlayer.currentTime)) 
+        // .attr("x2",  xScaleHL2(videoPlayer.currentTime)) 
+        .attr("x2",  xScaleHL2(get_videoPlayer().currentTime)) 
         .attr("y2", 120) 
         .style("stroke", "black")
         .attr("stroke-width", 2)
@@ -175,9 +184,11 @@ export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xE
 
     hl2Group.append("line")
         .attr("class","seekline")
-        .attr("x1", xScaleHL2(videoPlayer.currentTime)) 
+        // .attr("x1", xScaleHL2(videoPlayer.currentTime))
+        .attr("x1", xScaleHL2(get_videoPlayer().currentTime))
         .attr("y1", 190) 
-        .attr("x2",  xScaleHL2(videoPlayer.currentTime)) 
+        // .attr("x2",  xScaleHL2(videoPlayer.currentTime))
+        .attr("x2",  xScaleHL2(get_videoPlayer().currentTime))
         .attr("y2", 310) 
         .style("stroke", "black")
         .attr("stroke-width", 2)
@@ -263,24 +274,7 @@ export function updateHl2Details( brushedTrial, brushedSubject, brushesAdded, xE
     imuBrushGroup.call(imubrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
     fnirsBrushGroup.call(fnirsbrush.move, [ xScaleHL2(vidStart),xScaleHL2(vidEnd)]);
     
-    let timeupdate=0
-    videoPlayer.addEventListener('timeupdate', function() {
-        let curTime = videoPlayer.currentTime
-        d3.selectAll(".seekline")
-            .attr("x1",xScaleHL2(curTime))
-            .attr("x2",xScaleHL2(curTime))
-        if (videoPlayer.currentTime >= vidEnd) {
-          // Loop back to the start time
-          videoPlayer.currentTime = vidStart;
-        }
-
-        else if ( videoPlayer.currentTime<vidStart && timeupdate>5){
-            videoPlayer.currentTime = vidStart;
-            timeupdate=0
-
-        }
-        timeupdate+=1 
-      });
+    addTimeUpdateListener(vidStart, vidEnd, xScaleHL2);
 
     function hl2brushend(e){
         if (typeof e.sourceEvent != 'undefined') {          

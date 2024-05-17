@@ -5,14 +5,15 @@ import { get_fnirsGroup, get_fnirsSessionsGroup, get_fnirsSessionsSvg } from './
 export function updateFnirsSessions( dataFiles){
     console.log("Updatefnirssessions")
 
+    let selectedItems = get_selectedItems();
+    
+    // get selected value from dropdown menus
+    let selectedGroupby = get_selectedGroupby();
+
     // get svgs
     let fnirsGroup = get_fnirsGroup();
     let fnirsSessionsGroup = get_fnirsSessionsGroup();
     let fnirsSessionsSvg = get_fnirsSessionsSvg();
-
-
-    let selectedItems = get_selectedItems();
-    let selectedGroupby = get_selectedGroupby();
 
     fnirsSessionsGroup.selectAll('*').remove();
     

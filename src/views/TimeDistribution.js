@@ -10,6 +10,8 @@ export function updateTimeDistribution( dataFiles ){
     const margins = get_margins();
     let selectedItems = get_selectedItems();
     let maxTimestamp = get_maxTimestamp();
+
+    // get selected value from dropdown menus
     let selectedGroupby = get_selectedGroupby();
     let selectedFilter = get_selectedFilter();
 

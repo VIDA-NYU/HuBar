@@ -6,11 +6,14 @@ export function updateMatrix( dataFiles ){
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
-    let selectedFnirs = get_selectedFnirs();
     let selectedItems  = get_selectedItems();
+
     const margins = get_margins();
-    let selectedGroupby = get_selectedGroupby();
     
+    // get selected value from dropdown menus
+    let selectedGroupby = get_selectedGroupby();
+    let selectedFnirs = get_selectedFnirs();
+
     // get svgs
     let matrixGroup = get_matrixGroup();
     let matrixSvg = get_matrixSvg();
