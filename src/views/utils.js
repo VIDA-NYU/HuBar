@@ -1,3 +1,153 @@
+import { get_allTimestamps, process_timestamps } from "./config";
+
+export function consolidate_data(files){
+    let dataFiles = files;
+    // TIMESTAMP
+    process_timestamps(dataFiles);
+    let allTimestamps = get_allTimestamps();
+
+    dataFiles[1].forEach((trial)=>{
+        //consolidate step data:
+        let consolidatedStepData = {
+            step: [],
+            flightPhase: [],
+            error: []
+        };  
+        let currentStep = null;
+        let currentFlightPhase = null;
+        let currentError = null;
+
+        trial['data'].forEach(record => {
+
+            if (record.seconds<0){
+                return
+            }
+
+            // Consolidate 'Step' data
+            if (record.Step !== currentStep) {
+                if (consolidatedStepData.step.length > 0) {
+                consolidatedStepData.step[consolidatedStepData.step.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedStepData.step.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.Step
+                });
+                currentStep = record.Step;
+            } else {
+                consolidatedStepData.step[consolidatedStepData.step.length - 1].endTimestamp = record.seconds;
+            }
+
+            // Consolidate 'FlightPhase' data
+            if (record.FlightPhase !== currentFlightPhase) {
+                if (consolidatedStepData.flightPhase.length > 0) {
+                consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedStepData.flightPhase.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.FlightPhase
+                });
+                currentFlightPhase = record.FlightPhase;
+            } else {
+                consolidatedStepData.flightPhase[consolidatedStepData.flightPhase.length - 1].endTimestamp = record.seconds;
+            }
+
+            // Consolidate 'Error' data
+            if (record.Error !== currentError) {
+                if (consolidatedStepData.error.length > 0) {
+                consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedStepData.error.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.Error
+                });
+                currentError = record.Error;
+            } else {
+                consolidatedStepData.error[consolidatedStepData.error.length - 1].endTimestamp = record.seconds;
+            }
+        });
+        trial['consolidatedStepData'] = consolidatedStepData;
+    })
+
+    //consolidate FNIRS Data
+    dataFiles[3].forEach((trial)=>{
+        let consolidatedFNIRS = {
+            workload: [],
+            attention: [],
+            perception: [],
+        };
+
+        //handle special case where the values are too high (timestamps out of sync)
+        if (trial.trial_id == 4 && trial.subject_id==8708){
+            trial.data = trial.data.map(item => {
+                return {
+                    ...item,
+                    seconds: item.seconds - 84004.747
+                };
+            });
+        }
+
+        let currentWorkload = null;
+        let currentAttention = null;
+        let currentPerception = null;
+        
+        trial['data'].forEach(record=> {
+
+            if (record.seconds<0 || record.seconds> allTimestamps['t'+trial.trial_id+"-s"+trial.subject_id]){
+                return
+            }
+            // Consolidate 'Workload' data
+            if (record.workload_classification !== currentWorkload) {
+                if (consolidatedFNIRS.workload.length > 0) {
+                consolidatedFNIRS.workload[consolidatedFNIRS.workload.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedFNIRS.workload.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.workload_classification
+                });
+                currentWorkload = record.workload_classification;
+            } else {
+                consolidatedFNIRS.workload[consolidatedFNIRS.workload.length - 1].endTimestamp = record.seconds;
+            }
+            
+            //consolidate 'Attention' data
+            if (record.attention_classification !== currentAttention) {
+                if (consolidatedFNIRS.attention.length > 0) {
+                consolidatedFNIRS.attention[consolidatedFNIRS.attention.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedFNIRS.attention.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.attention_classification
+                });
+                currentAttention = record.attention_classification;
+            } else {
+                consolidatedFNIRS.attention[consolidatedFNIRS.attention.length - 1].endTimestamp = record.seconds;
+            }
+
+            //consolidate 'Perception Data'
+            if (record.perception_classification !== currentPerception) {
+                if (consolidatedFNIRS.perception.length > 0) {
+                consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp = record.seconds;
+                }
+                consolidatedFNIRS.perception.push({
+                startTimestamp: record.seconds,
+                endTimestamp: record.seconds,
+                value: record.perception_classification
+                });
+                currentPerception = record.perception_classification;
+            } else {
+                consolidatedFNIRS.perception[consolidatedFNIRS.perception.length - 1].endTimestamp = record.seconds;
+            }
+        });
+        trial['consolidatedFNIRS'] = consolidatedFNIRS; 
+    })
+    return dataFiles;
+}
+
 // Function to calculate proportions
 export function calculateProportions(data, uniqueTrials, selectedGroupby, uniqueSubjects) {
     const proportions = {
@@ -65,3 +215,4 @@ export function calculateProportions(data, uniqueTrials, selectedGroupby, unique
 
     return proportions;
 }
+
