@@ -31,15 +31,10 @@ export function updateEventTimeline( dataFiles ){
     let eventTimelineSvg = get_eventTimelineSvg();
     let matrixGroup = get_matrixGroup();
 
-    // brushedTrial, brushedSubject, brushesAdded, xEventTimelineScale, eventTimelineGroup, eventTimelineSvg, vidStart, vidEnd, videoPlayer, hl2Group, dataFiles
-    // let brushedTrial = null;
-    // let brushedSubject = null;
     let brushedTrial = get_brushedTrial();
     let brushedSubject = get_brushedSubject();
     let brushesAdded=[];
     let brushIndices=[];
-    // set_brushesAdded([]);
-    // set_brushedSubject(null);
     let xEventTimelineScale;
     let reverseTimelineScale;
     let vidStart = get_vidStart();
@@ -50,8 +45,6 @@ export function updateEventTimeline( dataFiles ){
     const margins = get_margins();
     let selectedFnirs = get_selectedFnirs();
 
-    // brushedSubject = null;
-    // brushedTrial = null;
     set_brushedTrial(null);
     set_brushedSubject(null);
     brushesAdded.splice(0, brushesAdded.length)
@@ -538,8 +531,6 @@ export function updateEventTimeline( dataFiles ){
 
 
                 if (e.selection == null){
-                    // brushedSubject = null;
-                    // brushedTrial = null; 
                     set_brushedTrial(null);
                     set_brushedSubject(null);
                     d3.selectAll(".hide-bar")

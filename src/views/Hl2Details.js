@@ -44,24 +44,6 @@ export function updateHl2Details( dataFiles){
     if (brushedSubject == null){
         return
     }
-    // hl2Group.selectAll('*').remove();
-    // d3.select("#gaze-header")
-    //     .style("visibility","hidden")
-    
-    // d3.select("#imu-header")
-    //     .style("visibility","hidden")
-
-    // d3.select("#fnirs-title-header")
-    //     .style("visibility","hidden")
-    // console.log("start initialization");
-    // if (brushedSubject == null){
-    //     videoPlayer.src=""
-    //     videoPlayer.load();
-    //     videoPlayer.removeAttribute('src');
-    //     videoPlayer.load();
-    //     console.log("start return initialization");
-    //     return
-    // }
 
     // get selected value from dropdown menus
     let selectedImu = get_selectedImu();
@@ -163,27 +145,11 @@ export function updateHl2Details( dataFiles){
         .style("fill", "none")
         .style("fill-opacity", 0)
 
-    /*
-    hl2Group.append("rect")
-        .attr("x", 0)
-        .attr("y", 360)
-        .attr("rx",5)
-        .attr("ry", 7)
-        .attr("width", xScaleHL2.range()[1])
-        .attr("height", 120)
-        .style("stroke", "black")
-        .style("stroke-width", "0.5px")
-        .style("stroke-opacity", 0.7)
-        .style("fill", "none")
-        .style("fill-opacity", 0)
-    */
     // Draw a dashed vertical line
     hl2Group.append("line")
         .attr("class","seekline")
-        // .attr("x1", xScaleHL2(videoPlayer.currentTime))
         .attr("x1", xScaleHL2(get_videoPlayer().currentTime)) 
         .attr("y1", 0) 
-        // .attr("x2",  xScaleHL2(videoPlayer.currentTime)) 
         .attr("x2",  xScaleHL2(get_videoPlayer().currentTime)) 
         .attr("y2", 120) 
         .style("stroke", "black")
@@ -192,10 +158,8 @@ export function updateHl2Details( dataFiles){
 
     hl2Group.append("line")
         .attr("class","seekline")
-        // .attr("x1", xScaleHL2(videoPlayer.currentTime))
         .attr("x1", xScaleHL2(get_videoPlayer().currentTime))
         .attr("y1", 190) 
-        // .attr("x2",  xScaleHL2(videoPlayer.currentTime))
         .attr("x2",  xScaleHL2(get_videoPlayer().currentTime))
         .attr("y2", 310) 
         .style("stroke", "black")
@@ -248,22 +212,6 @@ export function updateHl2Details( dataFiles){
                 .attr("height", 35)
                 .style("fill", () => {return data.value == "Underload" ? "#ffb0b0" : data.value == "Overload" ? "#99070d" : "#eb5a4d";});
         });
-        /*
-        let variableName= selectedFnirs + "_confidence" 
-        let yScaleLine =  d3.scaleLinear()
-        .domain([1.0,0])
-        .range([320,405])
-
-        hl2Group.append("path")
-            .datum(fnirsToDisplay.data.filter(function(d) { return d.seconds >= 0 && d.seconds<=duration }))
-            .attr("fill", "none")
-            .attr("stroke", "steelblue")
-            .attr("stroke-width", 1)
-            .attr("stroke-opacity", 0.8)
-            .attr("d", d3.line()
-            .x(function(d) { return xScaleHL2(d.seconds) })
-            .y(function(d) { return yScaleLine(d[variableName]) }))  
-            */
     }
     
     let gazeBrushGroup = hl2Group.append("g")

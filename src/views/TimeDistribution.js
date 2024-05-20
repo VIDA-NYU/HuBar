@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedItems, get_selectedGroupby, get_selectedFilter} from './config.js'
+import { get_maxTimestamp, get_margins, get_unique_subjects, get_unique_trials, get_selectedItems, get_selectedGroupby, get_selectedFilter} from './config.js'
 import { get_timeDistGroup, get_timeDistSvg } from './containersSVG.js';
 
 export function updateTimeDistribution( dataFiles ){
