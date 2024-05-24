@@ -4,6 +4,7 @@ HuBar is a visual analytics tool to explore human behavior using fNIRS data in A
 
 ![System screen](https://github.com/soniacq/HuBar/blob/master/imgs/HuBar_system.png)
 
+
 ## Install
 
 ~~~~
