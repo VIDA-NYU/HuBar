@@ -21,7 +21,7 @@ body{
   
 #overview-panel{
     display: grid;
-    grid-template-columns: 3.5fr 8.5fr;
+    grid-template-columns: 3.5fr 8.5fr 5.5fr;
     overflow-y: hidden;
     padding: 0.5%;
     overflow-x: hidden;
@@ -44,9 +44,15 @@ body{
 #fnirs-agg-time-container{
     margin-left: 0.75%;
     overflow-y: scroll;
-    overflow-x: clip;
+    overflow-x: scroll;
     display: grid;
     grid-template-columns: 80% 20%;
+}
+
+#ideal-logs-container{
+    margin-left: 0.75%;
+    overflow: auto !important;
+    display: grid;
 }
 
 #tlmatrix-container{
@@ -263,6 +269,12 @@ body{
     position: relative;
     padding: none;
 }
+
+#ideal-log-container-child{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
  
 
 .axisHide path {
@@ -301,6 +313,20 @@ body{
     z-index: 100;
     font-size: 14px;
     font-weight: bold;
+}
+
+.ideal-workload-datafield{
+    margin: 2px -1px auto -1px;
+    text-align: left;
+    z-index: 100;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: solid;
+    border-radius: 0px;
+    padding: 5px 5px;
+    /* font-weight: bold; */
 }
 
 #time-title 

@@ -12,6 +12,7 @@ import { updateFnirsSessions } from './views/FnirsErrorSessions.js';
 import { initialise_svgs } from './views/containersSVG.js';
 import { add_legendFnirs } from './views/legendFnirs.js';
 import { consolidate_data } from './views/utils.js';
+import { TestScript } from './views/IdealView.js';
 
 const videoFolder = "data/video/"
 let dataFiles; 
@@ -41,8 +42,10 @@ Promise.all([
     console.log("Data Files not loaded!")
 })
 
-function initializeContainers(){
+async function initializeContainers(){
     console.log("initializing")
+
+    TestScript();
     
     // Extract unique sources from the data
     compute_unique_data(dataFiles);

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch": "webpack --watch",
+    "start": "webpack && webpack-dev-server --hot"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +15,8 @@
     "d3": "^7.9.0",
     "d3-drag": "^3.0.0",
     "d3-selection": "^3.0.0",
-    "robust-point-in-polygon": "^1.0.3"
+    "robust-point-in-polygon": "^1.0.3",
+    "webpack-dev-server": "^5.0.4"
   },
   "devDependencies": {
     "webpack": "^5.90.3",

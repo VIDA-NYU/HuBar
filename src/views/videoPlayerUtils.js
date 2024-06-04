@@ -24,7 +24,6 @@ export function addTimeUpdateListener(vidStart, vidEnd, xScaleHL2) {
         d3.selectAll(".seekline")
             .attr("x1", xScaleHL2(curTime))
             .attr("x2", xScaleHL2(curTime));
-        
         if (curTime >= vidEnd) {
             // Loop back to the start time
             videoPlayer.currentTime = vidStart;
