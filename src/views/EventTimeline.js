@@ -61,6 +61,15 @@ export function updateEventTimeline( dataFiles ){
     d3.select("#corr-checkbox-label")
         .style("visibility","hidden");
 
+    d3.select("#brain-checkbox")
+        .style("visibility","hidden");
+
+    d3.select("#brain-checkbox-label")
+        .style("visibility","hidden");
+    
+    d3.select("#brain-dropdown")
+        .style("visibility","hidden");
+
     if (selectedItems.length == 0){
         return;
     }
@@ -72,6 +81,12 @@ export function updateEventTimeline( dataFiles ){
         .style("visibility","visible");
 
     d3.select("#corr-checkbox-label")
+        .style("visibility","visible");
+    
+    d3.select("#brain-checkbox")
+        .style("visibility","visible");
+
+    d3.select("#brain-checkbox-label")
         .style("visibility","visible");
 
     let filteredMissionData=[];

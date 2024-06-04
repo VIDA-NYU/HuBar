@@ -55,7 +55,6 @@ body{
     grid-template-columns: 37.5% 37.5% 25%;
     padding: none;
     overflow-y:scroll;
-
 }
 
 #vid-imu-container{
@@ -70,7 +69,7 @@ body{
     padding: 0%;
 }
 
-#scatterplot-container, #video-container, #event-timeline-container, #fnirs-sessions-container {
+#scatterplot-container, #video-container, #event-timeline-container, #fnirs-sessions-container, #matrix-container {
     padding: 0;
 
     position: relative; /* Ensure relative positioning */
@@ -156,62 +155,55 @@ body{
 
 #source-label{
     font-size: 0.8em;
-    position: absolute; /* Position dropdown absolutely */
+    position: absolute; 
     left:2%;
     top:5px;
 }
 
 #source-dropdown {
-    position: absolute; /* Position dropdown absolutely */
-    top: 4px; /* Adjust top position as needed */
-    left: 15%; /* Adjust right position as needed */
-    z-index: 1; /* Ensure dropdown is above other elements */
+    position: absolute; 
+    top: 4px; 
+    left: 15%; 
+    z-index: 1; 
 }
 
 
 #groupby-label {
     font-size: 0.8em;
-    position: absolute; /* Position dropdown absolutely */
+    position: absolute; 
     left:34%;
     top:5px;
 }
 
 #groupby-dropdown{
-    position: absolute; /* Position dropdown absolutely */
-    top: 4px; /* Adjust top position as needed */
-    left: 48%; /* Adjust left position as needed */
-    z-index: 1; /* Ensure dropdown is above other elements */
+    position: absolute; 
+    top: 4px; 
+    left: 48%; 
+    z-index: 1; 
 }
 
 #filter-label{
     font-size: 0.8em;
-    position: absolute; /* Position dropdown absolutely */
+    position: absolute; 
     left:73%;   
     top:5px;
 }
 
 #filter-dropdown{
-    position: absolute; /* Position dropdown absolutely */
-    top: 4px; /* Adjust top position as needed */
-    right: 2%; /* Adjust left position as needed */
+    position: absolute; 
+    top: 4px; 
+    right: 2%; 
     z-index: 1;
 }
 
 
 #fnirs-label{
     font-size: 0.8em;
-    position: absolute; /* Position dropdown absolutely */
+    position: absolute; 
     left:0%;
     top:25px;
 }
 
-#fnirs-dropdown{
-    width: 34%;
-    position: absolute; /* Position dropdown absolutely */
-    top: 35px; /* Adjust top position as needed */
-    right: 8%; /* Adjust left position as needed */
-    z-index: 1;
-}
 
 #corr-checkbox-div{
     position: absolute;
@@ -219,6 +211,33 @@ body{
     left: 0px;
     font-size: 12px;
     top: 30px;
+    visibility: hidden;
+}
+
+#fnirs-dropdown{
+    width: 34%;
+    position: absolute; 
+    top: 35px; 
+    right: 8%; 
+    z-index: 1;
+}
+
+#brain-checkbox-div{
+    position: absolute;
+    margin: 0%;
+    left: 30px;
+    font-size: 12px;
+    top: 60px;
+    visibility: hidden;
+}
+
+#brain-dropdown{
+    width: 20%;
+    position: absolute; 
+    top: 65px; 
+    left: 45%; 
+    z-index: 1;
+    visibility: hidden;
 }
 
 .lasso path {
