@@ -274,8 +274,32 @@ body{
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
+    height: inherit;
+}
+
+#workload-module-title{
+    margin-bottom: 10px;
+}
+
+#workload-module-main-container{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow: auto;
+    margin: auto 10px;
+}
+
+.workload-module-datafield-container{
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    margin: auto auto auto 0px;
 }
  
+.workload-module-datafield-inner-div{
+    margin-top: auto;
+}
 
 .axisHide path {
     display: none;
@@ -316,17 +340,20 @@ body{
 }
 
 .ideal-workload-datafield{
-    margin: 2px -1px auto -1px;
+    margin: 2px 10px 2px 2px;
     text-align: left;
     z-index: 100;
-    font-size: 14px;
+    font-size: 12px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    border: solid;
-    border-radius: 0px;
+    /* border: solid;
+    border-radius: 0px; */
     padding: 5px 5px;
     /* font-weight: bold; */
+    max-width: 100px;
+    height: max-content;
+    
 }
 
 #time-title 
