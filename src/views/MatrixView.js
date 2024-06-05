@@ -268,6 +268,8 @@ export function updateMatrix( dataFiles ){
         // Load the brain model and append it to the SVG
         matrixGroup.append("image")
             .attr("xlink:href", "./imgs/brain_model.png")
+            .attr("class","brainimg")
+            .attr("id", "brainimg-" + step + "-"+row.subject +"-"+row.trial)
             .attr("x", xScaleMatrix(step))  // X coordinate of the image
             .attr("y", currentY)  // Y coordinate of the image
             .attr("width", brainWidth)  // Width of the image (same as SVG width)
@@ -286,6 +288,8 @@ export function updateMatrix( dataFiles ){
 
             matrixGroup.append("path")
                 .attr("d", pathData)
+                .attr("class","brainpath")
+                .attr("id", "brainpath-" + step + "-"+row.subject +"-"+row.trial)
                 .attr("transform", `translate(${x}, ${y}) scale(${1.4 * span/300 }) scale(${randomScale}) skewX(${randomSkewX}) skewY(${randomSkewY})`)
                 .attr("fill", colorScale(value))
                 .attr("opacity", 0.7);

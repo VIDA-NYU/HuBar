@@ -544,6 +544,12 @@ export function updateEventTimeline( dataFiles ){
                 matrixGroup.selectAll(".circle")
                     .style("fill-opacity",1)
 
+                matrixGroup.selectAll(".brainimg")
+                    .style("opacity",1)
+
+                matrixGroup.selectAll(".brainpath")
+                    .style("fill-opacity",1)
+
 
                 if (e.selection == null){
                     set_brushedTrial(null);
@@ -573,8 +579,15 @@ export function updateEventTimeline( dataFiles ){
                     .classed("hide-bar",true);
                 d3.selectAll(".fnirs-session-bar")
                     .classed("hide-bar",true);
+                
                 d3.selectAll(".t"+brushedTrial+"-s"+brushedSubject)
                     .classed("hide-bar",false)
+
+                matrixGroup.selectAll(".brainimg")
+                    .style("opacity",0.1)
+
+                matrixGroup.selectAll(".brainpath")
+                    .style("fill-opacity",0.1)
 
                 let sessionObject = dataFiles[1].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)[0]
                 let stepNames = new Set();
@@ -597,7 +610,13 @@ export function updateEventTimeline( dataFiles ){
                     let circleElements = document.getElementsByClassName(circleName)
                     if(circleElements.length==1){
                         circleElements[0].classList.toggle("highlight-arcs")  
-                    } 
+                    }
+                    
+                    matrixGroup.selectAll("#brainpath-" + name + "-"+brushedSubject +"-" + brushedTrial)
+                        .style( "fill-opacity",1);
+                    matrixGroup.selectAll("#brainimg-" + name + "-"+brushedSubject +"-" + brushedTrial)
+                        .style( "opacity",1);
+
                 })
                 matrixGroup.selectAll(".arc>path")
                     .style("fill-opacity",0.1)
@@ -605,6 +624,8 @@ export function updateEventTimeline( dataFiles ){
                     .style("fill-opacity",0.1)
                 matrixGroup.selectAll(".highlight-arcs")
                     .style("fill-opacity",1)
+                
+                matrixGroup.selectAll
                 updateHl2Details( dataFiles);
 
             }
