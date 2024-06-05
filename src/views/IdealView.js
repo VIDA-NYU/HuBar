@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 // List of field labels
 const fieldLabels = [
   ['Total Time Demand','seconds','total-time-demand'],
-  ['Overall Working Memeory Load', 'chunks','overall-working-memeory-load'],
+  ['Overall Working Memory Load', 'chunks','overall-working-memeory-load'],
   ['Overall Workload Rating', '','overall-workload-rating'],
   ['Procedure Time Demand','seconds','procedure-time-demand'],
   ['Procedure Working Memory Load','chunks','procedure-working-memmory-load'],
