@@ -4,12 +4,9 @@ import * as d3 from 'd3';
 
 // List of field labels
 const fieldLabels = [
-  ['Total Time Demand','seconds','total-time-demand'],
-  ['Overall Working Memory Load', 'chunks','overall-working-memeory-load'],
-  ['Overall Workload Rating', '','overall-workload-rating'],
-  ['Procedure Time Demand','seconds','procedure-time-demand'],
-  ['Procedure Working Memory Load','chunks','procedure-working-memmory-load'],
-  ['Procedure Workload','','procedure-workload'],
+  ['Task Time Demand','seconds','task-time-demand'],
+  ['Task Working Memory Load','chunks','task-working-memory-load'],
+  ['Task Workload','','task-workload'],
 ];
 
 var ClosestMatch;
@@ -75,7 +72,7 @@ export async function TestScript() {
       targetDiv.outerHTML = DefaultContainer;
     }
     const titleContainer = document.getElementById('workload-module-title');
-    titleContainer.innerHTML = "Workload Module";
+    titleContainer.innerHTML = "Expected Expert Workload";
 
     const imageContainer = document.getElementById('work-module-image');
     imageContainer.src = '';
@@ -84,25 +81,24 @@ export async function TestScript() {
   async function updateOptimalTaskView(Match){
     if(Match.FlightPhase != null && Match.Procedure != null){
       const containerTitle = document.getElementById('workload-module-title');
-      containerTitle.innerHTML = `Workload Module ${Match.FlightPhase} ${Match.Procedure}`;
+      containerTitle.innerHTML = `Expected Expert Workload <br> ${Match.FlightPhase} | Task ${Match.Procedure}`;
       var LookUpJSON = await fetchData("../data/workload_module_lookup_table.json");
 
       fieldLabels.forEach(label => {
 
         var DataTextDiv = document.getElementById(label[2]);
+        if(label[0] == "Task Workload"){
+          var WorkingMemeoryLoad = LookUpJSON[Match.FlightPhase][Match.Procedure]["task-working-memory-load"];
+          if(WorkingMemeoryLoad >= 4){
+            DataTextDiv.innerText = "High";
+          }
+          else{
+            DataTextDiv.innerText = "Low";
 
-        if(label[2] === "total-time-demand"){
-          DataTextDiv.innerText = LookUpJSON[Match.FlightPhase].total_time_demand;
-        }
-        else if(label[2] === "overall-working-memeory-load"){
-          DataTextDiv.innerText = LookUpJSON[Match.FlightPhase].total_working_memory_load;
-
-        }
-        else if(label[2] === "overall-workload-rating"){
-          DataTextDiv.innerText = LookUpJSON[Match.FlightPhase].overall_workload;
+          }
         }
         else{
-          DataTextDiv.innerText = LookUpJSON[Match.FlightPhase][Match.Procedure][label[2]];
+        DataTextDiv.innerText = LookUpJSON[Match.FlightPhase][Match.Procedure][label[2]];
         }
       })
 
