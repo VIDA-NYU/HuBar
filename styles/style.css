@@ -53,6 +53,7 @@ body{
     margin-left: 0.75%;
     overflow: auto !important;
     display: grid;
+    background-color: #F8F8F8;
 }
 
 #tlmatrix-container{
