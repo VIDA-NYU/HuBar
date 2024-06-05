@@ -82,10 +82,9 @@ export async function TestScript() {
   }
 
   async function updateOptimalTaskView(Match){
-    if(Match.FlightPhase != null || Match.Procedure != null){
+    if(Match.FlightPhase != null && Match.Procedure != null){
       const containerTitle = document.getElementById('workload-module-title');
       containerTitle.innerHTML = `Workload Module ${Match.FlightPhase} ${Match.Procedure}`;
-
       var LookUpJSON = await fetchData("../data/workload_module_lookup_table.json");
 
       fieldLabels.forEach(label => {
@@ -111,6 +110,9 @@ export async function TestScript() {
       imageContainer.src = LookUpJSON[Match.FlightPhase][Match.Procedure].chart_url;
 
       Reset = false;
+    }
+    else{
+      LoadDefaultContainer();
     }
   }
 
@@ -238,6 +240,7 @@ function LoadWorkloadModule(){
 }
 
 function normalizeFlightProcedureString(input) {
+  if(input != null){
     // Convert the input to a string
     let str = input.toString();
 
@@ -265,4 +268,6 @@ function normalizeFlightProcedureString(input) {
 
     // If input doesn't match the expected patterns, return the original input
     return input;
+  }
+  return null;
 }
