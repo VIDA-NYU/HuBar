@@ -35,3 +35,8 @@ To set up the required data for HuBar, follow these steps:
     |  |  ...   
     └────────────────────────────────────────────────────────────────────────────
     ```
+Regarding the GOMS model outputs:
+
+4. Within the `data` folder, unzip GOMS models outputs `image.zip`. Please contact [s.castelo@nyu.edu](mailto:s.castelo@nyu.edu) to obtain a copy of this file.
+
+5. Within the `data` folder, copy `workload_module_lookup_table.json` file. Please contact [s.castelo@nyu.edu](mailto:s.castelo@nyu.edu) to obtain a copy of this file.
