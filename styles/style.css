@@ -232,10 +232,10 @@ body{
 }
 
 #brain-dropdown{
-    width: 20%;
+    width: 13%;
     position: absolute; 
     top: 65px; 
-    left: 45%; 
+    left: 42%; 
     z-index: 1;
     visibility: hidden;
 }
