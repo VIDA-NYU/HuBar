@@ -65,7 +65,20 @@
         </div>
 
         <div id="matrix-container" style="text-align: center;">
-          <strong>Procedures</strong>
+           <strong>Procedures</strong> 
+
+           <div id="brain-checkbox-div">
+            <input type="checkbox" id="brain-checkbox" name="brain-checkbox" value="brain">
+            <label id="brain-checkbox-label" for="brain-checkbox">Toggle Brain Activity</label><br>
+          </div>
+
+          <select id="brain-dropdown" style="visibility: hidden">
+            <option selected value="hbo">HbO</option>
+            <option selected value="hbr">HbR</option>
+            <option value="hbt">HbT</option>
+            <option value="oxy">Oxy</option>
+          </select>
+
         </div>
 
         <div id="fnirs-sessions-container">

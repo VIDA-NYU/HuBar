@@ -120,6 +120,16 @@ async function initializeContainers(){
         updateFnirsSessions( dataFiles)
     });
 
+    d3.select("#brain-checkbox").on("change", function() {
+        updateMatrix( dataFiles)
+    });
+
+
+
+    d3.select("#brain-dropdown").on("change", function() {
+        updateMatrix( dataFiles)
+    });
+
     const gazeDropdown = d3.select("#gaze-dropdown");
 
     gazeDropdown.on("change", function() {

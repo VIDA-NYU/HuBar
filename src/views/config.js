@@ -104,7 +104,7 @@ export function get_selectedGaze(){
 
 // get video path
 export function get_videoPath(brushedSubject, brushedTrial){
-    return `data/video/${String(brushedSubject).padStart(4, '0')}/${brushedTrial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`;
+    return `./data/video/${String(brushedSubject).padStart(4, '0')}/${brushedTrial}/hl2_rgb/codec_hl2_rgb_vfr.mp4`;
 }
 
 let selectedItems;
