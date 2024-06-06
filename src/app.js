@@ -6,7 +6,7 @@ import {updateTimeDistribution } from './views/TimeDistribution.js'
 // import {maxTimestamp} from './views/config.js'
 import { cleanUpdateHl2Details, updateHl2Details } from './views/Hl2Details.js'
 import { updateEventTimeline } from './views/EventTimeline.js'
-import { compute_unique_data, get_unique_sources, set_selectedFnirs, set_selectedImu, set_selectedGaze, set_selectedItems, set_selectedScatterSource, set_selectedGroupby, set_selectedFilter } from './views/config.js'
+import { compute_unique_data, get_unique_sources, set_selectedFnirs, set_selectedImu, set_selectedGaze, set_selectedItems, set_selectedScatterSource, set_selectedGroupby, set_selectedFilter, set_stepColorScale } from './views/config.js'
 import { updateMatrix } from './views/MatrixView.js';
 import { updateFnirsSessions } from './views/FnirsErrorSessions.js';
 import { initialise_svgs } from './views/containersSVG.js';
@@ -47,6 +47,7 @@ async function initializeContainers(){
 
     TestScript();
     
+    set_stepColorScale();
     // Extract unique sources from the data
     compute_unique_data(dataFiles);
     const sources = get_unique_sources();
