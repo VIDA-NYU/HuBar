@@ -17,7 +17,7 @@ python -m http.server
 
 To set up the required data for HuBar, follow these steps:
 
-1. Unzip the `data.zip` file in the same directory where it is located.
+1. Unzip the `data.zip` file in the same directory where it is located. `data.zip` already includes the required data to display the GOMS models outputs (the image folder and `workload_module_lookup_table.json` file).
 
 2. Within the unzipped `data` folder, create a new folder named `video`.
 
@@ -35,8 +35,3 @@ To set up the required data for HuBar, follow these steps:
     |  |  ...   
     └────────────────────────────────────────────────────────────────────────────
     ```
-Regarding the GOMS model outputs:
-
-4. Within the `data` folder, unzip GOMS models outputs `image.zip`. Please contact [s.castelo@nyu.edu](mailto:s.castelo@nyu.edu) to obtain a copy of this file.
-
-5. Within the `data` folder, copy `workload_module_lookup_table.json` file. Please contact [s.castelo@nyu.edu](mailto:s.castelo@nyu.edu) to obtain a copy of this file.
