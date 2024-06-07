@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems, get_selectedGroupby} from './config.js'
 import { get_matrixGroup, get_matrixSvg, get_matrixTooltip } from './containersSVG.js';
+import { get_brushedSubject, get_brushedTrial, get_vidEnd, get_vidStart} from './configHl2Details.js';
 
 export function updateMatrix( dataFiles ){
     // Extract unique sources from the data
@@ -182,6 +183,34 @@ export function updateMatrix( dataFiles ){
 
                 
                 stepsPresent.forEach(step => createBrainVis(session, step))
+
+                //check if brush has been activated and add transparency to non brushed instances
+                let brushedSubject = get_brushedSubject();
+                if (brushedSubject !=null){ 
+                    matrixGroup.selectAll(".brainimg")
+                        .style("opacity",0.1)
+
+                    matrixGroup.selectAll(".brainpath")
+                        .style("fill-opacity",0.1)
+
+                    let brushedTrial = get_brushedTrial()
+                    let vidStart = get_vidStart()
+                    let vidEnd = get_vidEnd()
+                    let sessionObject = dataFiles[1].filter(obj => obj.subject_id == brushedSubject && obj.trial_id == brushedTrial)[0]
+                    let stepNames = new Set();
+                    sessionObject['consolidatedStepData'].step.forEach((step)=>{
+                        if (step.startTimestamp > vidStart && step.startTimestamp < vidEnd)
+                            stepNames.add(step.value)
+                        else if (step.endTimestamp> vidStart && step.startTimestamp < vidEnd)
+                            stepNames.add(step.value)
+                    })
+                    stepNames.forEach((name)=>{
+                        matrixGroup.selectAll("#brainpath-" + name + "-"+brushedSubject +"-" + brushedTrial)
+                            .style( "fill-opacity",1);
+                        matrixGroup.selectAll("#brainimg-" + name + "-"+brushedSubject +"-" + brushedTrial)
+                            .style( "opacity",1);
+                    })
+                }
             }
 
             else{
