@@ -13,6 +13,10 @@ npx webpack
 python -m http.server
 ~~~~
 
+Ports:
+
+The web interface is at http://localhost:8000. Please use Firefox or Safari web browsers.
+
 ## Data Setup
 
 To set up the required data for HuBar, follow these steps:
