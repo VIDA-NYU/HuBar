@@ -2,7 +2,7 @@
 
 HuBar is a visual analytics tool to explore human behavior using fNIRS data in AR guidance systems.
 
-![System screen](https://github.com/soniacq/HuBar/blob/master/imgs/HuBar_system.png)
+![System screen](https://github.com/soniacq/HuBar/blob/master/imgs/HuBar-NYU_NGC_UF_integration.png)
 
 
 ## Install
