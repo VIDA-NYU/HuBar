@@ -56,6 +56,7 @@ def process_get_brain():
             return jsonify('image: ', result_image.tolist()), 200
     
     except Exception as e:
+        print("Error:",e)
         return jsonify({'error': str(e)}), 500
     
 def run_app(port=8001):
