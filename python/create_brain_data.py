@@ -173,7 +173,6 @@ def create_mne_epochs_object(raw,
                              t_max):
     # reject_criteria = dict(hbo=80e-6)
     # regect_criteria = dict(hbo=1e-6, hbr=1e-6)
-
     # Create epochs
     epochs = mne.Epochs(raw, 
                         events, 
@@ -186,7 +185,6 @@ def create_mne_epochs_object(raw,
                         preload=True, 
                         detrend=None, 
                         verbose=True)
-
     return epochs
 
 def plot_channel_hemodynamic_response(evoked, 
@@ -275,8 +273,7 @@ def plot_3d_evoked_array(ea,
     return brain
 
 
-def plot_evoked(subject_id, 
-                trial_id, 
+def plot_evoked(subject_trials,
                 epochs, 
                 picks="hbo",
                 selected_events=[],
@@ -328,34 +325,63 @@ def plot_evoked(subject_id,
     return brain, hemodynamic_response
         
 
-def create_brain_data(subjects_id, 
-         trial_id, 
+def create_brain_data(subject_trials, # list of subject trial pairs to aggragate
          plot_sensors=False, 
          plot_annotation=False, 
          picks="hbo",
          selected_events=[],
          initial_time=0,
-         end_time=None):
+         end_time=None,
+         ):
     
     image = None
     
     start_timer = timeit.default_timer()
 
-    df = get_trial_dataframe(subjects_id, trial_id)
-    events, realized_event_ids, t_min, t_max = read_events(subjects_id, 
-                                                           trial_id)
+    full_epochs = []
+    events_list = []
+    realized_event_ids = {}
+    t_min = None
+    t_max = None
+    for (subjects_id, trial_id) in subject_trials:
+        df = get_trial_dataframe(subjects_id, trial_id)
+        events, realized_event_id_single, t_min_single, t_max_single = read_events(subjects_id, 
+                                                            trial_id)
+        if len(events) == 0 or df is None:
+            print(f"No events/data found for {subjects_id} {trial_id}")
+            continue
 
-    if len(events) != 0 and df is not None:
         raw = create_mne_raw_object(df)
-        epochs = create_mne_epochs_object(raw, 
+
+        if t_min is None or t_min_single < t_min:
+            t_min = t_min_single
+        if t_max is None or t_max_single > t_max:
+            t_max = t_max_single
+
+        # check that all events in realized_event_ids are in realized_event_id_single
+        # if not, remove them
+        if len(realized_event_ids) == 0:
+            realized_event_ids = realized_event_id_single
+        else:
+            for k, v in realized_event_ids.items():
+                if k not in realized_event_id_single:
+                    del realized_event_ids[k]
+                    events = np.delete(events, np.where(events[:, 2] == k), axis=0)
+        events_list.append(events)
+
+    for events in events_list:
+        epochs = create_mne_epochs_object(raw,
                                         events, 
                                         realized_event_ids, 
                                         t_min, 
                                         t_max)
+        full_epochs.append(epochs)
 
-        brain, hemodynamic_response  = plot_evoked(subjects_id, 
-                    trial_id, 
-                    epochs, 
+    if len(full_epochs) != 0:
+        full_epochs = mne.concatenate_epochs(full_epochs, add_offset=True, verbose=True)
+
+        brain, hemodynamic_response  = plot_evoked(subject_trials, 
+                    full_epochs, 
                     picks=picks,
                     selected_events=selected_events,
                     time_to_average=5, 
@@ -367,14 +393,13 @@ def create_brain_data(subjects_id,
         if brain is not None:
             print(f'Done  {subjects_id} {trial_id} {selected_events}: {timeit.default_timer() - start_timer}')
             image = brain.screenshot(mode='rgb', time_viewer=False)
-
-    if image is None:
+    else:
         print(f"No events/data found for {subjects_id} {trial_id} {selected_events}")
 
     return image
 
 if __name__ == '__main__':
-    subjects_id, trial_id = '0293', '13'
+    subjects_trials = [['0293', '13'],['0293', '2'],['0293', '11'],['0293', '16'],['0293', '19']]
 
     # for event in ['a', 'b', 'c', 'd', 'e', 'f']:
     #     image = create_brain_data(subjects_id, 
@@ -390,12 +415,11 @@ if __name__ == '__main__':
         
     #     input("Press Enter to continue...")
 
-    image = create_brain_data(subjects_id, 
-            trial_id,
+    image = create_brain_data(subjects_trials,
             plot_sensors=False,
             plot_annotation=False,
             picks="hbo",
-            selected_events=['a', 'b'],
+            selected_events=['a'],
             initial_time=0,
             end_time=None)
     plt.imshow(image)
