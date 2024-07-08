@@ -46,6 +46,53 @@
         </div>
       </div>
 
+      <div id ="vid-imu-container" class="cell" >      
+        <div id = "video-container" class="cell">  
+          <video id="video-player" controls muted="muted"></video>
+        </div>
+
+        <div id="hl2-container">
+
+          <div id="imu-header">
+            <div>          
+                <strong>IMU &nbsp;</strong>
+                <select id="imu-dropdown">
+                  <option value="orientation_x" selected>orientation_x</option>
+                  <option value="orientation_y">orientation_y</option>
+                  <option value="orientation_z">orientation_z</option>
+                  <option value="linear_acceleration_x">linear_acceleration_x</option>
+                  <option value="linear_acceleration_y">linear_acceleration_y</option>
+                  <option value="linear_acceleration_z">linear_acceleration_z</option>
+                  <option value="angular_velocity_x">angular_velocity_x</option>
+                  <option value="angular_velocity_y">angular_velocity_y</option>
+                  <option value="angular_velocity_z">angular_velocity_z</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="gaze-header">
+            <div>
+            <strong>Gaze &nbsp;</strong>
+            <select id="gaze-dropdown">
+              <option value="origin_x">origin_x</option>
+              <option value="origin_y">origin_y</option>
+              <option value="origin_z">origin_z</option>
+              <option value="direction_x" selected>direction_x</option>
+              <option value="direction_y">direction_y</option>
+              <option value="direction_z">direction_z</option>
+            </select>
+            </div>        
+          </div>
+
+        <div id="fnirs-title-header">
+          <div>          
+             <strong>Workload</strong> 
+          </div>
+        </div>
+
+      </div>
+    </div>
+
 
     </div>
 
@@ -95,52 +142,7 @@
       
       </div>
       
-      <div id ="vid-imu-container" class="cell">      
-        <div id = "video-container" class="cell">  
-          <video id="video-player" controls muted="muted"></video>
-        </div>
 
-        <div id="hl2-container">
-
-          <div id="imu-header">
-            <div>          
-                <strong>IMU &nbsp;</strong>
-                <select id="imu-dropdown">
-                  <option value="orientation_x" selected>orientation_x</option>
-                  <option value="orientation_y">orientation_y</option>
-                  <option value="orientation_z">orientation_z</option>
-                  <option value="linear_acceleration_x">linear_acceleration_x</option>
-                  <option value="linear_acceleration_y">linear_acceleration_y</option>
-                  <option value="linear_acceleration_z">linear_acceleration_z</option>
-                  <option value="angular_velocity_x">angular_velocity_x</option>
-                  <option value="angular_velocity_y">angular_velocity_y</option>
-                  <option value="angular_velocity_z">angular_velocity_z</option>
-              </select>
-            </div>
-          </div>
-
-          <div id="gaze-header">
-            <div>
-            <strong>Gaze &nbsp;</strong>
-            <select id="gaze-dropdown">
-              <option value="origin_x">origin_x</option>
-              <option value="origin_y">origin_y</option>
-              <option value="origin_z">origin_z</option>
-              <option value="direction_x" selected>direction_x</option>
-              <option value="direction_y">direction_y</option>
-              <option value="direction_z">direction_z</option>
-            </select>
-            </div>        
-          </div>
-
-        <div id="fnirs-title-header">
-          <div>          
-             <strong>Workload</strong> 
-          </div>
-        </div>
-
-      </div>
-    </div>
     </div>
   </div>
 

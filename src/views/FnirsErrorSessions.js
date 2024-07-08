@@ -208,7 +208,7 @@ export function updateFnirsSessions( dataFiles){
                 }
         
             }
-            currentY+=90
+            currentY+=100
             if (fnirsSessionsSvg.attr("height")<=currentY+200){
                 fnirsSessionsGroup.attr("height",currentY+200)
                 fnirsSessionsSvg.attr("height",currentY+250+margins.fnirsSessions.top+margins.fnirsSessions.bottom)     

@@ -630,7 +630,7 @@ export function updateEventTimeline( dataFiles ){
 
             }
 
-            currentY+=10
+            currentY+=20
 
             if (eventTimelineSvg.attr("height")<=currentY+200){
                 eventTimelineGroup.attr("height",currentY+200)

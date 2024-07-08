@@ -2,7 +2,46 @@ import * as d3 from 'd3';
 import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems, get_selectedGroupby} from './config.js'
 import { get_matrixGroup, get_matrixSvg, get_matrixTooltip } from './containersSVG.js';
 
+
 export function updateMatrix( dataFiles ){
+    let requestData = {
+        "subjects_id": "0293",
+        "trial_id": "13",
+        "plot_sensors": false,
+        "plot_annotation": false,
+        "picks": "hbo",
+        "selected_events": ['a'],
+        "initial_time": 0,
+        "end_time": null,
+        "aggregate_by": null
+    }
+
+    async function fetchProcessedData(data) {
+        const response = await fetch('https://localhost:8001/process-brain-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+    
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+    
+        return response.json();
+    }
+
+    
+    (async () => {
+        try {
+            const result = await fetchProcessedData(requestData);
+            console.log(result);
+        } catch (error) {
+            console.log(error);
+        }
+    })();
+
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
@@ -125,7 +164,7 @@ export function updateMatrix( dataFiles ){
                     matrixGroup.attr("height",currentY+200)
                     matrixSvg.attr("height",currentY+250+margins.matrix.top+margins.matrix.bottom)     
                 }
-                currentY+=90;
+                currentY+=100;
                 return
             }
                   
@@ -189,7 +228,7 @@ export function updateMatrix( dataFiles ){
                     .style("visibility","hidden");
                 stepsPresent.forEach(step => createPie( session, step));
             }    
-            currentY+=90;
+            currentY+=100;
         })
         currentY+=50
         if(matrixSvg.attr("height")<=currentY+200){
@@ -325,7 +364,7 @@ export function updateMatrix( dataFiles ){
             .attr("x", xScaleMatrix(step))  // X coordinate of the image
             .attr("y", currentY)  // Y coordinate of the image
             .attr("width", brainWidth)  // Width of the image (same as SVG width)
-            .attr("height", 90)  // Height of the image (same as SVG height)
+            .attr("height", 100)  // Height of the image (same as SVG height)
             .attr("preserveAspectRatio", "xMidYMid meet");  // Preserve aspect ratio
         
 
@@ -374,4 +413,7 @@ export function updateMatrix( dataFiles ){
             .attr("opacity", 1);
     
     }
+
+
+
 }

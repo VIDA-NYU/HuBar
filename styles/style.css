@@ -21,7 +21,7 @@ body{
   
 #overview-panel{
     display: grid;
-    grid-template-columns: 3.5fr 8.5fr;
+    grid-template-columns: 3.5fr 7fr 3.5fr;
     overflow-y: hidden;
     padding: 0.5%;
     overflow-x: hidden;
@@ -30,7 +30,7 @@ body{
 
 #details-panel{
     display: grid;
-    grid-template-columns:9fr 3fr;
+    grid-template-columns:1fr;
     overflow-y:hidden;
     padding: 0.5%;
 }
@@ -52,7 +52,7 @@ body{
 #tlmatrix-container{
     margin-right: 0.75%;
     display: grid;
-    grid-template-columns: 37.5% 37.5% 25%;
+    grid-template-columns: 39% 41% 20%;
     padding: none;
     overflow-y:scroll;
 }

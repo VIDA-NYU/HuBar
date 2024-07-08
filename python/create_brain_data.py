@@ -209,9 +209,9 @@ def plot_channel_hemodynamic_response(evoked,
     ax.plot(evoked.times, hbr_evoked_data.T, color='b', label='HbR')
     # Add channel names to plot orient text along lines
     for i, ch in enumerate(selected_channels_hbo):
-        ax.text(evoked.times[0]+0.2, hbo_evoked_data[i, 0], f'{subject_id} {ch.strip(' hbo')}', rotation=45, rotation_mode='anchor', fontsize=8)
+        ax.text(evoked.times[0]+0.2, hbo_evoked_data[i, 0], f'{subject_id} {ch.strip(" hbo")}', rotation=45, rotation_mode='anchor', fontsize=8)
     for i, ch in enumerate(selected_channels_hbr):
-        ax.text(evoked.times[0]+0.2, hbr_evoked_data[i, 0]+0.01, f'{subject_id} {ch.strip(' hbr')}', rotation=45, rotation_mode='anchor', fontsize=8)
+        ax.text(evoked.times[0]+0.2, hbr_evoked_data[i, 0]+0.01, f'{subject_id} {ch.strip(" hbr")}', rotation=45, rotation_mode='anchor', fontsize=8)
     
     # pickle plot
     # with open(f'./data/{subject_id}_{trial_id}_{event}_{picks}_channels.pkl', 'wb') as f:
@@ -401,4 +401,3 @@ if __name__ == '__main__':
     plt.imshow(image)
     plt.show()
     input("Press Enter to continue...")
-
