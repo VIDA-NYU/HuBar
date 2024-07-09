@@ -8,15 +8,13 @@ app = Flask(__name__)
 CORS(app)
 
 '''
-subjects_id, 
-trial_id,
+subjects_trials,
 plot_sensors=False,
 plot_annotation=False,
 picks="hbo",
 selected_events=['a', 'b'],
 initial_time=0,
 end_time=None,
-aggregate_by=None
 '''
 @app.route('/process-brain-data', methods=['POST','OPTIONS'])
 @cross_origin(origin='https://localhost:8000',  # Allow requests only from this origin
@@ -28,8 +26,7 @@ def process_get_brain():
         print(data)
         print(f'type: {type(data)} data: {data}')
         
-        subjects_id = data['subjects_id']
-        trial_id = data['trial_id']
+        subjects_trials = data['subjects_trials']
         plot_sensors = data['plot_sensors']
         plot_annotation = data['plot_annotation']
         picks = data['picks']
@@ -39,8 +36,7 @@ def process_get_brain():
 
         # run on seperate core
         pool = multiprocessing.Pool()
-        result_image = pool.apply(create_brain_data, (subjects_id, 
-                                                    trial_id, 
+        result_image = pool.apply(create_brain_data, (subjects_trials,
                                                     plot_sensors, 
                                                     plot_annotation, 
                                                     picks, 
