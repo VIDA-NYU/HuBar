@@ -1,4 +1,3 @@
-# server.py
 import http.server
 import socketserver
 import ssl
@@ -10,9 +9,15 @@ KEY_FILE = 'certs/key.pem'
 
 Handler = http.server.SimpleHTTPRequestHandler
 
-# Create an HTTP server with SSL support
+# Create an SSL context
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(certfile=CERT_FILE, keyfile=KEY_FILE)
+
+# Create an HTTP server
 httpd = socketserver.TCPServer(('localhost', PORT), Handler)
-httpd.socket = ssl.wrap_socket(httpd.socket, certfile=CERT_FILE, keyfile=KEY_FILE, server_side=True)
+
+# Wrap the socket with the SSL context
+httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 
 print(f'Starting HTTPS server on https://localhost:{PORT}/ (Ctrl+C to stop)...')
 
