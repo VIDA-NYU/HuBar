@@ -1,42 +1,19 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_selectedItems, get_selectedGroupby} from './config.js'
+import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedBrainVariable, get_selectedFnirs, get_selectedItems, get_selectedGroupby, get_abortController, set_abortController} from './config.js'
 import { get_matrixGroup, get_matrixSvg, get_matrixTooltip } from './containersSVG.js';
 
 
 export function updateMatrix( dataFiles ){
-
-    /*
-    async function fetchProcessedData(data) {
-        const response = await fetch('https://localhost:8001/process-brain-data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
     
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-    
-        return response.json();
-    }
-
-    (async () => {
-        try {
-            const result = await fetchProcessedData(requestData);
-            console.log('Fetch result:', result);
-        } catch (error) {
-            console.error('Error during fetch:', error);
-        }
-    })();
-    */
 
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
     let selectedItems  = get_selectedItems();
-
+    let controller = get_abortController();
+    controller.abort();
+    set_abortController();
+    controller=get_abortController();
     const margins = get_margins();
     
     // get selected value from dropdown menus
@@ -163,6 +140,7 @@ export function updateMatrix( dataFiles ){
                 d3.select("#brain-dropdown")
                     .style("visibility","visible");
                 
+                /*
                 colorScaleBrain = d3.scaleDiverging([1,0,-1],d3.interpolateRdBu);
 
                 //Add color legend for brain
@@ -208,9 +186,9 @@ export function updateMatrix( dataFiles ){
                     .call(xAxisBrainLegend)
                     .selectAll(".tick text")
                     .style("font-weight", "lighter");
-
+                */
                 
-                stepsPresent.forEach(step => createBrainVis(session, step))
+                stepsPresent.forEach(step => createBrainVis(session, step, currentY, controller))
             }
 
             else{
@@ -307,7 +285,7 @@ export function updateMatrix( dataFiles ){
             //.text(d => d.value);
     }
 
-    function createBrainVis(row, step){
+    function createBrainVis(row, step, currentY, controller){
         
 
         const total = row[step] ?? 0;
@@ -324,11 +302,10 @@ export function updateMatrix( dataFiles ){
         let span = Math.min(brainHeight, brainWidth);
 
         let requestData = {
-            "subjects_id": row.subject=="293"? "0293" : String(row.subject),
-            "trial_id": String(row.trial),
+            "subjects_trials": row.subject=="293"? [["0293",String(row.trial)]] :[[String(row.subject),String(row.trial)]],
             "plot_sensors": false,
             "plot_annotation": false,
-            "picks": "hbo",
+            "picks": get_selectedBrainVariable(),
             "selected_events": [String(step)],
             "initial_time": 0,
             "end_time": null,
@@ -341,7 +318,8 @@ export function updateMatrix( dataFiles ){
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                signal: controller.signal
             });
         
             if (!response.ok) {
@@ -354,36 +332,51 @@ export function updateMatrix( dataFiles ){
         (async () => {
             try {
                 const result = await fetchProcessedData(requestData);
-                const imageData = result[1];  // Assuming the RGB pixel data is in result[1]
+                if (controller.signal.aborted) {
+                    console.log('Fetch request was aborted.');
+                    return; // Exit function if fetch was aborted
+                }
 
-                // Assuming imageData is structured as a 2D array of RGB values
-                const width = imageData.length;  // Width of the image
-                const height = imageData[0].length;  // Height of the image
+                const imageData = result[1];  // Assuming the RGB pixel data is in result[1]
                 
-                // Create a canvas element to draw the image
+                // Assuming imageData is structured as a 2D array of RGB values
+                const height = imageData.length;  // Width of the image
+                const width = imageData[0].length;  // Height of the image
+                
+                // Calculate cropping dimensions
+                const excludedTop = Math.floor(height * 0.16); // 15% of height to exclude from the top
+                const excludedBottom = Math.floor(height * 0.13); // 10% of height to exclude from the bottom
+                const excludedSides = Math.floor(width * 0.13); // 10% of width to exclude from each side
+                const croppedWidth = width - 2 * excludedSides;
+                const croppedHeight = height - excludedTop - excludedBottom;
+                
+                // Create a canvas element and context
                 const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
+                canvas.width = croppedWidth;  // Use the cropped width
+                canvas.height = croppedHeight;  // Use the cropped height
                 const context = canvas.getContext('2d');
                 
-                // Prepare imageData for Canvas API
-                const imageDataUint8 = new Uint8ClampedArray(width * height * 4);  // RGBA format
+                // Create ImageData object for the cropped image
+                const imgData = context.createImageData(croppedWidth, croppedHeight);
                 
-                // Convert RGB values to RGBA format for Canvas API
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const index = (y * width + x) * 4;
-                        imageDataUint8[index] = imageData[x][y][0];  // Red
-                        imageDataUint8[index + 1] = imageData[x][y][1];  // Green
-                        imageDataUint8[index + 2] = imageData[x][y][2];  // Blue
-                        imageDataUint8[index + 3] = 255;  // Alpha (fully opaque)
+                // Set RGBA values from imageData to ImageData object, excluding top, bottom, and side percentages
+                for (let y = excludedTop; y < height - excludedBottom; y++) {
+                    for (let x = excludedSides; x < width - excludedSides; x++) {
+                        const sourceX = x;
+                        const sourceY = y;
+                        const targetX = x - excludedSides;
+                        const targetY = y - excludedTop;
+                        const targetIndex = (targetY * croppedWidth + targetX) * 4;
+                
+                        imgData.data[targetIndex] = imageData[sourceY][sourceX][0];  // Red
+                        imgData.data[targetIndex + 1] = imageData[sourceY][sourceX][1];  // Green
+                        imgData.data[targetIndex + 2] = imageData[sourceY][sourceX][2];  // Blue
+                        imgData.data[targetIndex + 3] = 255;  // Alpha (fully opaque)
                     }
                 }
                 
-                // Create ImageData object
-                const imgData = new ImageData(imageDataUint8, width, height);
                 
-                // Put the image data onto the canvas
+                // Put the ImageData onto the canvas
                 context.putImageData(imgData, 0, 0);
                 
                 // Convert canvas to data URL
@@ -399,62 +392,13 @@ export function updateMatrix( dataFiles ){
                     .attr("width", brainWidth)  // Width of the image (same as SVG width)
                     .attr("height", 100)  // Height of the image (same as SVG height)
                     .attr("preserveAspectRatio", "xMidYMid meet");
+                
         
             } catch (error) {
                 console.log(error);
             }
         })();
-        
-        /*
 
-        (async () => {
-
-        })();
-
-            /*
-        // Function to append a path element at a specified location and scale
-        function appendPath(x, y, value, span) {
-            // Color scale from blue (-1) to red (1)
-            const colorScale = d3.scaleDiverging([-1,0,1],d3.interpolateRdBu);
-            const randomScale = Math.random() * 0.3 + 1; // Scale between 1 and 1.3; 
-            //const randomRotation = Math.random() * 360; // Rotation between 0 and 360 degrees
-            const randomSkewX = Math.random() * 50 - 25
-            const randomSkewY = Math.random() * 50 - 25
-
-            matrixGroup.append("path")
-                .attr("d", pathData)
-                .attr("class","brainpath")
-                .attr("id", "brainpath-" + step + "-"+row.subject +"-"+row.trial)
-                .attr("transform", `translate(${x}, ${y}) scale(${1.4 * span/300 }) scale(${randomScale}) skewX(${randomSkewX}) skewY(${randomSkewY})`)
-                .attr("fill", colorScale(value))
-                .attr("opacity", 0.7);
-        }
-        points.forEach(point => {appendPath(point.x,point.y,point.value, span)});
-        */
-        /*
-        const xScaleBrain = d3.scaleBand()
-            .domain([1,2,3,4,5,6,7,8])
-            .range([midXPoint-0.41*span, midXPoint+0.41*span])
-            .padding(0.1)
-        
-        matrixGroup.append("g")
-            .selectAll("circle")
-            .data(points)
-            .enter()
-            .append("circle")
-            .attr("class","brainpath")
-            .attr("id", "brainpath-" + step + "-"+row.subject +"-"+row.trial)
-            .attr("cx", (d) => xScaleBrain(d.x) + xScaleBrain.bandwidth()/2)
-            .attr("cy", (d) =>{
-                if (d.y ==1)
-                    return midYPoint - 0.05*span
-                else
-                    return midYPoint - 0.3*span
-            })
-            .attr("r", xScaleBrain.bandwidth()/2)
-            .attr("fill", (d)=> colorScaleBrain(d.value))
-            .attr("opacity", 1);
-            */
     }
 
 

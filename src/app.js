@@ -6,12 +6,13 @@ import {updateTimeDistribution } from './views/TimeDistribution.js'
 // import {maxTimestamp} from './views/config.js'
 import { cleanUpdateHl2Details, updateHl2Details } from './views/Hl2Details.js'
 import { updateEventTimeline } from './views/EventTimeline.js'
-import { compute_unique_data, get_unique_sources, set_selectedFnirs, set_selectedImu, set_selectedGaze, set_selectedItems, set_selectedScatterSource, set_selectedGroupby, set_selectedFilter, set_stepColorScale } from './views/config.js'
+import { compute_unique_data, get_unique_sources, set_selectedFnirs, set_selectedBrainVariable, set_selectedImu, set_selectedGaze, set_selectedItems, set_selectedScatterSource, set_selectedGroupby, set_selectedFilter, set_stepColorScale } from './views/config.js'
 import { updateMatrix } from './views/MatrixView.js';
 import { updateFnirsSessions } from './views/FnirsErrorSessions.js';
 import { initialise_svgs } from './views/containersSVG.js';
 import { add_legendFnirs } from './views/legendFnirs.js';
 import { consolidate_data } from './views/utils.js';
+import { updateBrainAgg } from './views/BrainAggregations.js';
 
 const videoFolder = "data/video/"
 let dataFiles; 
@@ -33,8 +34,9 @@ Promise.all([
         dataFiles = consolidate_data(files);;
         initializeContainers();
         updateScatterplot( dataFiles );
+        updateBrainAgg(dataFiles);
         updateFnirsAgg( dataFiles)
-        updateTimeDistribution( dataFiles );
+        //updateTimeDistribution( dataFiles );
     })
     .catch(function(err) {
     console.log(err)
@@ -64,8 +66,9 @@ function initializeContainers(){
         set_selectedScatterSource(sourceDropdown.property("value"));
         updateScatterplot( dataFiles )
         // selectedItems = [];
+        updateBrainAgg(dataFiles);
         updateFnirsAgg( dataFiles)
-        updateTimeDistribution( dataFiles );
+        //updateTimeDistribution( dataFiles );
         updateEventTimeline( dataFiles )
         updateMatrix( dataFiles )
         updateFnirsSessions( dataFiles)
@@ -79,8 +82,9 @@ function initializeContainers(){
         set_selectedGroupby(groupbyDropdown.property("value"));
         updateScatterplot( dataFiles )
         // selectedItems = [];
+        updateBrainAgg(dataFiles);
         updateFnirsAgg( dataFiles)
-        updateTimeDistribution( dataFiles );
+        //updateTimeDistribution( dataFiles );
         updateEventTimeline( dataFiles )
         updateMatrix( dataFiles )
         updateFnirsSessions( dataFiles)
@@ -94,8 +98,9 @@ function initializeContainers(){
         set_selectedFilter(filterDropdown.property("value"));
         updateScatterplot( dataFiles )
         // selectedItems = [];
+        updateBrainAgg(dataFiles);
         updateFnirsAgg( dataFiles)
-        updateTimeDistribution( dataFiles );
+        //updateTimeDistribution( dataFiles );
         updateEventTimeline( dataFiles )
         updateMatrix( dataFiles )
         updateFnirsSessions( dataFiles)
@@ -122,8 +127,10 @@ function initializeContainers(){
     });
 
 
+    const brainDropdown = d3.select("#brain-dropdown");
 
-    d3.select("#brain-dropdown").on("change", function() {
+    brainDropdown.on("change", function() {
+        set_selectedBrainVariable(brainDropdown.property("value"))
         updateMatrix( dataFiles)
     });
 
@@ -146,6 +153,7 @@ function initializeContainers(){
     set_selectedGroupby(groupbyDropdown.property("value"));
     set_selectedFilter(filterDropdown.property("value"));
     set_selectedFnirs(fnirsDropdown.property("value"));
+    set_selectedBrainVariable(brainDropdown.property("value"))
     set_selectedItems([]);
     set_selectedGaze(gazeDropdown.property("value"));
     set_selectedImu(imuDropdown.property("value"));

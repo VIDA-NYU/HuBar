@@ -7,7 +7,8 @@ let
     // uniqueTrials, uniqueSubjects,
     // selectedScatterSource, selectedGroupby, selectedFilter, 
     //selectedFnirs,
-    scatterSvg, scatterGroup, 
+    scatterSvg, scatterGroup,
+    brainSvg, brainGroup, 
     fnirsSvg, fnirsGroup,
     eventTimelineSvg , 
     eventTimelineGroup, 
@@ -43,6 +44,18 @@ export function initialise_svgs(){
         .attr("width", fnirsDiv.node().clientWidth -margins.fnirs.left - margins.fnirs.right )
         .attr("height", 400);    
 
+    //brain  agg
+    
+    let brainDiv= d3.select("#brain-agg-container")  
+    brainSvg = brainDiv.append("svg")
+        .attr("width", brainDiv.node().clientWidth)
+        .attr("height", 500)
+
+    brainGroup = brainSvg.append("g")
+        .attr("transform", `translate(${margins.brainAgg.left}, ${margins.brainAgg.top})`)
+        .attr("width", brainDiv.node().clientWidth -margins.brainAgg.left - margins.brainAgg.right )
+        .attr("height", 400);    
+
     //add font
     let fontImportURL = 'https://fonts.googleapis.com/css?family=Lato|Open+Sans|Oswald|Raleway|Roboto|Indie+Flower|Gamja+Flower';
 
@@ -53,6 +66,7 @@ export function initialise_svgs(){
         .attr("type", "text/css")
         .text('@import url("' + fontImportURL + '");');
     
+    /*
     let timeDistDiv= d3.select("#time-distribution-container") 
     timeDistSvg = timeDistDiv.append("svg")
         .attr("width", timeDistDiv.node().clientWidth)
@@ -62,7 +76,7 @@ export function initialise_svgs(){
         .attr("transform", `translate(${margins.timeDist.left}, ${margins.timeDist.top})`)
         .attr("width", timeDistSvg.attr("width") - margins.timeDist.left - margins.timeDist.right )
         .attr("height", 400);    
-
+    */
     //eventtimeline
     let eventTimelineDiv= d3.select("#event-timeline-container")  
     eventTimelineSvg = eventTimelineDiv
@@ -132,6 +146,14 @@ export function get_scatterSvg(){
 }
 export function get_scatterGroup(){
     return scatterGroup;
+}
+
+// brain aggreagation
+export function get_brainAggSvg(){
+    return brainSvg;
+}
+export function get_brainAggGroup(){
+    return brainGroup;
 }
 
 // fnirs aggreagation

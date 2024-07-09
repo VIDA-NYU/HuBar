@@ -9,6 +9,7 @@ import { updateFnirsSessions } from './FnirsErrorSessions.js';
 
 import { get_margins, get_selectedItems, set_selectedItems, get_selectedScatterSource, get_selectedGroupby, get_selectedFilter} from './config.js'
 import { get_scatterGroup, get_scatterSvg } from './containersSVG.js';
+import { updateBrainAgg } from './BrainAggregations.js';
 
 export function updateScatterplot( dataFiles ){
 
@@ -183,8 +184,9 @@ export function updateScatterplot( dataFiles ){
             lassoBrush.items().classed("unselectedscatter",false);
         }
         set_selectedItems(selectedItems);
+        updateBrainAgg(dataFiles);
         updateFnirsAgg( dataFiles)
-        updateTimeDistribution( dataFiles );
+        //updateTimeDistribution( dataFiles );
         updateEventTimeline( dataFiles )
         updateMatrix( dataFiles )
         updateFnirsSessions( dataFiles)
@@ -231,8 +233,9 @@ export function updateScatterplot( dataFiles ){
                         selectedItems.push({trial:sample.trial ,subject:sample.subject})
                     })
                     set_selectedItems(selectedItems);
+                    updateBrainAgg(dataFiles);
                     updateFnirsAgg( dataFiles)
-                    updateTimeDistribution( dataFiles );
+                    //updateTimeDistribution( dataFiles );
                     updateEventTimeline( dataFiles )
                     updateMatrix( dataFiles )
                     updateFnirsSessions( dataFiles)

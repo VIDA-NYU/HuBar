@@ -23,6 +23,14 @@ export function get_maxTimestamp(){
     return maxTimestamp;
 }
 
+let globalController = new AbortController();
+export function set_abortController(){
+    globalController= new AbortController;
+}
+export function get_abortController(){
+    return globalController;
+}
+
 
 let stepColorScale;
 export function set_stepColorScale(){
@@ -46,7 +54,8 @@ export function get_stepColorScale(){
 export function get_margins(){
     const margins={ 
         scatterplot:{ top:40, left:30, right:110, bottom:15},
-        fnirs:{top:50, left:47, right:10, bottom:10},
+        brainAgg:{top:50, left:47, right:10, bottom:10},
+        fnirs:{top:50, left:10, right:10, bottom:10},
         timeDist:{top:30, left:30, right:30, bottom: 10},
         eventTimeline:{top:25, left:55, right:16, bottom:20},
         matrix:{top:25, left:5, right:5, bottom:20},
@@ -84,6 +93,15 @@ export function get_selectedFnirs(){
     return selectedFnirs;
 }
 
+//update selected brain variable
+let selectedBrainVariable;
+export function set_selectedBrainVariable(option){
+    selectedBrainVariable = option;
+}
+export function get_selectedBrainVariable(){
+    return selectedBrainVariable;
+}
+
 // Update selected imu 
 let selectedImu;
 export function set_selectedImu(option){
@@ -110,6 +128,7 @@ export function get_videoPath(brushedSubject, brushedTrial){
 let selectedItems;
 // Update selected items 
 export function set_selectedItems(items){
+    get_abortController().abort();
     // Clone the items array to avoid mutability issues
     selectedItems = [...items];
 }

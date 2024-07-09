@@ -60,7 +60,7 @@ export function updateFnirsAgg( dataFiles){
         fnirsFinalData = fnirsFilteredData
 
     const proportions = calculateProportions(fnirsFinalData, uniqueTrials, selectedGroupby, uniqueSubjects);
-    const totalHeight = proportions.workload.length * 50;
+    const totalHeight = proportions.workload.length * 110;
     const newHeight = totalHeight + margins.fnirs.top + margins.fnirs.bottom;
 
     fnirsSvg.attr('height', newHeight+50);
@@ -86,14 +86,14 @@ export function updateFnirsAgg( dataFiles){
         yScaleFnirs = d3.scaleBand()
             .domain(proportions.attention.map(d => `Trial ${d.trial}`))
             .range([0, totalHeight])
-            .paddingInner(0.4)
+            .paddingInner(0.1)
             .paddingOuter(0.1);
     }
     else{
         yScaleFnirs = d3.scaleBand()
             .domain(proportions.attention.map(d => `Sub ${d.subject}`))
             .range([0, totalHeight])
-            .paddingInner(0.4)
+            .paddingInner(0.1)
             .paddingOuter(0.1);
     }
     
@@ -106,7 +106,7 @@ export function updateFnirsAgg( dataFiles){
                 return d.charAt(0).toUpperCase() + d.slice(1)+" %"; // Capitalize other labels    
         });
 
-    const yAxis = d3.axisLeft(yScaleFnirs);
+    //const yAxis = d3.axisLeft(yScaleFnirs);
     
     // Append axes to SVG
     fnirsGroup.append('g')
@@ -120,7 +120,7 @@ export function updateFnirsAgg( dataFiles){
             // selectedFnirs=d;
             set_selectedFnirs(d)
             updateFnirsAgg( dataFiles)
-            updateTimeDistribution( dataFiles );
+            //updateTimeDistribution( dataFiles );
             updateEventTimeline( dataFiles )
             updateMatrix( dataFiles )
             updateFnirsSessions( dataFiles)
@@ -156,7 +156,7 @@ export function updateFnirsAgg( dataFiles){
 
     
 
-
+    /*
     fnirsGroup.append('g')
         .attr('class', 'y-axis axisHide')
         .attr('transform', `translate(5, 0)`)
@@ -182,7 +182,7 @@ export function updateFnirsAgg( dataFiles){
             })
             set_selectedItems(selectedItems);
             updateFnirsAgg( dataFiles)
-            updateTimeDistribution( dataFiles );
+            //updateTimeDistribution( dataFiles );
             updateEventTimeline( dataFiles )
             updateMatrix( dataFiles )
             updateFnirsSessions( dataFiles)
@@ -193,7 +193,7 @@ export function updateFnirsAgg( dataFiles){
         .selectAll("text")
         .style("font-size", "9px")
         .style("font-family","Open Sans, Roboto, sans-serif");
-    
+        */
     
     // Create bars workload
 
