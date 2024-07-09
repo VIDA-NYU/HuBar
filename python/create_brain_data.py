@@ -259,16 +259,16 @@ def plot_3d_evoked_array(ea,
     brain = stc.plot(src=src, subjects_dir=subjects_dir, hemi='both',
                      surface=surface, initial_time=time_to_average, time_unit='s', clim=clim, size=size,
                      colormap=colormap, figure=figure, background=background, #backend='notebook',
-                     colorbar=colorbar, verbose=verbose, alpha=1, time_viewer=False, )
+                     colorbar=colorbar, verbose=verbose, alpha=1, time_viewer=False)
 
     if plot_sensors:
         brain.add_sensors(ea.info, trans='fsaverage', fnirs=dict(channels=1, pairs=0.5, sources=0.5, detectors=0.5))
     if plot_annotation:
         brain.add_annotation("aparc.a2009s", borders=True, alpha=0.7)
     if view is not None:
-        brain.show_view(view, azimuth=90, elevation=80, distance=350)
+        brain.show_view(view, azimuth=90, elevation=80, distance=245)
     else:
-        brain.show_view(azimuth=90, elevation=80, distance=350)
+        brain.show_view(azimuth=90, elevation=80, distance=245)
 
     return brain
 
@@ -399,7 +399,9 @@ def create_brain_data(subject_trials, # list of subject trial pairs to aggragate
     return image
 
 if __name__ == '__main__':
-    subjects_trials = [['0293', '13'],['0293', '2'],['0293', '11'],['0293', '16'],['0293', '19']]
+    # subjects_trials = [['0293', '13'],['0293', '2'],['0293', '11'],['0293', '16'],['0293', '19']]
+
+    subjects_trials = [['0293', '13']]
 
     # for event in ['a', 'b', 'c', 'd', 'e', 'f']:
     #     image = create_brain_data(subjects_id, 
