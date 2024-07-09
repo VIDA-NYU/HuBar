@@ -1,7 +1,7 @@
 import os
 import glob
 import pickle
-
+import copy
 import timeit
 
 import pandas as pd
@@ -363,7 +363,8 @@ def create_brain_data(subject_trials, # list of subject trial pairs to aggragate
         if len(realized_event_ids) == 0:
             realized_event_ids = realized_event_id_single
         else:
-            for k, v in realized_event_ids.items():
+            realized_event_ids_copy = copy.deepcopy (realized_event_ids)
+            for k, v in realized_event_ids_copy.items():
                 if k not in realized_event_id_single:
                     del realized_event_ids[k]
                     events = np.delete(events, np.where(events[:, 2] == k), axis=0)
@@ -399,9 +400,9 @@ def create_brain_data(subject_trials, # list of subject trial pairs to aggragate
     return image
 
 if __name__ == '__main__':
-    # subjects_trials = [['0293', '13'],['0293', '2'],['0293', '11'],['0293', '16'],['0293', '19']]
-
-    subjects_trials = [['0293', '13']]
+    subjects_trials = [['0293', '13'],['0293', '2'],['0293', '11'],['0293', '16'],['0293', '19']]
+    #subjects_trials = [['0293', '2'],['0293', '11'],['0293', '13'],['0293', '16'],['0293', '19']]
+    #subjects_trials = [['0293', '13']]
 
     # for event in ['a', 'b', 'c', 'd', 'e', 'f']:
     #     image = create_brain_data(subjects_id, 
