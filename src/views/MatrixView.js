@@ -344,9 +344,14 @@ export function updateMatrix( dataFiles ){
                 const width = imageData[0].length;  // Height of the image
                 
                 // Calculate cropping dimensions
+                /*
                 const excludedTop = Math.floor(height * 0.16); // 15% of height to exclude from the top
                 const excludedBottom = Math.floor(height * 0.13); // 10% of height to exclude from the bottom
                 const excludedSides = Math.floor(width * 0.13); // 10% of width to exclude from each side
+                */
+                const excludedTop = 0; // 15% of height to exclude from the top
+                const excludedBottom = 0;
+                const excludedSides = 0;
                 const croppedWidth = width - 2 * excludedSides;
                 const croppedHeight = height - excludedTop - excludedBottom;
                 
