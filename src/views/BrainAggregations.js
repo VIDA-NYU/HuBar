@@ -6,12 +6,15 @@ import { updateEventTimeline } from './EventTimeline.js'
 import { updateMatrix } from './MatrixView.js';
 import { updateFnirsSessions } from './FnirsErrorSessions.js';
 import { updateFnirsAgg } from './FnirsAggregations.js';
-import { get_allTimestamps, get_margins, get_unique_subjects, c, get_selectedItems, set_selectedItems, get_selectedFilter ,get_selectedGroupby, get_unique_trials} from './config.js'
+import { get_allTimestamps, get_margins, get_unique_subjects, c, get_selectedItems, set_selectedItems, get_selectedFilter ,get_selectedGroupby, get_selectedBrainVariable, get_brainAggController,set_brainAggController, get_unique_trials} from './config.js'
 import { get_brainAggGroup, get_brainAggSvg, get_scatterGroup } from './containersSVG.js';
 
 export function updateBrainAgg(dataFiles){
 
-
+    let controller = get_brainAggController();
+    controller.abort();
+    set_brainAggController();
+    controller=get_brainAggController();
     const margins = get_margins();
     
     // get selected value from dropdown menus
@@ -137,10 +140,131 @@ export function updateBrainAgg(dataFiles){
         .style("font-family","Open Sans, Roboto, sans-serif");
 
 
-    /*groupArrayOrdered.forEach(groupId=>{
-        //let currentObj;
-        //if (selectedGroupby=="trial")
-           //currentObj = filteredObjectArray.filter()
+    groupArrayOrdered.forEach(groupId=>{
+        let currentObj;
+        if (selectedGroupby=="trial")
+           currentObj = filteredObjectArray.filter(d => d.trial == groupId)
+        else
+            currentObj =  filteredObjectArray.filter(d => d.subject == groupId)
 
-    })*/
+        let requestArray = [] 
+        currentObj.forEach((obj)=>{
+            if (obj.subject == "293")
+                requestArray.push(["0293",String(obj.trial)])
+            else
+                requestArray.push([ String(obj.subject), String(obj.trial)]);
+
+            let requestData = {
+                "subjects_trials": requestArray,
+                "plot_sensors": false,
+                "plot_annotation": false,
+                "picks": get_selectedBrainVariable(),
+                "selected_events": ['a','b','c','d','e','f'],
+                "initial_time": 0,
+                "end_time": null
+            }
+            console.log(controller)
+            plot_brainAggs(requestData, controller, yScaleBrainAgg, groupId, selectedGroupby)
+
+            function plot_brainAggs(requestData, controller, yScaleBrainAgg, groupId, selectedGroupby){
+
+                async function fetchProcessedData(data, controller) {
+                    const response = await fetch('https://localhost:8001/process-brain-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                        signal: controller.signal
+                    });
+                
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                
+                    return response.json();
+                }
+
+                (async () => {
+                    try {
+                        const result = await fetchProcessedData(requestData, controller);
+                        if (controller.signal.aborted) {
+                            console.log('Fetch request was aborted.');
+                            return; // Exit function if fetch was aborted
+                        }
+        
+                        const imageData = result[1];  // Assuming the RGB pixel data is in result[1]
+                        
+                        // Assuming imageData is structured as a 2D array of RGB values
+                        const height = imageData.length;  // Width of the image
+                        const width = imageData[0].length;  // Height of the image
+                        
+                        // Calculate cropping dimensions
+                        /*
+                        const excludedTop = Math.floor(height * 0.16); // 15% of height to exclude from the top
+                        const excludedBottom = Math.floor(height * 0.13); // 10% of height to exclude from the bottom
+                        const excludedSides = Math.floor(width * 0.13); // 10% of width to exclude from each side
+                        */
+                        const excludedTop = 0; // 15% of height to exclude from the top
+                        const excludedBottom = 0;
+                        const excludedSides = 0;
+                        const croppedWidth = width - 2 * excludedSides;
+                        const croppedHeight = height - excludedTop - excludedBottom;
+                        
+                        // Create a canvas element and context
+                        const canvas = document.createElement('canvas');
+                        canvas.width = croppedWidth;  // Use the cropped width
+                        canvas.height = croppedHeight;  // Use the cropped height
+                        const context = canvas.getContext('2d');
+                        
+                        // Create ImageData object for the cropped image
+                        const imgData = context.createImageData(croppedWidth, croppedHeight);
+                        
+                        // Set RGBA values from imageData to ImageData object, excluding top, bottom, and side percentages
+                        for (let y = excludedTop; y < height - excludedBottom; y++) {
+                            for (let x = excludedSides; x < width - excludedSides; x++) {
+                                const sourceX = x;
+                                const sourceY = y;
+                                const targetX = x - excludedSides;
+                                const targetY = y - excludedTop;
+                                const targetIndex = (targetY * croppedWidth + targetX) * 4;
+                        
+                                imgData.data[targetIndex] = imageData[sourceY][sourceX][0];  // Red
+                                imgData.data[targetIndex + 1] = imageData[sourceY][sourceX][1];  // Green
+                                imgData.data[targetIndex + 2] = imageData[sourceY][sourceX][2];  // Blue
+                                imgData.data[targetIndex + 3] = 255;  // Alpha (fully opaque)
+                            }
+                        }
+                        
+                        
+                        // Put the ImageData onto the canvas
+                        context.putImageData(imgData, 0, 0);
+                        
+                        // Convert canvas to data URL
+                        const imageUrl = canvas.toDataURL();  // This will give you a data URL (base64 encoded)
+                        
+                        // Append the image to the SVG or HTML
+                        brainGroup.append("image")
+                            .attr("xlink:href", imageUrl)
+                            .attr("class", "brainagg")
+                            .attr("id", "brainagg-" + selectedGroupby +"-"+ groupId)
+                            .attr("x", margins.brainAgg.left)  // X coordinate of the image
+                            .attr("y", ()=>{
+                                if (selectedGroupby == "trial")
+                                    return yScaleBrainAgg("Trial "+groupId)
+                                else
+                                    return yScaleBrainAgg("Sub "+groupId)
+                            })  // Y coordinate of the image
+                            .attr("width", brainSvg.attr('width') -margins.brainAgg.left - margins.brainAgg.right)  // Width of the image (same as SVG width)
+                            .attr("height", yScaleBrainAgg.bandwidth())  // Height of the image (same as SVG height)
+                            .attr("preserveAspectRatio", "xMidYMid meet");
+                        
+                
+                    } catch (error) {
+                        console.log(error);
+                    }
+                })();
+            }  
+        })
+    })
 }

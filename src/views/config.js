@@ -23,12 +23,20 @@ export function get_maxTimestamp(){
     return maxTimestamp;
 }
 
-let globalController = new AbortController();
-export function set_abortController(){
-    globalController= new AbortController;
+let brainSessionsController = new AbortController();
+export function set_brainSessionsController(){
+    brainSessionsController= new AbortController;
 }
-export function get_abortController(){
-    return globalController;
+export function get_brainSessionsController(){
+    return brainSessionsController;
+}
+
+let brainAggController = new AbortController();
+export function set_brainAggController(){
+    brainAggController= new AbortController;
+}
+export function get_brainAggController(){
+    return brainAggController;
 }
 
 
@@ -128,7 +136,7 @@ export function get_videoPath(brushedSubject, brushedTrial){
 let selectedItems;
 // Update selected items 
 export function set_selectedItems(items){
-    get_abortController().abort();
+    get_brainSessionsController().abort();
     // Clone the items array to avoid mutability issues
     selectedItems = [...items];
 }

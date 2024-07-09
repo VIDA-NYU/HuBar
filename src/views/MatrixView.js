@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedBrainVariable, get_selectedFnirs, get_selectedItems, get_selectedGroupby, get_abortController, set_abortController} from './config.js'
+import { get_allTimestamps, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedBrainVariable, get_selectedFnirs, get_selectedItems, get_selectedGroupby, get_brainSessionsController, set_brainSessionsController} from './config.js'
 import { get_matrixGroup, get_matrixSvg, get_matrixTooltip } from './containersSVG.js';
 
 
@@ -10,10 +10,10 @@ export function updateMatrix( dataFiles ){
     let uniqueTrials = get_unique_trials();
     let uniqueSubjects = get_unique_subjects();
     let selectedItems  = get_selectedItems();
-    let controller = get_abortController();
+    let controller = get_brainSessionsController();
     controller.abort();
-    set_abortController();
-    controller=get_abortController();
+    set_brainSessionsController();
+    controller=get_brainSessionsController();
     const margins = get_margins();
     
     // get selected value from dropdown menus
@@ -308,8 +308,7 @@ export function updateMatrix( dataFiles ){
             "picks": get_selectedBrainVariable(),
             "selected_events": [String(step)],
             "initial_time": 0,
-            "end_time": null,
-            "aggregate_by": null
+            "end_time": null
         }
 
         async function fetchProcessedData(data) {

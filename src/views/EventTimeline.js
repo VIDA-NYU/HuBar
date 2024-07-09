@@ -1,10 +1,10 @@
 import * as d3 from 'd3';
-import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_videoPath, get_selectedItems, set_selectedItems, get_selectedGroupby, get_abortController} from './config.js'
+import { get_allTimestamps, get_maxTimestamp, get_stepColorScale, get_margins, get_unique_subjects, get_unique_trials, get_selectedFnirs, get_videoPath, get_selectedItems, set_selectedItems, get_selectedGroupby, get_brainSessionsController} from './config.js'
 import { updateHl2Details } from './Hl2Details.js'
 import { updateMatrix } from './MatrixView.js';
 import { updateFnirsSessions } from './FnirsErrorSessions.js';
 import { get_eventTimelineGroup, get_eventTimelineSvg, get_matrixGroup } from './containersSVG.js';
-import { playVideoWithStartTime } from './videoPlayerUtils.js';
+import { playVideoWithStartTime } from './videoPlayerUtils.js'; 
 import { get_brushedSubject, get_brushedTrial, get_vidEnd, get_vidStart, set_brushedSubject, set_brushedTrial, set_brushesAdded, set_vidEnd, set_vidStart } from './configHl2Details.js';
 
 export function get_xEventTimelineScale(){
@@ -18,7 +18,7 @@ export function get_xEventTimelineScale(){
 export function updateEventTimeline( dataFiles ){   
 
     console.log("updateEventTimeline");
-    let controller = get_abortController();
+        let controller = get_brainSessionsController();
     controller.abort()
     // Extract unique sources from the data
     let uniqueTrials = get_unique_trials();
