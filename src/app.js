@@ -132,6 +132,7 @@ function initializeContainers(){
     brainDropdown.on("change", function() {
         set_selectedBrainVariable(brainDropdown.property("value"))
         updateMatrix( dataFiles)
+        updateBrainAgg(dataFiles);
     });
 
     const gazeDropdown = d3.select("#gaze-dropdown");

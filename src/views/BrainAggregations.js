@@ -153,7 +153,8 @@ export function updateBrainAgg(dataFiles){
                 requestArray.push(["0293",String(obj.trial)])
             else
                 requestArray.push([ String(obj.subject), String(obj.trial)]);
-
+        })
+        
             let requestData = {
                 "subjects_trials": requestArray,
                 "plot_sensors": false,
@@ -265,6 +266,6 @@ export function updateBrainAgg(dataFiles){
                     }
                 })();
             }  
-        })
+        
     })
 }
